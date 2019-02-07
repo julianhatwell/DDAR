@@ -1,0 +1,91 @@
+---
+title: "DDAR"
+author: "Julian Hatwell"
+date: "7 February 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE
+                      , message = FALSE
+                      , echo = FALSE
+                      )
+
+knitr::opts_template$set(
+  fig.wide = list(fig.height = 4.5, fig.width = 8, fig.align='center')
+  , fig.wideX = list(fig.height = 3, fig.width = 9, fig.align='center')
+  , fig.relaxed = list(fig.height = 6, fig.width = 8, fig.align='center')
+  , fig.tile = list(fig.height = 3, fig.width = 3, fig.align='center')
+)
+```
+
+# Discrete Data Analysis with Examples in R
+
+## Introduction
+
+Note: This tutorial is based on material contained in the book [Discrete Data Analysis with R: Visualization and Modeling Techniques for Categorical and Count Data](https://www.crcpress.com/Discrete-Data-Analysis-with-R-Visualization-and-Modeling-Techniques-for/Friendly-Meyer/p/book/9781498725835) by Prof. Michael Friendly
+
+You can also find a much shorter tutorial on these topics in the long form help for the "vcd" package for R: [vcd vignette](https://cran.r-project.org/web/packages/vcdExtra/vignettes/vcd-tutorial.pdf)
+
+Michael Friendly is a pioneer in this field and has contributed to the development of modules and libraries for SAS and R.
+
+### What is Discrete Data Analysis (DDA)?
+
+Simply, the analysis of discrete data! This is a specialist branch of statistics that is concerned with categorical, ordinal and count data. So, there's no real mystery here. We're essentially talking about a set of tools and techniques that you would apply to achieve the same objectives as any quantitative statistical analysis.
+
+Nearly everyone with any background in stats has some experience of DDA! We have all performed a $\chi^2$ test for independence or for association. This is a hypothesis test involving categorical and count data. For example:
+
+* $H_0 =$ In a random sample of the population, there is an equal chance of belonging to each category.
+
+* $H_0 =$ In a random sample of the population, membership of any category in feature A is independent of membership of any category in feature B
+
+In this workshop, we will go deeper than the basic $\chi^2$ to answer more detailed questions, and we will focus on visual tools that can reveal very interesting patterns in categorical data!
+
+### Why Would You Be Interested in This Workshop
+
+As a Data Analytics research group, we frequently encounter classification problems in machine learning. The aim of this workshop is to provide a high-level overview of some statistical tools that might help you with such tasks as:
+
+ * Exploratory Data Analysis - previewing new datasets that you might use your experimental work
+ * Rigorous and robust justification of your results
+ 
+Bear in mind, this is just an overview! One hour is just long enough for a taster and not much depth.
+
+### Why Am I Presenting This Workshop?
+
+This topic is one of the main reasons I became really interested in statistics in general. For me, *this was the way in!* Like many (most?) people, statistics was a bit alien, boring, mysterious, inpenetrable (all the above!), until I found a reason to actually apply it.
+
+This specialist area of stats peaked my interest at two distinct points in my life:
+
+1. My undergraduate degree in Microbiology - using techniques such as [Most Probable Number](https://en.wikipedia.org/wiki/Most_probable_number) to estimate the number of bacterial cells in a test tube. You certainly can't count them all!
+
+2. My job as an analyst in the tertiary education sector in Singapore. The kinds of questions I needed to answer were:
+
+  * How do student grades compare across demographic groups (subject, gender, nationality, high school attended prior to entry, GPA prior to entry)
+  * Is there a difference between the numbers of students who progress from undergrad to post-grad, depending on specific interventions
+  * Do different interventions improve the retention of at-risk students
+  * etc
+  
+The types of questions we did *not* need to ask was "what is the average height/weight of students across different groups?" So it was obvious that regular descriptive and quantitative stats were not the right tools for this work.
+
+## Preliminaries
+
+If you prefer, you can simply follow along with the in person presentation but if you want to run the code chunks and see the results in the RStudio UI you need access to a machine with R+RStudio and the source code for this file.
+
+Most of the examples will be based on the Titanic dataset. If you are not familier with this dataset, please try the following before the session starts:
+
+```{r, eval=FALSE}
+learnAbout <- function(d) {
+  data(list = d)
+  str(get(d))
+  help(topic = d) 
+}
+
+learnAbout("Titanic")
+```
+
+To save time, make sure the following libraries are installed and loaded
+
+```{r load_libs}
+library(vcd)
+library(vcdExtra)
+```
