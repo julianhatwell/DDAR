@@ -231,13 +231,49 @@ $(document).ready(function () {
 <li>Do different interventions improve the retention of at-risk students</li>
 <li>etc</li>
 </ul>
-<p>The types of questions we <em>did not</em> need to ask was “what is the average height/weight” of students across different groups. So it was clear that regular descriptive and quantitative stats were not the right tools for this work.</p>
+<p>The types of questions we did <em>not</em> need to ask was “what is the average height/weight of students across different groups?” So it was obvious that regular descriptive and quantitative stats were not the right tools for this work.</p>
 </div>
 </div>
 <div id="preliminaries" class="section level2">
 <h2>Preliminaries</h2>
 <p>If you prefer, you can simply follow along with the in person presentation but if you want to run the code chunks and see the results in the RStudio UI you need access to a machine with R+RStudio and the source code for this file.</p>
+<p>Most of the examples will be based on the Titanic dataset. If you are not familier with this dataset, please try the following before the session starts:</p>
 <p>To save time, make sure the following libraries are installed and loaded</p>
+</div>
+<div id="workshop" class="section level2">
+<h2>Workshop</h2>
+<div id="task-overview" class="section level3">
+<h3>Task Overview</h3>
+<p>This is a non-exhaustive list of common statistical tasks and questions that require specific DDA techniques:</p>
+<ol style="list-style-type: decimal">
+<li>1-way analysis and goodness of fit</li>
+</ol>
+<ul>
+<li><span class="math inline">\(H_0 =\)</span> My data fits a common, known distribution <span class="math inline">\(\delta\)</span> - so I can use properties of <span class="math inline">\(\delta\)</span> in subsequent tests.</li>
+<li>Does my data fit a known distribution and if so, what are the parameters?</li>
+</ul>
+<ol start="2" style="list-style-type: decimal">
+<li>2-way analysis</li>
+</ol>
+<ul>
+<li>2 <span class="math inline">\(\times\)</span> 2 tables are a special case where a standard <span class="math inline">\(\chi^2\)</span> test is not recommended. What tools should I use instead?</li>
+<li><span class="math inline">\(\chi^2\)</span> tests on <span class="math inline">\(n \times m\)</span> tables can tell me that an association between features is present/absent, but if <span class="math inline">\(n\)</span> or <span class="math inline">\(m\)</span> are larger than 3-4, how can I find and test for complex relationships between so many combinations of categories?</li>
+<li>Some of my categories are ordinal - what is the right test?</li>
+<li>In a confusion matrix, how can I quantify the agreement/disagreement between True and Predicted classes?</li>
+</ul>
+<ol start="3" style="list-style-type: decimal">
+<li>n-way analysis - Help! I just can’t visualise and measure any of this in multiple dimensions.</li>
+</ol>
+</div>
+<div id="dda-in-r-and-task-specific-visualisations" class="section level3">
+<h3>DDA in R and task specific visualisations</h3>
+<p>We can’t develop a fluency for these tasks in this workshop but if this is something useful for you there are two “building block” skills to concentrate on:</p>
+<ol style="list-style-type: decimal">
+<li><p>Useful data structures for DDA in R are not data frames, but n-way tables and matrices, sometimes data frames with a frequency column (for the count data).</p></li>
+<li><p>Useful functions to get to know are table, margin.table, prop.table, xtabs, apply</p></li>
+<li><p>library “vcd” comes with its own plotting system. It’s different from Base graphics, ggplot2 and lattice. It’s easy to get started, but a bit of effort is required to learn all the tweaks for making publication ready graphical output.</p></li>
+</ol>
+</div>
 </div>
 </div>
 
