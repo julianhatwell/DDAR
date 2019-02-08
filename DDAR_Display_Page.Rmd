@@ -103,8 +103,11 @@ This is a non-exhaustive list of common statistical tasks and questions that req
   * 2 $\times$ 2 tables are a special case where a standard $\chi^2$ test is not recommended. What tools should I use instead?
   * $\chi^2$ tests on $n \times m$ tables can tell me that an association between features is present/absent, but if $n$ or $m$ are larger than 3-4, how can I find and test for complex relationships between so many combinations of categories?
   * Some of my categories are ordinal - what is the right test?
-  * In a confusion matrix, how can I quantify the agreement/disagreement between True and Predicted classes?
+  * Classification problems with ordinal data - how can I quantify the agreement/disagreement between True and Predicted classes when there is a relationship between classes?
 3. n-way analysis - Help! I just can't visualise and measure any of this in multiple dimensions.
+  * Visualising n-way tables
+  * Statistical hypothesis testing in n-way tables
+  * Correspondence Analysis - PCA for categorical variables
 
 ### DDA in R and task specific visualisations
 
@@ -112,6 +115,6 @@ We don't have time develop a fluency for these tasks in this workshop but if thi
 
 1. Useful data structures for DDA in R are not data frames, but n-way tables and matrices, sometimes data frames with a frequency column (for the count data).
 
-1. Useful functions to get to know are table, margin.table, prop.table, xtabs, apply
+1. Useful functions to get to know are table, margin.table, prop.table, ftable, xtabs, apply, using integer indexing to re-order categories and pivot the dimensions
 
 1. library "vcd" comes with its own plotting system. It's different from Base graphics, ggplot2 and lattice. It's easy to get started, but a bit of effort is required to learn all the tweaks for making publication ready graphical output.

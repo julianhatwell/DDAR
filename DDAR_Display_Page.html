@@ -91,14 +91,8 @@ img {
 .tabbed-pane {
   padding-top: 12px;
 }
-.html-widget {
-  margin-bottom: 20px;
-}
 button.code-folding-btn:focus {
   outline: none;
-}
-summary {
-  display: list-item;
 }
 </style>
 
@@ -107,74 +101,14 @@ summary {
 <div class="container-fluid main-container">
 
 <!-- tabsets -->
-
-<style type="text/css">
-.tabset-dropdown > .nav-tabs {
-  display: inline-table;
-  max-height: 500px;
-  min-height: 44px;
-  overflow-y: auto;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
-  font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
-  font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
-}
-
-.tabset-dropdown > .nav-tabs > li.active {
-  display: block;
-}
-
-.tabset-dropdown > .nav-tabs > li > a,
-.tabset-dropdown > .nav-tabs > li > a:focus,
-.tabset-dropdown > .nav-tabs > li > a:hover {
-  border: none;
-  display: inline-block;
-  border-radius: 4px;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
-  display: block;
-  float: none;
-}
-
-.tabset-dropdown > .nav-tabs > li {
-  display: none;
-}
-</style>
-
 <script>
 $(document).ready(function () {
   window.buildTabsets("TOC");
 });
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
 </script>
 
 <!-- code folding -->
+
 
 
 
@@ -259,18 +193,23 @@ $(document).ready(function () {
 <li>2 <span class="math inline">\(\times\)</span> 2 tables are a special case where a standard <span class="math inline">\(\chi^2\)</span> test is not recommended. What tools should I use instead?</li>
 <li><span class="math inline">\(\chi^2\)</span> tests on <span class="math inline">\(n \times m\)</span> tables can tell me that an association between features is present/absent, but if <span class="math inline">\(n\)</span> or <span class="math inline">\(m\)</span> are larger than 3-4, how can I find and test for complex relationships between so many combinations of categories?</li>
 <li>Some of my categories are ordinal - what is the right test?</li>
-<li>In a confusion matrix, how can I quantify the agreement/disagreement between True and Predicted classes?</li>
+<li>Classification problems with ordinal data - how can I quantify the agreement/disagreement between True and Predicted classes when there is a relationship between classes?</li>
 </ul>
 <ol start="3" style="list-style-type: decimal">
 <li>n-way analysis - Help! I just can’t visualise and measure any of this in multiple dimensions.</li>
 </ol>
+<ul>
+<li>Visualising n-way tables</li>
+<li>Statistical hypothesis testing in n-way tables</li>
+<li>Correspondence Analysis - PCA for categorical variables</li>
+</ul>
 </div>
 <div id="dda-in-r-and-task-specific-visualisations" class="section level3">
 <h3>DDA in R and task specific visualisations</h3>
-<p>We can’t develop a fluency for these tasks in this workshop but if this is something useful for you there are two “building block” skills to concentrate on:</p>
+<p>We don’t have time develop a fluency for these tasks in this workshop but if this is something useful for you there are some “building block” skills that are worth spending time on:</p>
 <ol style="list-style-type: decimal">
 <li><p>Useful data structures for DDA in R are not data frames, but n-way tables and matrices, sometimes data frames with a frequency column (for the count data).</p></li>
-<li><p>Useful functions to get to know are table, margin.table, prop.table, xtabs, apply</p></li>
+<li><p>Useful functions to get to know are table, margin.table, prop.table, ftable, xtabs, apply, using integer indexing to re-order categories and pivot the dimensions</p></li>
 <li><p>library “vcd” comes with its own plotting system. It’s different from Base graphics, ggplot2 and lattice. It’s easy to get started, but a bit of effort is required to learn all the tweaks for making publication ready graphical output.</p></li>
 </ol>
 </div>
