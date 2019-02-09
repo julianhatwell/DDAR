@@ -3,12 +3,23 @@ title: "DDAR"
 author: "Julian Hatwell"
 date: "7 February 2019"
 output: html_document
+references:
+- id: noack1950
+  title: A class of random variables with discrete distributions.
+  author:
+  - family: Noack
+    given: A.
+  container-title: Annals of Mathematical Statistics
+  volume: 21
+  page: 127-132
+  type: article-journal
+  issued:
+    year: 1950
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(warning = FALSE
                       , message = FALSE
-                      , echo = FALSE
                       )
 
 knitr::opts_template$set(
@@ -41,14 +52,28 @@ Nearly everyone with any background in stats has some experience of DDA! We have
 
 In this workshop, we will go deeper than the basic $\chi^2$ to answer more detailed questions, and we will focus on visual tools that can reveal very interesting patterns in categorical data!
 
-### Why Would You Be Interested in This Workshop
+### Intended Audience
 
-As a Data Analytics research group, we frequently encounter classification problems in machine learning. The aim of this workshop is to provide a high-level overview of some statistical tools that might help you with such tasks as:
+Data Analytics and Artificial Intelligence Research Group at Birmingham City University. A team of academics, post-doctoral researchers and doctoral candidates.
 
- * Exploratory Data Analysis - previewing new datasets that you might use your experimental work
- * Rigorous and robust justification of your results
- 
-Bear in mind, this is just an overview! One hour is just long enough for a taster and not much depth.
+### Why Would You Be Interested in This Workshop?
+
+As a Data Analytics research group, we frequently encounter classification problems in machine learning. The aim of this workshop is to provide a high-level overview of some less well known statistical tools that might help you with such tasks as:
+
+* Exploratory Data Analysis:
+    * An essential, often overlooked, step prior to any analysis task
+    * Assess a new dataset that contains several discrete features
+    * Develop an intuition about the relationships between those features
+* Rigorous and robust reporting of machine learning classification results:
+    * classification, especially multi-class problems involves categorical data
+    * sometimes a confusion matrix is not enough!
+    * ordinal classification is a special case
+
+### What we won't cover
+
+Bear in mind, this is just an overview! Our seminar session is just long enough for a taster and not much depth.
+
+We also won't cover predictive modeling. Logistic regression falls squarely under both DDA and Machine Learning, and there other techniques such as proportional odds for predictive modeling of ordinal classes, and loglinear models and glms for count data. This is all out of scope for today.
 
 ### Why Am I Presenting This Workshop?
 
@@ -58,14 +83,12 @@ This specialist area of stats peaked my interest at two distinct points in my li
 
 1. My undergraduate degree in Microbiology - using techniques such as [Most Probable Number](https://en.wikipedia.org/wiki/Most_probable_number) to estimate the number of bacterial cells in a test tube. You certainly can't count them all!
 
-2. My job as an analyst in the tertiary education sector in Singapore. The kinds of questions I needed to answer were:
-
-  * How do student grades compare across demographic groups (subject, gender, nationality, high school attended prior to entry, GPA prior to entry)
-  * Is there a difference between the numbers of students who progress from undergrad to post-grad, depending on specific interventions
-  * Do different interventions improve the retention of at-risk students
-  * etc
+2. My career as a data professional, included a stint in the tertiary education sector in Singapore. The kinds of questions I needed to answer were:
+    * How do student grades compare across demographic groups (subject, gender, nationality, high school attended prior to entry, GPA prior to entry)
+    * Is there a difference between the numbers of students who progress from undergrad to post-grad, depending on specific interventions
+    * Do different interventions improve the retention of at-risk students
   
-The types of questions we did *not* need to ask was "what is the average height/weight of students across different groups?" So it was obvious that regular descriptive and quantitative stats were not the right tools for this work.
+The types of questions we did *not* need to ask was "what is the average height/weight of students across different groups?" So it was obvious that regular descriptive and quantitative stats (i.e. the normal distribution) were not the right tools for this work.
 
 ## Preliminaries
 
@@ -86,28 +109,24 @@ learnAbout("Titanic")
 To save time, make sure the following libraries are installed and loaded
 
 ```{r load_libs}
+library(knitr)
 library(vcd)
 library(vcdExtra)
 ```
 
-## Workshop
 
-### Task Overview
+### Common distributions - the currency of DDA
 
-This is a non-exhaustive list of common statistical tasks and questions that require specific DDA techniques:
+There are several distributions to help with the most common DDA research questions. You can recognise them because a random variable from any of these can only be a natural number $\{ 0,1,2,\dots \}$:
 
-1. 1-way analysis and goodness of fit
-  * $H_0 =$ My data fits a common, known distribution $\delta$ - so I can use properties of $\delta$ in subsequent tests.
-  * Does my data fit a known distribution and if so, what are the parameters?
-2. 2-way analysis
-  * 2 $\times$ 2 tables are a special case where a standard $\chi^2$ test is not recommended. What tools should I use instead?
-  * $\chi^2$ tests on $n \times m$ tables can tell me that an association between features is present/absent, but if $n$ or $m$ are larger than 3-4, how can I find and test for complex relationships between so many combinations of categories?
-  * Some of my categories are ordinal - what is the right test?
-  * Classification problems with ordinal data - how can I quantify the agreement/disagreement between True and Predicted classes when there is a relationship between classes?
-3. n-way analysis - Help! I just can't visualise and measure any of this in multiple dimensions.
-  * Visualising n-way tables
-  * Statistical hypothesis testing in n-way tables
-  * Correspondence Analysis - PCA for categorical variables
+* Binomial - how many heads in n coin tosses?
+* Poisson - how many buses come every n minutes?
+* Geometric - how many minutes do I wait before a bus comes?
+* Negative Binomial - how many minutes waiting time between each bus?
+
+These distributions are all special cases of the Power Series family of distributions [@noack1950]
+
+There are lots of other more specialised distributions such as *hurdles* and *zero-inflated* models where a very high prevalence zero success events must be handled. 
 
 ### DDA in R and task specific visualisations
 
@@ -115,6 +134,208 @@ We don't have time develop a fluency for these tasks in this workshop but if thi
 
 1. Useful data structures for DDA in R are not data frames, but n-way tables and matrices, sometimes data frames with a frequency column (for the count data).
 
-1. Useful functions to get to know are table, margin.table, prop.table, ftable, xtabs, apply, using integer indexing to re-order categories and pivot the dimensions
+1. Useful functions to get to know are table, margin.table, prop.table, ftable, xtabs, apply, using integer indexing to re-order categories and pivot dimensions
 
-1. library "vcd" comes with its own plotting system. It's different from Base graphics, ggplot2 and lattice. It's easy to get started, but a bit of effort is required to learn all the tweaks for making publication ready graphical output.
+1. library "vcd" comes with its own plotting system. It is based on the grids package but is different from R base graphics, ggplot2 and lattice! It's easy to get started, but a bit of effort is required to learn all the tweaks for making publication ready graphical output. However, interpreting area based plots in really intuitive and it's really worth the effort to learn so that results can be communicated succinctly (a picture tells a thousand words).
+
+## Workshop
+
+### Task Overview
+
+This is a non-exhaustive list of common statistical tasks and questions that require specific DDA techniques. We will do short case studies on several of these that you might run into in your Machine Learning practice.
+
+1. 1-way analysis and goodness of fit
+    * $H_0 =$ My data fits a common, known distribution $\delta$, so I can use mathematical/analytical properties of $\delta$ for hypothesis tests.
+    * Does my data fit a known distribution and if so, what are the parameters?
+    * Does one random sample come from the same distribution as another?
+2. 2-way analysis
+    * 2 $\times$ 2 tables are a special case where a standard $\chi^2$ test is not recommended. What tools should I use instead?
+    * $\chi^2$ tests on $n \times m$ tables can tell me that an association between features is present/absent, but if $n$ or $m$ are larger than 3-4, how can I find and test for complex relationships between so many combinations of categories?
+    * Some of my categories are ordinal - what is the right test?
+    * Classification problems with ordinal data - how can I quantify the agreement/disagreement between True and Predicted classes when there is a relationship between classes?
+3. n-way analysis - Help! I just can't visualise and measure any of this in multiple dimensions.
+    * Visualising n-way tables for exploratory analysis
+    * Statistical hypothesis testing in n-way tables
+    * Correspondence Analysis - Dimension Reduction like PCA for categorical variables
+
+### Task 1: 1-way analysis, goodness of fit
+
+#### Case Study in Text Analysis: The Federalist Papers - How many times does the marker word 'may' appear per 200 word block.
+
+The poisson distribution has just one paramater $\lambda$ for the rate, and both the mean and variance are equal to this parameter.
+
+The negative binomial distribution has two parameters, rate and dispersion. The mean is equal to the rate, but the variance is always greater than the rate. It can appear as a right skewed poisson distribution and behaves as a sample of poisson variables with a non-constant rate.
+
+However, data from these two distributions can look very similar. Identifying the best match and estimating the parameters is essential in text analysis for comparing texts with each other. The following technique has been used to determine if documents are written by same or different authors. Distributions of marker words are fit to the text known to come from one author. 
+
+Any previously unseen text can be tested against these known distributions to determine if they are written by the same author.
+
+Notes: 
+* The rate is occurences/200. 
+* The expected count is rate $\times$ 200
+* The square root is used to "squash" the large numbers on the left, giving a clearer perspective on the small numbers in the right tail of these charts.
+
+```{r federalist}
+data("Federalist", package = "vcd")
+Federalist
+sum(Federalist)
+mean(Federalist)
+```
+
+```{r barplot_actual}
+barplot(sqrt(Federalist)
+        , xlab = "Occurences of 'may'"
+        , ylab = "Number of text blocks"
+        , col = "lightgreen"
+        , cex.lab = 1.5
+)
+```
+
+A very naive way to estimate the poisson rate is just to take the mean.
+
+```{r pois_naive_expected}
+barplot(sqrt(200 * dpois(0:6, mean(Federalist)/200))
+        , ylab = "Expected"
+        , xlab = "Occurences of 'may'"
+        , col = "lightblue"
+        , cex.lab = 1.5)
+```
+
+The actual data looks a bit like a poisson distribution with a rate = mean, but has a much fatter tail. What is a better approach? The vcd package comes to the rescue!
+
+```{r fed_goodfit_pois}
+Fed_fit0 <- goodfit(Federalist, type = "poisson")
+# This will show the rate parameter, estimated by Maximum Likelihood
+unlist(Fed_fit0$par)
+
+# This will show a Chi-Square Goodness of fit test against the expected values of a poisson distribution with this parameter
+summary(Fed_fit0)
+
+# The plot speaks for itself!
+plot(Fed_fit0, type = "hanging", shade = TRUE)
+```
+
+```{r fed_goodfit_nbinom}
+Fed_fit1 <- goodfit(Federalist, type = "nbinomial")
+# This will show the rate and dispersion parameters, estimated by Maximum Likelihood
+unlist(Fed_fit1$par)
+summary(Fed_fit1)
+
+# The plot speaks for itself!
+plot(Fed_fit1, type = "hanging", shade = TRUE)
+```
+
+We have now fit an appropriate distribution and estimated the parameters for the frequency of marker word 'may' in this text. We can use these parameters to assess a different text.
+
+```{r nonFederalist}
+nonFederalist <- structure(c(128L, 71L, 33L, 16L, 8L, 4L, 2L), .Dim = 7L, .Dimnames = structure(list(
+    c("0", "1", "2", "3", "4", "5", "6")), .Names = "nMay"), class = "table")
+nonFederalist
+sum(nonFederalist)
+mean(nonFederalist)
+barplot(sqrt(nonFederalist)
+        , xlab = "Occurences of 'may'"
+        , ylab = "Number of text blocks"
+        , col = "lightgreen"
+        , cex.lab = 1.5
+)
+```
+
+It certainly looks similar and has the same descriptive statistics. We can test it properly using the parameters from the goodfit object we just created:
+
+```{r fit_nonfed}
+Fed_fit3 <- goodfit(nonFederalist, type = "nbinomial", par = Fed_fit1$par)
+summary(Fed_fit3)
+plot(Fed_fit3, type = "hanging", shade = TRUE)
+```
+
+The word 'may' seems to appear more frequently in this text. The tail, with 3-6 occurences per 200 words is fatter, while blocks where this word is absent are fewer. The difference is significant. The $\chi^2$ result is evidence that this is not the same distribution. 
+
+#### Talking points
+
+Does this test imply that the second text was not written by the same author?
+
+Text analysis has come a long way since these statistical techniques were developed. What are some newer, more sophisticated methods?
+
+Can you describe, in plain English, what is the implication of finding a poisson distributed word frequency? Why is the negative binomial a more natural distribution for word frequency? Hints:
+
+* Frequency is the number of times the word appeared per block of 200 words
+* Review the notes about these two distributions at the top of this task
+
+### Task 2: 2-way analysis
+
+#### Case Study: Reporting results for multi-class classification of ordinal variables.
+
+In Machine Learning, the standard way to assess results is with a confusion matrix. This is a two way table comparing True and Predicted class labels. When classes are well balanced, it's easy to measure accuracy. When they're out of balance, we use Cohen's $\kappa$ statistic to weight according to the occurence of each class in the data.
+
+$\kappa$ = 1 means perfect agreement
+$\kappa$ = 0 means no better than chance agreement
+
+If you start with a class imbalance of 9:1 and and just predict a single class for any instance, you will get 90% accuracy but your $\kappa$ = 0 and that's not a good result!
+
+But what if class labels are related to each other? Ordinal variables have a natural order, e.g. 
+
+1. Strongly Agree
+1. Agree
+1. Neither Agree Nor Disagree
+1. Disagree
+1. Strongly Disagree
+
+You want your model to predict as well as possible, but to make an off-by-one error isn't as bad as a full opposite error. There can also be bias in the thresholds between classes. Only order matters with ordinal variables, there's no magnitude implied between the classes.
+
+If you can detect this kind of bias, you can correct it! This is where agreement plots can help. They are based on statistical techniques for comparing two raters, such as two doctors, two film critics, two wine critics etc, to valdiate ratings and analyse all kinds of bias.
+
+In the following example we show how two sets of diagnoses for Multiple Sclerosis. The classes are ordinal ratings:
+
+1. Certain
+1. Probable
+1. Possible
+1. Doubtful
+
+```{r MSP_2D}
+# combine results from two cities (same raters are involved in all cases)
+MSP <- margin.table(MSPatients, 1:2)
+MSP
+```
+
+There are definitely some problems with this confusion matrix, but what exactly is the problem?
+
+```{r MSP_accuracy}
+# basic accuracy
+sum(diag(MSP))/sum(MSP)
+```
+
+On the face of it, this looks like a terrible result! *Note, it's less than 0.5 but it's not worse than a random guess. There are 4 classes to choose from.*
+
+```{r MSP_kappa}
+# cohen's kappa - the function in the vcd package provides confidence intervals for this statistic
+confint(Kappa(MSP, weights = "Fleiss-Cohen"))
+```
+
+Unweighted $\kappa$ is also showing that this is not a very good result. However, Fleiss-Cohen Weighted kappa favours near disagreements and taking this into account gives a much better result. So these raters are closer than it first appears.
+
+```{r MSP_agreement}
+op <- par(mar = c(4, 3, 4, 1) + .1)
+B <- agreementplot(MSP
+                   , main = "MS Patient Ratings"
+                   , xlab_rot = -20
+)
+par(op)
+unlist(B)[1 : 2]
+```
+
+This plot needs some explaining. The rectangle outlines show the maximum possible agreement, given the marginal totals. The black rectangles indicate where there is full agreement between raters. The shaded area indicates the off by $n$ disagreement. *Note, if there were more categories, there would be more grades of shading*.
+
+Ideally, we want the black area to fill the outline and it's not very close in this chart. However, the shaded area is coming much closer to filling the available space. 
+
+The Bangitwala statistic is calculated based on the ratio of these shaded rectangles to the maximal outline. The large interval between the weighted and unweighted statistics shows that near disagreements are very common. The weighted statistic is `r unlist(B)[2]`. Not a bad result at all.
+
+There is another feature of this plot, which is the relationship of the rectangles to the diagonal line. This indicates how well aligned the raters are in using each category. In this chart, Winnipeg Neurologist seems to rate cases as "Certain" or "Probable" much more frequently than New Orleans Neurologist. Neither $\kappa$ nor Bangitwala statistics can detect this. There are statistical tests available but this chart shows the problem directly.
+
+With a little intervention, guided by this information, these two raters could become much better aligned.
+
+#### Talking Point
+
+Have you worked with, or can you think of an ordinal classification problem?
+
+# References

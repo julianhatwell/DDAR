@@ -1,0 +1,60 @@
+---
+title: "Scratch"
+output: html_document
+---
+
+Now we will introduce the 'strucplot framework' that is the heart of the vcd package. This may be a new approach to structuring data and writing plotting routines compared to previous experience with R. However, it's worth the effort for the intuitive views of complex relationships in the data.
+
+Everything is based on the simple concept that your features of insterest are on the axes and the area of plotted shapes is proportional to the count or frequency variable at the intersection of each category then shading can be used in many ways to highlight important interactions. The concept scales well to 3 or even 4 dimensions as we shall see later on.
+
+#### Case Study 2a: Checking for dependencies between two categorical features in a dataset
+
+The HairEyeColor dataset ships with base R. The help says:
+
+Distribution of hair and eye color and sex in 592 statistics students. A 3-dimensional array resulting from cross-tabulating 592 observations on 3 variables. The variables and their levels are as follows:
+
+```{r describe_haireye, echo=FALSE}
+hr_desc <- data.frame(No=1:3
+                      , Name=c("Hair", "Eye", "Sex")
+                      , Levels=c("Black, Brown, Red, Blond", "Brown, Blue, Hazel, Green", "Male, Female"))
+kable(hr_desc)
+```
+
+For now, we will ignore the sex of each individual by collapsing the 3-D table down to 2-D.
+
+```{r haireye}
+haireye <- margin.table(HairEyeColor, 1:2)
+haireye
+```
+
+Big numbers and small numbers stand out but the table still has 16 cells which is a lot to take in at once. It's not immediately obvious what the relationships are.
+
+Let's recall our old friend the $\chi^2$ test, which compared actual counts to expected counts. Expected counts means there is an assumption of no interaction between the features. What would no interaction look like?
+
+```{r haireye_expected}
+expected = independence_table(haireye)
+round(expected, 1)
+
+sieve(haireye
+      , sievetype = "expected"
+      , shade = TRUE
+      , main="Expected frequencies"
+      , labeling = labeling_values
+      , value_type = "expected"
+      , gp_text = gpar(fontface = 2)
+      , gp = shading_sieve(interpolate = 0
+      , line_col="darkgrey"
+      , eps = Inf
+      , lty = "dashed"))
+```
+
+The cells' areas are proportional to the product of each intersection of expected counts. Now we'll add the information about actual counts, using shading.
+
+```{r haireye_obs_shading}
+sieve(haireye
+      , shade = TRUE
+      , main="Observed frequencies"
+      , labeling = labeling_values
+      , value_type = "observed"
+      , gp_text = gpar(fontface = 2))
+```
