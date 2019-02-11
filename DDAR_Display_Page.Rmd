@@ -36,28 +36,6 @@ Note: This tutorial is based on material contained in the book [Discrete Data An
 
 You can also find a much shorter tutorial on these topics in the long form help for the "vcd" package for R: [vcd vignette](https://cran.r-project.org/web/packages/vcdExtra/vignettes/vcd-tutorial.pdf)
 
-## What is Discrete Data Analysis (DDA)?
-
-Predictably, the term refers to analysis of discrete data! DDA is a set of tools and techniques that you would apply to achieve the same objectives as any quantitative statistical analysis but with these data types:
-
-* Nominal
-* Ordinal
-* Counts / Frequencies
-
-Nearly everyone with any background in stats has some experience of DDA! We have all performed a $\chi^2$ test for independence or for association. This is a hypothesis test involving categorical and count data. For example:
-
-* $H_0 =$ In a random sample of the population, there is an equal chance of belonging to any category of feature A.
-
-* $H_0 =$ In a random sample of the population, membership of any category in feature A is independent of membership of any category in feature B
-
-In this workshop, we will focus on intuitive, visual tools that can reveal very interesting patterns in categorical data. We will only introduce formal statistics and tests where absolutely necessary.
-
-## What we won't cover
-
-Bear in mind, this is just an overview! Our seminar session is just long enough for a taster and not much depth.
-
-We won't cover explanatory and predictive modeling. This includes logistic regression for binary classification, which most will be familiar with. It falls squarely under both DDA and Machine Learning, and there are related or equivalent techniques for other kinds of classifiation (ordinal, polytomous/multi-class and counts. This is all out of scope for today because there isn't time to review the underlying theories.
-
 ## Intended Audience
 
 Data Analytics and Artificial Intelligence Research Group at Birmingham City University. A team of academics, post-doctoral researchers and doctoral candidates.
@@ -80,7 +58,7 @@ To provide a high-level overview of some less well-known, visual statitistical t
 
 **Learning Outcomes:** After this session you will be able to:
 
-* Demonstrate rigorous and robust, yet visually intuitive reporting of machine learning project results in:
+* Demonstrate rigorous and robust, yet visually intuitive reporting of machine learning research results in:
     * Frequency data: events, counts, occurrences, wait-times
     * Multi-class problems involving ordinal data
 * Formulate an appropriate strategy for the Exploratory Data Analysis (EDA) phase of a machine learning project:
@@ -88,6 +66,14 @@ To provide a high-level overview of some less well-known, visual statitistical t
     * Develop an intuition about the relationships between those features
 
 EDA is an essential but often overlooked step prior to any analysis task.
+
+## What we won't cover
+
+Bear in mind, this is just an overview! Our seminar session is just long enough for a taster and not much depth.
+
+In this workshop, we will focus on intuitive, visual tools that can reveal patterns in categorical data. We will only introduce formal statistics and tests where necessary, and will not develop any mathematical notation, theory or proofs.
+
+We also won't cover explanatory and predictive modeling. Most of you will already be familiar with logistic regression for binary classification. There are related or equivalent techniques for other kinds of classifiation (ordinal, polytomous/multi-class and counts). Even though these topics fall squarely under both DDA and Machine Learning, this is all out of scope for today because it's a massive topic that requires a whole course/module to explain.
 
 ## Why Am I Presenting This Workshop?
 
@@ -119,7 +105,7 @@ The types of questions we did *not* need to ask was "what is the average height/
 
 Tables and cross tabs were no use with so many dimensions. Pivot tables were a little better, but couldn't help with signficance testing and predictive analytics. Most importantly, I needed visual tools to communicate findings with the senior management team. I couldn't expect those guys to squint over a page of tables and numbers with me, looking for clues. This is when I came upon Michael Friendly's work on visualising categorical data, and was highly motivated to learn more about it.
 
-That's a story about the BI, management reports and forecasting work that I used to do. Now I am involved in (or evolved into) a Machine Learning researcher and practitioner, I face completely new tasks, but I keep noticing that the old tools and techniques are still applicable. I wanted to share these ideas with you and I hope you also find them useful.
+That's a story about the BI, management reports and forecasting work that I used to do. Now I am involved in (or evolved into) Machine Learning research and practice, and I face completely new tasks. However, I keep noticing that the old tools and techniques are still applicable. I wanted to share these ideas with you and I hope you also find them useful.
 
 # Preliminaries
 
@@ -137,6 +123,20 @@ library(vcd)
 library(vcdExtra)
 library(ca)
 ```
+
+## What is Discrete Data Analysis (DDA)?
+
+Predictably, the term refers to analysis of discrete data! DDA is a set of tools and techniques that you would apply to achieve the same objectives as any quantitative statistical analysis but with these data types:
+
+* Nominal
+* Ordinal
+* Counts / Frequencies
+
+Nearly everyone with any background in stats has some experience of DDA! We have all performed a $\chi^2$ test for independence or for association. This is a hypothesis test involving categorical and count data. For example:
+
+* $H_0 =$ There is an equal number of instances belonging to each category of feature A. Any observed differences are small enough to be considered a sampling error.
+
+* $H_0 =$ Membership of any category in feature A is independent of membership of any category in feature B. Frequency in each combination is proportional to the joint distribution $P(A) \times P(B)$. Any observed differences are small enough to be considered a sampling error.
 
 ## Common distributions - the currency of DDA
 
@@ -208,7 +208,7 @@ Notes:
 
 * The rate is occurences/200 words. 
 * The expected count is the rate parameter $\times$ 200
-* Plotting the square root transformation of the frequency provides more detail on the small numbers in the right tail of these charts. Log transformation would also work, square root makes distances proportional to residuals, which is a very useful property. The rootogram visualisations use square root transformation by default. So, this is also applied manually where necessary for comparison.
+* Plotting the square root transformation of the frequency provides more detail on the small numbers in the right tail of these charts. Log transformation would also work but square root makes distances proportional to $\chi^2$ residuals, which is a very useful property. The rootogram visualisations use square root transformation by default. So, this is also applied manually where necessary for comparison.
 
 ```{r federalist}
 data("Federalist", package = "vcd")
@@ -218,29 +218,31 @@ mean(expand.dft(as.data.frame(Federalist))$nMay)
 var(expand.dft(as.data.frame(Federalist))$nMay)
 ```
 
+The discriptive stats showed a slightly higher variance but we don't know if this is significant. What's the right test to use here?
+
+A very naive way to estimate the distribution is just to take the mean visually compare a poisson distribution with this value for $\lambda$.
+
+```{r pois_naive_expected}
+barplot(sqrt(200 * dpois(0:6, mean(expand.dft(as.data.frame(Federalist))$nMay)
+))
+        , main = "Number of text blocks by Number of Occurrences\nnaive expected values"
+        , ylab = "sqrt(Naive Expected)"
+        , xlab = "Occurences of 'may'"
+        , col = "lightblue")
+```
+
+The actual data looks a bit like this distribution. Could this be a good fit? How can we easily compare them?
+
 ```{r barplot_actual}
 barplot(sqrt(Federalist)
-        , main = "Number of text blocks by Number of Occurrences"
+        , main = "Number of text blocks by Number of Occurrences\nactual values"
         , xlab = "Occurences of 'may'"
         , ylab = "Sqrt(Actual)"
         , col = "lightgreen"
 )
 ```
 
-A very naive way to estimate the poisson rate is just to take the mean.
-
-```{r pois_naive_expected}
-barplot(sqrt(200 * dpois(0:6, mean(expand.dft(as.data.frame(Federalist))$nMay)
-))
-        , main = "Number of text blocks by Number of Occurrences"
-        , ylab = "sqrt(Naive Expected)"
-        , xlab = "Occurences of 'may'"
-        , col = "lightblue")
-```
-
-The actual data looks a bit like this poisson distribution with a $\lambda$ = mean of the sample. The discriptive stats showed a slightly higher variance but we don't know if this is significant. What's the right test to use here?
-
-Use the goodfit function in the vcd package to fit both these distributions and estimate the parameters. The hanging rootogram charts are intuitive views of goodness of fit testing.
+Use the goodfit function in the vcd package to estimate the parameters and compare the fit of different distributions. It provides hanging rootograms that are intuitive views of discrete goodness of fit testing.
 
 First, a poisson fit:
 
@@ -262,7 +264,26 @@ plot(Fed_fit0, type = "hanging", shade = TRUE)
 
 However, the rootogram plot makes it very clear what the problem is by showing how the variable diverges from the expectations. By hanging each bar top down from the expected distribution, we just need to look at how the bottoms of the bars miss the $y = 0$ reference line. These are proportional to the residuals. The contribution of each bar to the $\chi^2$ statistic is also made clear by the shading.
 
-Next a negative binomial fit:
+We can try fitting a poisson using a different estimation method, minimising the $\chi^2$ errors
+
+```{r fed_goodfit_pois_mchisq}
+Fed_fit0 <- goodfit(Federalist, type = "poisson", method = "MinChisq")
+# This has found a different value for the rate parameter.
+unlist(Fed_fit0$par)
+
+# This will show a Chi-Square Goodness of fit test against the expected values of a poisson distribution with this parameter
+summary(Fed_fit0)
+```
+
+The $\chi^2$ test actually shows a much worse fit.
+
+```{r fed_goodfit_pois_mplot}
+plot(Fed_fit0, type = "hanging", shade = TRUE)
+```
+
+The rootogram shows that the residuals have just been shuffled around so they balance by sign. Clearly poisson is not the right choice.
+
+Next, fit a negative binomial fit:
 
 ```{r fed_goodfit_nbinom}
 Fed_fit1 <- goodfit(Federalist, type = "nbinomial")
@@ -275,17 +296,18 @@ summary(Fed_fit1)
 plot(Fed_fit1, type = "hanging", shade = TRUE)
 ```
 
-The $\chi^2$ goodness of fit test result is not significant. We accept that null hypothesis that this sample is from a negative binomial distribution. The plot speaks for itself now that the bars drop close to the $y = 0$ reference line, with only very small residuals. We have also estimated the parameters and can now use this distribution to assess a different text.
+The $\chi^2$ goodness of fit test result is not significant. We accept that null hypothesis that this sample is from a negative binomial distribution. The plot speaks for itself now that the bars drop close to the $y = 0$ reference line, with only insignificant residuals. We have also estimated the parameters and can now use this distribution to assess a different text.
 
 ```{r nonFederalist}
-nonFederalist <- structure(c(128L, 71L, 33L, 16L, 8L, 4L, 2L), .Dim = 7L, .Dimnames = structure(list(
+# Some dummy data
+nonFederalist <- structure(c(135L, 71L, 36L, 17L, 8L, 4L, 1L), .Dim = 7L, .Dimnames = structure(list(
     c("0", "1", "2", "3", "4", "5", "6")), .Names = "nMay"), class = "table")
 nonFederalist
 sum(expand.dft(as.data.frame(nonFederalist))$nMay)
 mean(expand.dft(as.data.frame(nonFederalist))$nMay)
 var(expand.dft(as.data.frame(nonFederalist))$nMay)
 barplot(sqrt(nonFederalist)
-        , main = "Number of text blocks by Number of Occurrences\n unseen text"
+        , main = "Number of text blocks by Number of Occurrences\nunseen text"
         , xlab = "Occurences of 'may'"
         , ylab = "Sqrt(Actual)"
         , col = "lightgreen"
@@ -300,13 +322,13 @@ Fed_fit3 <- goodfit(nonFederalist, type = "nbinomial", par = Fed_fit1$par)
 summary(Fed_fit3)
 ```
 
-The $\chi^2$ result is significant, and therefore evidence that this new text is not from the same distribution. However, on it's own, it can't provide detailed information. 
+The $\chi^2$ result is significant, and strong evidence that this new text is not from the same distribution. However, on it's own, it can't provide detailed information. 
 
 ```{r fit_nonfed_plot}
 plot(Fed_fit3, type = "hanging", shade = TRUE)
 ```
 
-The rootogram hangs the frequency bars off the distribution that we just estimated and we can see now see from the pattern of residuals that the word 'may' seems to appear more frequently in this text. Specifically, the tail, with 3-6 occurences per 200 words is fatter, while blocks where this word is absent are fewer.
+The rootogram hangs the frequency bars off the distribution that we just estimated and we can now see from the pattern of residuals that the word 'may' seems to appear more frequently in this text. Specifically, the tail, with 3-5 occurences per 200 words is fatter, while blocks where this word is absent are fewer.
 
 ### Talking points
 
@@ -342,7 +364,7 @@ In the following example we show how two sets of diagnoses for Multiple Sclerosi
 MSP <- margin.table(MSPatients, 1:2)
 ```
 
-On this dataset, we can't say which is the true and which is predicted because they're both independent raters, but for now let's assume that Winnipeg Neurologist is the "True" class and New Orleans is the predicted class. The highest accuracy we could could get by a random guessing model ($\kappa = 0$) is the proportion of the majority true class:
+On this dataset, we can't say which is the true and which is predicted because they're both independent raters, but for now let's assume that Winnipeg Neurologist is the true class and New Orleans is the predicted class. The highest accuracy we could expect to get with constant model that always makes the same rating is the proportion of the majority true class. This would give a score of  $\kappa = 0$:
 
 ```{r MSP_winntrue}
 margin.table(MSP, 2)
@@ -385,7 +407,9 @@ B <- agreementplot(MSP
                    , main = "MS Patient Ratings"
                    , xlab_rot = -20
 )
+```
 
+```{r, echo=FALSE}
 # ignore this
 par(op)
 ```
@@ -491,13 +515,15 @@ mosaic(HEC
       , gp_text = gpar(fontface = 1), rot_labels = c(right = -45)) 
 ```
 
-We can still see the general opposite corner pattern, and some additional detail regarding gender. This type of plot is still fairly intuitive at 4 dimensions. More dimensions can be added by other means. There are several options:
+We can still see the general opposite corner pattern, and now some additional detail regarding gender. 
+
+This type of plot is still fairly intuitive at 4 dimensions. More dimensions can be added by other means. There are several options:
 
 * A cotabplot allows you to stratify over a further dimension. It looks just like facet_wrap() and facet_grid() in ggplot2, or a lattice/trellis plot.
 * Mosaics can be featured in a plot matrix or pairs plot, where each feature is compared pairwise and inset on a grid. This is the closest thing to a splom in lattice, or a correlogram for continuous variables.
 * Manipulate the grid spacing between dimensions to put more white space between several 4-way mosaics and a 5th dimensional slice. This is probably the most  fiddly option as you usually have to manage all the label placements, or suppress them.
 
-There is a whole methodology around loglinear modeling which allows you to make make statistical hypothesis tests about complex n-way relationships between features. There is enough material to write several books on this topic!
+There is a whole methodology around loglinear modeling which allows you to make statistical hypothesis tests about complex n-way relationships between features. There is enough material to write several books on this topic!
 
 ### Talking points
 
@@ -508,9 +534,9 @@ There is a whole methodology around loglinear modeling which allows you to make 
 
 ## Task 4: Correspondence Analysis for dimension reduction and clustering
 
-Most Machine Learning practitioners are familiar with the need for dimension reduction. It can radically simplify the whole process. Many dimension reduction techniques also double up as unsupervised learning methods i.e. clustering. This is useful as an end in itself, as well as being an additional tool for exploratory data analysis: multi-dimensional data is projected into 2-D which makes it intuitive to visualise.
+Most Machine Learning practitioners are familiar with dimension reduction. It can radically simplify and compress a dataset, making it easier to handle and train models on. Many dimension reduction techniques also double up as unsupervised learning methods i.e. clustering. This is useful as an end in itself, as well as being an additional tool for exploratory data analysis: multi-dimensional data is projected into 2-D which makes it intuitive to visualise.
 
-If you already know something about Principle Components Analysis, this is similar, but not quite the same. Remember, in DDA, the "dimensions" we want to reduce or cluster are not only the features, but also the categories within each feature.
+If you already know something about Principle Components Analysis, this is similar, but not quite the same. Remember, in DDA, the "dimensions" we want to reduce or cluster are not only the features, but also the categories within each feature. PCA identifies new dimensions that capture the most variance. The equivalent concept in Correspondence Analysis is the "inertia" of the new dimensions.
 
 Correspondence Analysis is an advanced topic. In particular, the way you pivot the multi-dimensional array controls the analysis. This requires some understanding of the data manipulation and modeling techniques. For today, we will just focus on interpreting the plots.
 
@@ -589,23 +615,52 @@ legend("topright", legend=c("Day", "Network", "Time"),
        bg="gray95")
 ```
 
-This plot reveals an incredibly strong effect relating NBC and Thursday nights. Viewing figures are at their highest by far compared to any night of the week and most people were watching Friends, Seinfeld and ER, three of the most popular shows of that [era](https://en.wikipedia.org/wiki/1995%E2%80%9396_United_States_network_television_schedule). NBC has viewing figures that are comparable to the others most other nights.
+This plot reveals an incredibly strong effect relating NBC and Thursday nights. This is apparently most of the inertia captured by Dimension 1. What's going on there?
 
-The 9pm slot clusters closer to the other four days than 8pm and 10pm. It turns out that more people are watching TV at 9pm throughout the week than other times. The effect is nothing like as strong, but still enough that NBC audience numbers dipped a little for that time slot, even on Thursday.
-
-CBS had the lion's share on Monday and ABC has Wednesday and Friday but neither channel had any massive crowd pleasers, the way NBC dominated Thursday nights.
-
-Audience was split evenly on Tuesday.
-
-These complex interactions would be much harder to understand on a mosaic plot.
-
-```{r tv_mosaic}
-# pivoting the dimensions for a clearer view
-mosaic(xtabs(Freq~Network+Day+Time, TV.df)
-       , gp = shading_Friendly # shade = TRUE
-       #, rot_labels = c(top = -20)
-       )
+```{r TV_day_network}
+margin.table(TV3, 1)
+margin.table(TV3, c(1, 3))
 ```
+
+Viewing figures are at their highest on Thursdays compared to any night of the week and for NBC they dramatically outnumber the other two channels, but only on this night. NBC has viewing figures that are comparable to the others most other nights. Everyone appears to be glued to NBC all evening. A little digging and domain knowledge (showing my age, here) means we can give this effect a name: This is the "Friends, Seinfeld and ER" effect! These were three of the most popular shows of that [era](https://en.wikipedia.org/wiki/1995%E2%80%9396_United_States_network_television_schedule). 
+
+The 9pm slot clusters closer to the other four days than 8pm and 10pm. What's happening there?
+
+```{r TV_time_network}
+margin.table(TV3, 2)
+t(TV3[4,,]) # Thursday
+```
+
+It turns out that 9pm is the most viewed timeslot throughout the week, independent of day or network. Yet, notice how the NBC audience numbers dip just a little for that time slot on Thursday, even though they still have far greater numbers than either of the other two channels. This dip in numbers runs counter to the "Friends, Seinfeld and ER" effect which has competely dominated the analysis, and so it has also been captured on Dimension 1.
+
+Dimension 2 is forced to capture differences between ABC and CBS schedules on the other nights as well as possible.
+
+Now we have identified this difficulty, we can untangle the problem by making a joint analysis of time and day. This will produce a plot with a point for each time slot over the week and should untangle the effect of people channel hopping from the "Friends, Seinfeld and ER" effect. It turns out to be very easy to do (see the code for yourself).
+
+```{r tv_2wayca}
+# Flatten to 2-D by stacking Time onto Network
+# Note: The data shaping choice here controls the specifics of the analysis.
+TV3s <- as.matrix(structable(Network~Time+Day, TV3))
+
+# Create the Correspondence Analysis objects
+TV3s.ca <- ca(TV3s)
+
+# Generate the plot
+res <- plot(TV3s.ca)
+# add some segments from the origin to make things clearer
+segments(0, 0, res$cols[,1], res$cols[,2], col = "red", lwd = 1)
+segments(0, 0, res$rows[,1], res$rows[,2], col = "blue", lwd = 0.5, lty = 3)
+```
+
+As you can see, the small channel hop from NBC on Thursday has moved onto Dimension 2, along with the other variations in within-evening viewing patterns. On the previous plot, there is a very slight affinity 8pm-CBS, and 9pm-ABC (I'm sure you didn't notice that before now). We can see clearly here, something of great interest at 8pm, Monday, but not later on the same evening and not again at the same time later in the week. We also can see several 9pm slots clustered around ABC.
+
+An interesting feature of this new analysis, is that distance from the origin is proportional to the size of positive residual. What does this mean? Well for example, from 10pm viewing figures dwindle over all, independent of day and channel. Thursday night, 10pm, NBC has massive audience figures relative to what's normally expected for that time slot. This inertia moves the point furthest from the origin out of all the nightly time slots. Monday at 8pm on CBS is notable for the same reasons.
+
+```{r TV_monday}
+t(TV3[1,,]) # Monday
+```
+
+As you can see Correspondence Analysis is an extremely powerful dimension reduction and clustering tool for categorical data.
 
 # Summary
 

@@ -589,3 +589,14 @@ res <- plot(TV3s.ca)
 segments(0, 0, res$cols[,1], res$cols[,2], col = "red", lwd = 1)
 segments(0, 0, res$rows[,1], res$rows[,2], col = "blue", lwd = 0.5, lty = 3)
 ```
+
+
+ for capturing these irregular and unpredictable interactions. They are much harder to understand on a mosaic plot, which is better suited for loglinear models that have more recognisable patterns e.g. opposite corners, as seen previously.
+
+```{r tv_mosaic}
+# pivoting the dimensions for a clearer view
+mosaic(xtabs(Freq~Network+Day+Time, TV.df)
+       , gp = shading_Friendly # shade = TRUE
+       #, rot_labels = c(top = -20)
+       )
+```
