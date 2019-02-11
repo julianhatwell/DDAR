@@ -32,6 +32,8 @@ knitr::opts_template$set(
 
 # Introduction
 
+The focus for today will be on visual analytics, not theories and formulas!
+
 Note: This tutorial is based on material contained in the book [Discrete Data Analysis with R: Visualization and Modeling Techniques for Categorical and Count Data](https://www.crcpress.com/Discrete-Data-Analysis-with-R-Visualization-and-Modeling-Techniques-for/Friendly-Meyer/p/book/9781498725835) by Michael Friendly. Michael Friendly is a pioneer in this field and has contributed to the development of modules and libraries for SAS and R.
 
 You can also find a much shorter tutorial on these topics in the long form help for the "vcd" package for R: [vcd vignette](https://cran.r-project.org/web/packages/vcdExtra/vignettes/vcd-tutorial.pdf)
@@ -44,11 +46,11 @@ Data Analytics and Artificial Intelligence Research Group at Birmingham City Uni
 
 **Aims:** 
 
-To provide a high-level overview of some less well-known, visual statitistical tools that can be applied to very common tasks in Machine Learning practice and research.
+To provide a high-level overview of some less well-known, visual statistical tools that can be applied to very common tasks in Machine Learning practice and research.
 
 **Objectives:**
 
-* Present some classical statistical techniques that are not usually included in a basic stats curriculum
+* Present some visual, statistical tools that are not usually included in a formal stats curriculum
 * Discuss how these could be applied to tasks that are typical in many practical Machine Learning projects
 * Demonstrate this with relevant case studies:
     * Text/Event Analysis
@@ -208,19 +210,20 @@ Notes:
 
 * The rate is occurences/200 words. 
 * The expected count is the rate parameter $\times$ 200
-* Plotting the square root transformation of the frequency provides more detail on the small numbers in the right tail of these charts. Log transformation would also work but square root makes distances proportional to $\chi^2$ residuals, which is a very useful property. The rootogram visualisations use square root transformation by default. So, this is also applied manually where necessary for comparison.
+* Plotting the square root transformation of the frequency provides more detail on the small numbers in the right tail of these charts. Log transformation would also work but the rootogram visualisations use square root transformation by default. So, this is also applied manually where necessary for comparison.
 
 ```{r federalist}
 data("Federalist", package = "vcd")
 Federalist
-sum(expand.dft(as.data.frame(Federalist))$nMay)
+sum(Federalist) # number of blocks
+sum(expand.dft(as.data.frame(Federalist))$nMay) # number of occurences
 mean(expand.dft(as.data.frame(Federalist))$nMay)
 var(expand.dft(as.data.frame(Federalist))$nMay)
 ```
 
 The discriptive stats showed a slightly higher variance but we don't know if this is significant. What's the right test to use here?
 
-A very naive way to estimate the distribution is just to take the mean visually compare a poisson distribution with this value for $\lambda$.
+A very naive approach is to take the mean and visually compare a poisson distribution with this value for $\lambda$ against the actual data.
 
 ```{r pois_naive_expected}
 barplot(sqrt(200 * dpois(0:6, mean(expand.dft(as.data.frame(Federalist))$nMay)
@@ -244,7 +247,7 @@ barplot(sqrt(Federalist)
 
 Use the goodfit function in the vcd package to estimate the parameters and compare the fit of different distributions. It provides hanging rootograms that are intuitive views of discrete goodness of fit testing.
 
-First, a poisson fit:
+First, a poisson fit using maximum likelihood - exactly what we've just done, but with bells on it:
 
 ```{r fed_goodfit_pois_chisq}
 Fed_fit0 <- goodfit(Federalist, type = "poisson")
@@ -256,15 +259,15 @@ unlist(Fed_fit0$par)
 summary(Fed_fit0)
 ```
 
-The $\chi^2$ test shows a poor fit. We reject the null hypothesis that this is a sample from a poisson distributed random variable. However, we don't know much about what caused this result.
+The $\chi^2$ test is very strong evidence to reject the null hypothesis. This sample is not from a poisson distribution with rate = sample mean. However, we don't know much about what caused this result. However, the rootogram plot makes it very clear what the problem is by showing how the variable diverges from the expectations. 
 
 ```{r fed_goodfit_pois_plot}
 plot(Fed_fit0, type = "hanging", shade = TRUE)
 ```
 
-However, the rootogram plot makes it very clear what the problem is by showing how the variable diverges from the expectations. By hanging each bar top down from the expected distribution, we just need to look at how the bottoms of the bars miss the $y = 0$ reference line. These are proportional to the residuals. The contribution of each bar to the $\chi^2$ statistic is also made clear by the shading.
+By hanging each bar top down from the expected distribution, we just need to look at how the bottoms of the bars miss the $y = 0$ reference line. This is visually much more intuitive than comparing the tops of the bars to a curve. The contribution of each bar to the $\chi^2$ statistic is also made clear by the shading.
 
-We can try fitting a poisson using a different estimation method, minimising the $\chi^2$ errors
+We can try fitting a poisson using a different estimation method, minimising the $\chi^2$ errors instead:
 
 ```{r fed_goodfit_pois_mchisq}
 Fed_fit0 <- goodfit(Federalist, type = "poisson", method = "MinChisq")
@@ -275,13 +278,13 @@ unlist(Fed_fit0$par)
 summary(Fed_fit0)
 ```
 
-The $\chi^2$ test actually shows a much worse fit.
+The $\chi^2$ test is also very strong evidence against the null.
 
 ```{r fed_goodfit_pois_mplot}
 plot(Fed_fit0, type = "hanging", shade = TRUE)
 ```
 
-The rootogram shows that the residuals have just been shuffled around so they balance by sign. Clearly poisson is not the right choice.
+The rootogram shows that the residuals have just been shuffled around so they balance better by sign. Clearly poisson is not the right choice.
 
 Next, fit a negative binomial fit:
 
@@ -296,14 +299,17 @@ summary(Fed_fit1)
 plot(Fed_fit1, type = "hanging", shade = TRUE)
 ```
 
-The $\chi^2$ goodness of fit test result is not significant. We accept that null hypothesis that this sample is from a negative binomial distribution. The plot speaks for itself now that the bars drop close to the $y = 0$ reference line, with only insignificant residuals. We have also estimated the parameters and can now use this distribution to assess a different text.
+We have estimated some parameters and the $\chi^2$ goodness of fit test result is not significant. We accept that null hypothesis that this sample is from a negative binomial distribution having the estimated parameters. The plot speaks for itself now that the bars drop close to the $y = 0$ reference line, with only insignificant residuals.
+
+We will now assess a different body of text.
 
 ```{r nonFederalist}
 # Some dummy data
 nonFederalist <- structure(c(135L, 71L, 36L, 17L, 8L, 4L, 1L), .Dim = 7L, .Dimnames = structure(list(
     c("0", "1", "2", "3", "4", "5", "6")), .Names = "nMay"), class = "table")
 nonFederalist
-sum(expand.dft(as.data.frame(nonFederalist))$nMay)
+sum(nonFederalist) # number of blocks
+sum(expand.dft(as.data.frame(nonFederalist))$nMay) # number of occurences
 mean(expand.dft(as.data.frame(nonFederalist))$nMay)
 var(expand.dft(as.data.frame(nonFederalist))$nMay)
 barplot(sqrt(nonFederalist)
@@ -314,7 +320,7 @@ barplot(sqrt(nonFederalist)
 )
 ```
 
-The descriptive statistics are a bit larger, but is this significant? We can test it properly using the parameters from the goodfit object we just created:
+The descriptive statistics are a bit larger than Federalist, but is this significant? We can test it properly using the parameters from the goodfit object we just created:
 
 ```{r fit_nonfed_chisq}
 # we pass in our fitted parameter list this time
@@ -322,13 +328,13 @@ Fed_fit3 <- goodfit(nonFederalist, type = "nbinomial", par = Fed_fit1$par)
 summary(Fed_fit3)
 ```
 
-The $\chi^2$ result is significant, and strong evidence that this new text is not from the same distribution. However, on it's own, it can't provide detailed information. 
+The $\chi^2$ result is significant, and strong evidence that this new text is not from the same distribution. However, on it's own, the test can't provide detailed information.
 
 ```{r fit_nonfed_plot}
 plot(Fed_fit3, type = "hanging", shade = TRUE)
 ```
 
-The rootogram hangs the frequency bars off the distribution that we just estimated and we can now see from the pattern of residuals that the word 'may' seems to appear more frequently in this text. Specifically, the tail, with 3-5 occurences per 200 words is fatter, while blocks where this word is absent are fewer.
+The rootogram hangs the frequency bars off the expected distribution, which this time is fixed with parameters we estimated on the original text. We can now see from the pattern of residuals that the word 'may' seems to appear more frequently in this text. Specifically, the tail, with 3-5 occurences per 200 words is fatter, while blocks where this word is absent are fewer.
 
 ### Talking points
 
@@ -346,13 +352,13 @@ The ratio of class 1 : class 2 is 9:1. Predict every instance as class 1 and you
 
 So we use Cohen's $\kappa$ statistic to weight according to the occurence of each class in the data. $\kappa = 1$ means perfect agreement while $\kappa = 0$ means no better than chance agreement. The above example would score $\kappa = 0$. 
 
-That's all well and good, but what if class labels are related to each other? If they have a natural order such [*least, middle, most*] then you have an additional complication. You want your model to predict as well as possible, but to make an off-by-one error isn't as bad as a full opposite error. Also, the classification distribution might be biased, giving different skew and kurtosis (flattened or polarised) by the predictive model.
+That's all well and good, but what if class labels are related to each other? If they have a natural order such as [*least, middle, most*] then you have an additional complication. You want your model to predict as well as possible, but to make an off-by-one error isn't as bad as a full opposite error. Also, the classification distribution might be biased, giving different skew and kurtosis (flattened or polarised) by the predictive model.
 
 If you can detect this kind of bias, you can correct it! This is where agreement plots can help. They are based on statistical techniques for comparing two raters, such as two doctors, two film critics, two wine critics etc, to valdiate ratings and analyse these kinds of bias.
 
 ### Case Study: Comparing inter-rater agreement.
 
-In the following example we show how two sets of diagnoses for Multiple Sclerosis. The classes are ordinal ratings:
+In the following example we show how two sets of diagnoses for Multiple Sclerosis compare between two doctors, one in Winnipeg and one in New Orleans. The classes are ordinal ratings:
 
 1. Certain
 1. Probable
@@ -364,7 +370,7 @@ In the following example we show how two sets of diagnoses for Multiple Sclerosi
 MSP <- margin.table(MSPatients, 1:2)
 ```
 
-On this dataset, we can't say which is the true and which is predicted because they're both independent raters, but for now let's assume that Winnipeg Neurologist is the true class and New Orleans is the predicted class. The highest accuracy we could expect to get with constant model that always makes the same rating is the proportion of the majority true class. This would give a score of  $\kappa = 0$:
+On this dataset, we can't say which is the true and which is predicted because they're both independent raters, but for now let's assume that Winnipeg Neurologist is the true class and New Orleans Neurologist is the predicted class. The highest accuracy we could expect to get with constant model that always makes the same rating is the proportion of the majority true class. This would give a score of  $\kappa = 0$:
 
 ```{r MSP_winntrue}
 margin.table(MSP, 2)
@@ -395,7 +401,7 @@ There are definitely some problems with the inter-rater agreement but it doesn't
 confint(Kappa(MSP, weights = "Fleiss-Cohen"))
 ```
 
-Unweighted $\kappa$, the standard measure also shows that this is not a very good result. 
+Unweighted $\kappa$, the standard measure, also shows that this is not a very good result. 
 
 However, Fleiss-Cohen Weighted $\kappa$ favours near disagreements and taking this into account gives a much better result. Off-by-n errors appear to be common, so these raters are closer than it first appears.
 
@@ -438,9 +444,9 @@ With a little intervention, guided by this information, these two raters could b
 
 Exploratory Analysis is an essential, and frequently overlooked step as practitioners are often keen to use the latest tooling or are under pressure to deliver results. However, spending some time "getting to know" a new dataset and developing some intiution about important features and interactions will pay off by revealing a better strategy when it comes to modelling.
 
-Now we will introduce the 'strucplot framework' that is the heart of the vcd package. This may be a new approach to structuring data and writing plotting routines compared to previous experience with R. However, it's worth the effort for the intuitive views of complex relationships in the data.
+Mosic plots are very powerful for visualising categorical data. Everything is based on the simple concept that your categorical features of interest are on the axes, and the area of plotted shapes is proportional to the count or frequency at the intersection of each category. Then, shading can be used in many ways to highlight important interactions. Today we will only use the mosaic plot, but this is the most useful as it scales well to 3 or even 4 dimensions.
 
-Everything is based on the simple concept that your categorical features of interest are on the axes, and the area of plotted shapes is proportional to the count or frequency at the intersection of each category. Then, shading can be used in many ways to highlight important interactions. Today we will only use the mosaic plot, but this is the most useful as it scales well to 3 or even 4 dimensions.
+*Note, the 'strucplot framework' that is the heart of the vcd package requires learning a new approach to structuring data and writing plotting routines compared to previous experience with R. However, it's worth the effort for the intuitive views of complex relationships in the data.*
 
 ### Case Study: Exploring the relationships between hair colour, eye colour and gender.
 
@@ -499,7 +505,7 @@ mosaic(haireye
       , rot_labels = c(top = -20))
 ```
 
-Here the grid lines between cells are no longer continuous because the cells are out of proportion with the marginal totals. Bigger cells means that the combination is over-represented and smaller cells the reverse. 
+Here the grid lines between cells are no longer continuous because the cells are out of proportion with the marginal totals. Unexpectedly large cells show that the combination is over-represented and small cells the reverse.
 
 The beauty of the mosaic chart is the use of shading to highlight the $\chi^2$ residuals. This shading scheme uses fills for statistically significant residuals but also adds an outline colour to highlight the sign of even the non-significant residuals. This is visually very powerful. There is a clear "opposite corner" pattern.
 
@@ -633,9 +639,9 @@ t(TV3[4,,]) # Thursday
 
 It turns out that 9pm is the most viewed timeslot throughout the week, independent of day or network. Yet, notice how the NBC audience numbers dip just a little for that time slot on Thursday, even though they still have far greater numbers than either of the other two channels. This dip in numbers runs counter to the "Friends, Seinfeld and ER" effect which has competely dominated the analysis, and so it has also been captured on Dimension 1.
 
-Dimension 2 is forced to capture differences between ABC and CBS schedules on the other nights as well as possible.
+Dimension 2 is forced to capture differences between ABC and CBS schedules on the other nights as well as possible, but there is undoubtedly more detail to untagle.
 
-Now we have identified this difficulty, we can untangle the problem by making a joint analysis of time and day. This will produce a plot with a point for each time slot over the week and should untangle the effect of people channel hopping from the "Friends, Seinfeld and ER" effect. It turns out to be very easy to do (see the code for yourself).
+Now we have identified this difficulty, we can tackle the problem by making a joint analysis of time and day. This will produce a plot with a point for each time slot over the week and should tease apart the effect of people channel hopping from the "Friends, Seinfeld and ER" effect. It turns out to be very easy to do (see the code for yourself).
 
 ```{r tv_2wayca}
 # Flatten to 2-D by stacking Time onto Network
@@ -652,12 +658,13 @@ segments(0, 0, res$cols[,1], res$cols[,2], col = "red", lwd = 1)
 segments(0, 0, res$rows[,1], res$rows[,2], col = "blue", lwd = 0.5, lty = 3)
 ```
 
-As you can see, the small channel hop from NBC on Thursday has moved onto Dimension 2, along with the other variations in within-evening viewing patterns. On the previous plot, there is a very slight affinity 8pm-CBS, and 9pm-ABC (I'm sure you didn't notice that before now). We can see clearly here, something of great interest at 8pm, Monday, but not later on the same evening and not again at the same time later in the week. We also can see several 9pm slots clustered around ABC.
+As you can see, the small channel hop from NBC on Thursday has moved onto Dimension 2, along with the other variations in within-evening viewing patterns. On the previous plot, there is a very slight affinity 8pm-CBS, and 9pm-ABC. Did you notice? Look again. We can see clearly on this new plot, something of great interest at 8pm, Monday, but not later on the same evening and not again at the same time later in the week. We also can see several 9pm slots clustered around ABC.
 
-An interesting feature of this new analysis, is that distance from the origin is proportional to the size of positive residual. What does this mean? Well for example, from 10pm viewing figures dwindle over all, independent of day and channel. Thursday night, 10pm, NBC has massive audience figures relative to what's normally expected for that time slot. This inertia moves the point furthest from the origin out of all the nightly time slots. Monday at 8pm on CBS is notable for the same reasons.
+An interesting feature of this new analysis, is that distance from the origin is proportional to the size of positive residual. What does this mean? Well for example, from 10pm the viewing figures dwindle, independent of day and channel as people go to bed or go out for a late drink. Thursday night, 10pm, NBC has massive audience figures relative to what's normally expected for that time slot the rest of the week. This inertia moves the point furthest from the origin out of all the nightly time slots. Monday at 8pm on CBS is notable for the same reason. Why not Monday 9pm and ABC? There are other nights when ABC is popular at 9pm, making this combination less unusual.
 
 ```{r TV_monday}
 t(TV3[1,,]) # Monday
+TV3[,2,1] # Every day, 9pm, ABC
 ```
 
 As you can see Correspondence Analysis is an extremely powerful dimension reduction and clustering tool for categorical data.
