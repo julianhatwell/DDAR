@@ -46,17 +46,17 @@ Predictably, the term refers to analysis of discrete data! DDA is a set of tools
 
 Nearly everyone with any background in stats has some experience of DDA! We have all performed a $\chi^2$ test for independence or for association. This is a hypothesis test involving categorical and count data. For example:
 
-* $H_0 =$ In a random sample of the population, there is an equal chance of belonging to each category.
+* $H_0 =$ In a random sample of the population, there is an equal chance of belonging to any category of feature A.
 
 * $H_0 =$ In a random sample of the population, membership of any category in feature A is independent of membership of any category in feature B
 
-In this workshop, we will go deeper than the basic $\chi^2$ to answer more detailed questions, and we will focus on visual tools that can reveal very interesting patterns in categorical data!
+In this workshop, we will focus on intuitive, visual tools that can reveal very interesting patterns in categorical data. We will only introduce formal statistics and tests where absolutely necessary.
 
 ## What we won't cover
 
-Bear in mind, this is just an overview! Our seminar session is just long enough for a taster and not much depth. We will focus on visual analytics and only introduce statistical tests where absolutely necessary.
+Bear in mind, this is just an overview! Our seminar session is just long enough for a taster and not much depth.
 
-We also won't cover explanatory and predictive modeling. This includes logistic regression which everyone will be familiar with. It falls squarely under both DDA and Machine Learning, and there are other techniques such as proportional odds for predictive modeling of ordinal classes, and loglinear models for categories, and glms for count data. This is all out of scope for today because there isn't time to review the underlying theories.
+We won't cover explanatory and predictive modeling. This includes logistic regression for binary classification, which most will be familiar with. It falls squarely under both DDA and Machine Learning, and there are related or equivalent techniques for other kinds of classifiation (ordinal, polytomous/multi-class and counts. This is all out of scope for today because there isn't time to review the underlying theories.
 
 ## Intended Audience
 
@@ -64,37 +64,72 @@ Data Analytics and Artificial Intelligence Research Group at Birmingham City Uni
 
 ## Why Would You Be Interested in This Workshop?
 
-The aim of this workshop is to provide a high-level overview of some less well known statistical tools that might help you with some very common tasks in your Machine Learning practice and research:
+**Aims:** 
 
-* Exploratory Data Analysis:
-    * An essential, often overlooked, step prior to any analysis task
+To provide a high-level overview of some less well-known, visual statitistical tools that can be applied to very common tasks in Machine Learning practice and research.
+
+**Objectives:**
+
+* Present some classical statistical techniques that are not usually included in a basic stats curriculum
+* Discuss how these could be applied to tasks that are typical in many practical Machine Learning projects
+* Demonstrate this with relevant case studies:
+    * Text/Event Analysis
+    * Comparing True and Predicted Classes for Ordinal data
+    * Exploratory Data Analysis of Categorical Data
+    * Dimension Reduction and Clustering of Categorical Data
+
+**Learning Outcomes:** After this session you will be able to:
+
+* Demonstrate rigorous and robust, yet visually intuitive reporting of machine learning project results in:
+    * Frequency data: events, counts, occurrences, wait-times
+    * Multi-class problems involving ordinal data
+* Formulate an appropriate strategy for the Exploratory Data Analysis (EDA) phase of a machine learning project:
     * Assess a new dataset that contains several discrete features
     * Develop an intuition about the relationships between those features
-* Rigorous and robust reporting of machine learning results:
-    * Analysing frequency data: events, occurences, wait-times
-    * Classification, especially multi-class problems involves categorical data
-    * Sometimes a confusion matrix is not enough: ordinal classification is a special case
+
+EDA is an essential but often overlooked step prior to any analysis task.
 
 ## Why Am I Presenting This Workshop?
 
-This topic is one of the main reasons I became really interested in statistics in general. For me, *this was the way in!* Like many (most?) people, statistics was a bit alien, boring, mysterious, inpenetrable (all the above!), until I found a reason to actually apply it.
-
-This specialist area of stats peaked my interest at two distinct points in my life:
+This branch of stats peaked my interest at two distinct points in my life:
 
 1. My undergraduate degree in Microbiology - using techniques such as [Most Probable Number](https://en.wikipedia.org/wiki/Most_probable_number) to estimate the number of bacterial cells in a test tube. You certainly can't count them all!
 
-2. My career as a data professional, included a stint in the tertiary education sector in Singapore. The kinds of questions I needed to answer were:
-    * How do student grades compare across demographic groups (subject, gender, nationality, high school attended prior to entry, subjects and grades prior to entry)?
-    * Is there a difference between the numbers of students who progress from undergrad to post-grad, depending on special offers?
-    * Do different interventions improve the retention of at-risk students?
-  
-The types of questions we did *not* need to ask was "what is the average height/weight of students across different groups?" So it was obvious that regular descriptive and quantitative stats (i.e. the normal distribution) were not the right tools for this work.
+2. My career as a data professional in the tertiary education sector.
+
+The kinds of questions I used to work on were:
+
+* Does the number of students who progress from undergrad to post-grad differ, depending on whether they receive an incentive plan?
+* Do different interventions improve the retention of at-risk students?
+* What combination of factors most affect student satisfaction (measured on a likert scale)
+* How do student outcomes (Distinction, Merit, Pass, Fail) compare across various demographics?
+* Can we identify groups in need of extra support?
+    
+Here are just some of the factors/features to be utilised in the research questions above:
+
+* subject
+* full-time / part-time
+* age group
+* gender
+* nationality (well over 50 unique categories at a single institution)
+* high school attended prior to entry
+* subjects and grades prior to entry
+    
+The types of questions we did *not* need to ask was "what is the average height/weight of students across different groups?" So it was obvious that regular descriptive and quantitative stats (i.e. the normal distribution) were not the right tools for this work. 
+
+Tables and cross tabs were no use with so many dimensions. Pivot tables were a little better, but couldn't help with signficance testing and predictive analytics. Most importantly, I needed visual tools to communicate findings with the senior management team. I couldn't expect those guys to squint over a page of tables and numbers with me, looking for clues. This is when I came upon Michael Friendly's work on visualising categorical data, and was highly motivated to learn more about it.
+
+That's a story about the BI, management reports and forecasting work that I used to do. Now I am involved in (or evolved into) a Machine Learning researcher and practitioner, I face completely new tasks, but I keep noticing that the old tools and techniques are still applicable. I wanted to share these ideas with you and I hope you also find them useful.
 
 # Preliminaries
 
-If you prefer, you can simply follow along with the in person presentation but if you want to run the code chunks and see the results in the RStudio UI you need access to a machine with R+RStudio and the source code for this file.
+If you prefer, you can simply follow along with the in person presentation but if you want to run the code chunks and see the results in the RStudio UI you need access to a machine with R+RStudio and the source code for [this file](https://raw.githubusercontent.com/julianhatwell/DDAR/master/DDAR_Display_Page.Rmd). After you've downloaded it to your working directory, just ditch all my text move all the code chunks to a new .R file with:
 
-To save time, make sure the following libraries are installed and loaded
+```{r purlit, eval=FALSE}
+knitr::purl("DDAR_Display_Page.Rmd")
+```
+
+To save time, make sure the following libraries are installed and loaded before the workshop.
 
 ```{r load_libs}
 library(knitr)
@@ -114,14 +149,14 @@ There are several distributions to help with the most common DDA research questi
 
 These distributions are all special cases of the Power Series family of distributions [@noack1950]
 
-There are lots of other more specialised distributions such as *hurdles* and *zero-inflated* models where a very high prevalence zero success events must be handled.
+There are lots of other more specialised distributions such as *hurdles* and *zero-inflated* models where a very high prevalence zero success events must be handled appropriately.
 
-## Common DDA Tasks and Research Questions
+## Common DDA Tasks
 
-This is a non-exhaustive list of common statistical tasks and questions that require specific DDA techniques. We will do short case studies on several of these that have shown to be useful in my Machine Learning research and practice. I hope there are some interesting nuggets here for you.
+This is a non-exhaustive list of common statistical tasks and questions that require specific DDA techniques.
 
 1. 1-way analysis and goodness of fit
-    * $H_0 =$ My data fits a common, known distribution $\delta$, so I can use mathematical/analytical properties of $\delta$ for hypothesis tests.
+    * $H_0 =$ My data fits a common, known distribution $\delta$, so I can use mathematical/analytical properties of $\delta$ for parametric tests.
     * Does my data fit a known distribution and if so, what are the parameters?
     * Does one random sample come from the same distribution as another?
 2. 2-way analysis
@@ -129,10 +164,13 @@ This is a non-exhaustive list of common statistical tasks and questions that req
     * $\chi^2$ tests on $n \times m$ tables can tell me that an association between features is present/absent, but if $n$ or $m$ are larger than 3-4, how can I find and test for complex relationships between so many combinations of categories?
     * Some of my categories are ordinal - what is the right test?
     * Classification problems with ordinal data - how can I quantify the agreement/disagreement between True and Predicted classes when there is a relationship between classes?
-3. n-way analysis - Help! I just can't visualise and measure any of this in multiple dimensions.
-    * Visualising n-way tables for exploratory analysis
+3. n-way analysis:
+    * Visualising multi-dimensional tables for exploratory analysis
     * Statistical hypothesis testing in n-way tables
     * Correspondence Analysis, a dimension reduction technique, like PCA and clustering for categorical variables!
+4. Explanatory and Predictive modeling:
+    * Any of the above, measuring the magnitude of interactions
+    * Any of the above, measuring the effect of covariates and co-factors
 
 ## DDA in R and task specific visualisations
 
@@ -140,9 +178,9 @@ We don't have time develop a fluency for these tasks in this workshop but if thi
 
 1. The most useful data structures for DDA in R are not data frames, but n-dimensinal arrays, n-way tables, and matrices, sometimes data frames with a frequency column (for the count data).
 
-1. Useful functions to get to know are table(), addmargins(), prop.table(), ftable(), xtabs(), xtable(), structable(), apply(), margin.table(), collapse.table(), aggregate(), aperm(), expand.dft(), subset(), using integer indexing to re-order categories and pivot dimensions
+1. It's good to become fluent with functions for manipulating table data - pivoting and collapsing dimensions, and converting between data structures to suit your analysis. Useful functions to get to know are table(), addmargins(), prop.table(), ftable(), xtabs(), xtable(), structable(), apply(), margin.table(), collapse.table(), aggregate(), aperm(), expand.dft(), subset(), using integer indexing to re-order categories and pivot dimensions. Most of the specialised objects have as.table() and as.data.frame() methods that generate the most intuitive shape for the output data structure.
 
-1. library "vcd" comes with its own plotting system. It is based on the grids package but is different from R base graphics, ggplot2 and lattice! It's easy to get started, but a bit of effort is required to learn all the tweaks for making publication ready graphical output. However, interpreting these area-based plots is really intuitive and it's worth the effort to learn so that results can be communicated succinctly (a picture tells a thousand words).
+1. Library "vcd" comes with its own plotting system. It is based on the grids package but is different from R base graphics, ggplot2 and lattice! It's easy to get started, but a bit of effort is required to learn all the tweaks for making publication ready graphical output. However, interpreting these area-based plots is really intuitive and it's worth the effort to learn so that results can be communicated succinctly (a picture tells a thousand words).
 
 # Workshop
 
@@ -170,7 +208,7 @@ Notes:
 
 * The rate is occurences/200 words. 
 * The expected count is the rate parameter $\times$ 200
-* Plotting the square root transformation of the frequency provides more detail on the small numbers in the right tail of these charts. Log transformation would also work, but the rootogram visualisations use square root transformation by default. So, this is also applied manually where necessary for comparison.
+* Plotting the square root transformation of the frequency provides more detail on the small numbers in the right tail of these charts. Log transformation would also work, square root makes distances proportional to residuals, which is a very useful property. The rootogram visualisations use square root transformation by default. So, this is also applied manually where necessary for comparison.
 
 ```{r federalist}
 data("Federalist", package = "vcd")
@@ -206,7 +244,7 @@ Use the goodfit function in the vcd package to fit both these distributions and 
 
 First, a poisson fit:
 
-```{r fed_goodfit_pois}
+```{r fed_goodfit_pois_chisq}
 Fed_fit0 <- goodfit(Federalist, type = "poisson")
 # This will show the rate parameter, estimated by Maximum Likelihood
 # This estimate is the same as the naive mean. This is to be expected when fitting a poisson.
@@ -214,13 +252,15 @@ unlist(Fed_fit0$par)
 
 # This will show a Chi-Square Goodness of fit test against the expected values of a poisson distribution with this parameter
 summary(Fed_fit0)
+```
 
+The $\chi^2$ test shows a poor fit. We reject the null hypothesis that this is a sample from a poisson distributed random variable. However, we don't know much about what caused this result.
+
+```{r fed_goodfit_pois_plot}
 plot(Fed_fit0, type = "hanging", shade = TRUE)
 ```
 
-The $\chi^2$ test shows a poor fit. We reject the null hypothesis that this is a sample from a poisson distributed random variable.
-
-However, the plot makes it very clear what the problem is by showing how the variable diverges from the expectations. By hanging each bar top down from the expected distribution, we just need to look at how the bottoms of the bars miss the $y = 0$ reference line. The contribution of each bar to the $\chi^2$ statistic is also made clear by the shading.
+However, the rootogram plot makes it very clear what the problem is by showing how the variable diverges from the expectations. By hanging each bar top down from the expected distribution, we just need to look at how the bottoms of the bars miss the $y = 0$ reference line. These are proportional to the residuals. The contribution of each bar to the $\chi^2$ statistic is also made clear by the shading.
 
 Next a negative binomial fit:
 
@@ -235,7 +275,7 @@ summary(Fed_fit1)
 plot(Fed_fit1, type = "hanging", shade = TRUE)
 ```
 
-The $\chi^2$ goodness of fit test is clear that the negative binomial distribution is the better choice. The plot speaks for itself now that the bars drop close to the $y = 0$ reference line. We have also estimated the parameters and can now use this distribution to assess a different text.
+The $\chi^2$ goodness of fit test result is not significant. We accept that null hypothesis that this sample is from a negative binomial distribution. The plot speaks for itself now that the bars drop close to the $y = 0$ reference line, with only very small residuals. We have also estimated the parameters and can now use this distribution to assess a different text.
 
 ```{r nonFederalist}
 nonFederalist <- structure(c(128L, 71L, 33L, 16L, 8L, 4L, 2L), .Dim = 7L, .Dimnames = structure(list(
@@ -254,14 +294,19 @@ barplot(sqrt(nonFederalist)
 
 The descriptive statistics are a bit larger, but is this significant? We can test it properly using the parameters from the goodfit object we just created:
 
-```{r fit_nonfed}
+```{r fit_nonfed_chisq}
 # we pass in our fitted parameter list this time
 Fed_fit3 <- goodfit(nonFederalist, type = "nbinomial", par = Fed_fit1$par)
 summary(Fed_fit3)
+```
+
+The $\chi^2$ result is significant, and therefore evidence that this new text is not from the same distribution. However, on it's own, it can't provide detailed information. 
+
+```{r fit_nonfed_plot}
 plot(Fed_fit3, type = "hanging", shade = TRUE)
 ```
 
-The word 'may' seems to appear more frequently in this text. The tail, with 3-6 occurences per 200 words is fatter, while blocks where this word is absent are fewer. The difference is significant. The $\chi^2$ result is evidence that this new text is not from the same distribution. 
+The rootogram hangs the frequency bars off the distribution that we just estimated and we can see now see from the pattern of residuals that the word 'may' seems to appear more frequently in this text. Specifically, the tail, with 3-6 occurences per 200 words is fatter, while blocks where this word is absent are fewer.
 
 ### Talking points
 
@@ -273,26 +318,17 @@ The word 'may' seems to appear more frequently in this text. The tail, with 3-6 
 
 ## Task 2: 2-way analysis for reporting results for multi-class classification of ordinal variables.
 
-In Machine Learning, the standard way to assess the quality of a supervised classification model is with a confusion matrix. This is a two way table comparing True and Predicted class labels. When classes are well balanced, it's easy to measure accuracy as $\frac{\sum(\textit{diagonal})}{\sum(\textit{total})}$. When they're out of balance, we use Cohen's $\kappa$ statistic to weight according to the occurence of each class in the data.
+In Machine Learning, the standard way to assess the quality of a supervised classification model is with a confusion matrix. This is a two way table comparing True and Predicted class labels. When classes are well balanced, it's easy to measure accuracy as $\frac{\sum(\textit{diagonal})}{\sum(\textit{total})}$. When they're out of balance you can have a situation such as this:
 
-$\kappa$ = 1 means perfect agreement
-$\kappa$ = 0 means no better than chance agreement
+The ratio of class 1 : class 2 is 9:1. Predict every instance as class 1 and you will get 90% accuracy. This not a useful result!
 
-If you start with a class imbalance of 9:1 and and just predict a single class for any instance, you will get 90% accuracy but your $\kappa$ = 0 and that's not a good result!
+So we use Cohen's $\kappa$ statistic to weight according to the occurence of each class in the data. $\kappa = 1$ means perfect agreement while $\kappa = 0$ means no better than chance agreement. The above example would score $\kappa = 0$. 
 
-But what if class labels are related to each other? Ordinal variables have a natural order, e.g. 
-
-1. Strongly Agree
-1. Agree
-1. Neither Agree Nor Disagree
-1. Disagree
-1. Strongly Disagree
-
-You want your model to predict as well as possible, but to make an off-by-one error isn't as bad as a full opposite error. Also, the classification distribution might be biased, different skew and kurtosis (flattened or polarised) by the predictive model.
+That's all well and good, but what if class labels are related to each other? If they have a natural order such [*least, middle, most*] then you have an additional complication. You want your model to predict as well as possible, but to make an off-by-one error isn't as bad as a full opposite error. Also, the classification distribution might be biased, giving different skew and kurtosis (flattened or polarised) by the predictive model.
 
 If you can detect this kind of bias, you can correct it! This is where agreement plots can help. They are based on statistical techniques for comparing two raters, such as two doctors, two film critics, two wine critics etc, to valdiate ratings and analyse these kinds of bias.
 
-### Case Study: Comparing inter-rater agreement between two neurologists assessing possible cases of multiple sclerosis.
+### Case Study: Comparing inter-rater agreement.
 
 In the following example we show how two sets of diagnoses for Multiple Sclerosis. The classes are ordinal ratings:
 
@@ -304,25 +340,33 @@ In the following example we show how two sets of diagnoses for Multiple Sclerosi
 ```{r MSP_2D}
 # combine results from two cities (same raters are involved in all cases)
 MSP <- margin.table(MSPatients, 1:2)
-MSP
 ```
 
-There are definitely some problems with this confusion matrix, but what exactly are they?
+On this dataset, we can't say which is the true and which is predicted because they're both independent raters, but for now let's assume that Winnipeg Neurologist is the "True" class and New Orleans is the predicted class. The highest accuracy we could could get by a random guessing model ($\kappa = 0$) is the proportion of the majority true class:
+
+```{r MSP_winntrue}
+margin.table(MSP, 2)
+props <- prop.table(margin.table(MSP, 2))
+props
+
+# The baseline accuracy is
+props[which(props == max(props))]
+```
+
+Without looking at the confusion matrix, let's take a naive look at the accuracy:
 
 ```{r MSP_accuracy}
 # basic accuracy
 sum(diag(MSP))/sum(MSP)
 ```
 
-On the face of it, this looks like a terrible result! *Note, it's less than 0.5 but it's not worse than a random guess. There are 4 classes to choose from.* 
+On the face of it, this looks like a terrible result! Is New Orleans Neurologist just predicting the most frequent Winnipeg class?
 
-In this case study we can't say which is the "True" and which is "Predicted" because they're both independent raters, but for now let's assume that Winnipeg Neurologist is the "True" class.
-
-```{r MSP_winntrue}
-margin.table(MSP, 2)
+```{r MSP_confmat}
+MSP
 ```
 
-This does look like some class imbalance. So we should assess this confusion matrix with $\kappa$
+There are definitely some problems with the inter-rater agreement but it doesn't look like random guessing. Why is accuracy so low? Does class imbalance play a part? What is the $\kappa$ score?
 
 ```{r MSP_kappa}
 # cohen's kappa - the function in the vcd package provides weights and confidence intervals for this statistic
@@ -331,16 +375,18 @@ confint(Kappa(MSP, weights = "Fleiss-Cohen"))
 
 Unweighted $\kappa$, the standard measure also shows that this is not a very good result. 
 
-However, Fleiss-Cohen Weighted $\kappa$ favours near disagreements and taking this into account gives a much better result. So these raters are closer than it first appears.
+However, Fleiss-Cohen Weighted $\kappa$ favours near disagreements and taking this into account gives a much better result. Off-by-n errors appear to be common, so these raters are closer than it first appears.
 
-We should use an agreement plot to look at how off-by-n errors and other bias could be affecting the outcome.
+An agreement plot is the best way to visualise a situation like this because it shows how off-by-n errors and other bias could be affecting the outcome.
 
-```{r MSP_agreement}
+```{r MSP_agreement, results='hold'}
 op <- par(mar = c(4, 3, 4, 1) + .1)
 B <- agreementplot(MSP
                    , main = "MS Patient Ratings"
                    , xlab_rot = -20
 )
+
+# ignore this
 par(op)
 ```
 
@@ -352,16 +398,17 @@ Ideally, we want the black area to fill the outline and it's not very close in t
 unlist(B)[1 : 2]
 ```
 
-The Bangdiwala statistic is calculated based on the ratio of these shaded rectangles to the maximal outline. The large interval between the weighted and unweighted statistics shows that near disagreements are very common and if taken into account, indicate a much better alignment was indicated by a naive accuracy measure and even $\kappa$. 
+The Bangdiwala statistic is calculated based on the ratio of these shaded rectangles to the maximal outline. The large interval between the weighted and unweighted statistics shows that near disagreements are very common and if taken into account, they indicate a much better alignment than was indicated by a naive accuracy measure and even $\kappa$. 
 
-There is another feature of this plot, which is the relationship of the rectangles to the diagonal line. This indicates how well aligned the raters are in using each category. In this chart, Winnipeg Neurologist seems to rate cases as "Certain" or "Probable" much more frequently than New Orleans Neurologist. Neither $\kappa$ nor Bangdiwala statistics can detect this. There are statistical tests available but this chart shows the problem directly.
+There is another feature of this plot, which is the relationship of the rectangles to the diagonal line. This indicates how well aligned the raters are in using each category. In this chart, we can see how the Winnipeg Neurologist rates cases as "Certain" or "Probable" much more frequently than New Orleans Neurologist. Neither $\kappa$ nor Bangdiwala statistics can detect this. There are statistical tests available but this chart shows the problem directly.
 
-With a little intervention, guided by this information, these two raters could become much better aligned. The same is true for ordinal classification models.
+With a little intervention, guided by this information, these two raters could become much better aligned.
 
 ### Talking Points
 
 * What other statistics, tools and techniques can you use to analyse a confusion matrix?
 * Have you worked with, or can you think of an ordinal classification problem?
+* How could you use the Bangdiwala statistic *during* training to improve alignment?
 
 ## Task 3: n-way analysis for exploring relationships between features
 
@@ -369,7 +416,7 @@ Exploratory Analysis is an essential, and frequently overlooked step as practiti
 
 Now we will introduce the 'strucplot framework' that is the heart of the vcd package. This may be a new approach to structuring data and writing plotting routines compared to previous experience with R. However, it's worth the effort for the intuitive views of complex relationships in the data.
 
-Everything is based on the simple concept that your features of interest are on the axes, and the area of plotted shapes is proportional to the count or frequency variable at the intersection of each category. Then, shading can be used in many ways to highlight important interactions. Today we will only use the mosaic plot, but this is the most useful as it scales well to 3 or even 4 dimensions.
+Everything is based on the simple concept that your categorical features of interest are on the axes, and the area of plotted shapes is proportional to the count or frequency at the intersection of each category. Then, shading can be used in many ways to highlight important interactions. Today we will only use the mosaic plot, but this is the most useful as it scales well to 3 or even 4 dimensions.
 
 ### Case Study: Exploring the relationships between hair colour, eye colour and gender.
 
@@ -392,7 +439,7 @@ haireye
 
 Big numbers and small numbers stand out but the table still has 16 cells which is a lot to take in at once. It's not immediately obvious what the relationships are.
 
-Let's recall our old friend the $\chi^2$ test, which compares actual counts to expected counts. 
+Let's recall our old friend the $\chi^2$ test, which compares actual counts to expected counts. A non significant result would indicate that the two variables have no relationship (the null hypothesis).
 
 ```{r hr_chisq}
 chisq.test(haireye)
@@ -400,7 +447,7 @@ chisq.test(haireye)
 
 The null hypothesis is rejected. There is a very significant difference between actual and expected counts. Obviously there is a relationship between these two features, but we still don't know what it is.
 
-Expected counts is what we would get if there wereno interaction between the features. Here's what no interaction looks like:
+Expected counts is what we would get if there were no interaction between the features. Here's what no interaction looks like:
 
 ```{r hr_expected}
 expected = independence_table(haireye)
@@ -414,7 +461,7 @@ mosaic(expected
       , gp_text = gpar(fontface = 1))
 ```
 
-Note that the areas are proportional to the counts. The grid lines between the tiles are dead straight because each cell is proportional to the margin products.
+Note that the areas are proportional to the counts. The grid lines between the tiles are dead straight because each cell is proportional to the marginal totals.
 
 Here's what actuals looks like:
 
@@ -428,9 +475,9 @@ mosaic(haireye
       , rot_labels = c(top = -20))
 ```
 
-Here the grid lines between cells are no longer continuous because the cells are out of proportion with the margin products. Bigger cells means that the combination is over-represented and smaller cells the reverse. 
+Here the grid lines between cells are no longer continuous because the cells are out of proportion with the marginal totals. Bigger cells means that the combination is over-represented and smaller cells the reverse. 
 
-The beauty of the mosaic chart is the use of shading to highlight the $\chi^2$ residuals. This shading scheme uses fills for statistically significant residuals but also adds an outline colour to highlight the sign of even the non-significant residuals. This is visually very powerful.
+The beauty of the mosaic chart is the use of shading to highlight the $\chi^2$ residuals. This shading scheme uses fills for statistically significant residuals but also adds an outline colour to highlight the sign of even the non-significant residuals. This is visually very powerful. There is a clear "opposite corner" pattern.
 
 Let's take this up to all three dimensions now.
 
@@ -444,9 +491,13 @@ mosaic(HEC
       , gp_text = gpar(fontface = 1), rot_labels = c(right = -45)) 
 ```
 
-This type of plot is still fairly intuitive at 4 dimension. More is possible, but it's harder work to interpret them. However, there are several options, such as faceting (i.e a trellis plot) to stratify over a further dimension, and mosaics can be featured in a plot matrix or pairs plot, where each feature is compared $2 \times 2$ inset on a grid.
+We can still see the general opposite corner pattern, and some additional detail regarding gender. This type of plot is still fairly intuitive at 4 dimensions. More dimensions can be added by other means. There are several options:
 
-Loglinear modeling can be used to explore the patterns further and make statistical hypothesis tests about complex n-way relationships between features.
+* A cotabplot allows you to stratify over a further dimension. It looks just like facet_wrap() and facet_grid() in ggplot2, or a lattice/trellis plot.
+* Mosaics can be featured in a plot matrix or pairs plot, where each feature is compared pairwise and inset on a grid. This is the closest thing to a splom in lattice, or a correlogram for continuous variables.
+* Manipulate the grid spacing between dimensions to put more white space between several 4-way mosaics and a 5th dimensional slice. This is probably the most  fiddly option as you usually have to manage all the label placements, or suppress them.
+
+There is a whole methodology around loglinear modeling which allows you to make make statistical hypothesis tests about complex n-way relationships between features. There is enough material to write several books on this topic!
 
 ### Talking points
 
@@ -488,7 +539,7 @@ TV.df <- as.data.frame.table(TV)
 # Convert it into hourly slices
 levels(TV.df$Time) <- rep(c("8", "9", "10"), c(4,4,3))
 
-# Convert frequency data back to 3-D array, now with just 3 time level
+# Convert frequency data back to 3-D array, now with just 3 time levels
 TV3 <- xtabs(Freq~Day+Time+Network, TV.df)
 ```
 
@@ -512,11 +563,11 @@ nlev <- c(5,3,3)
 
 # everything needs to be in semantic order
 coords <- coords[ order(coords[,"factor"], coords[,"level"]), ]
-# quick fix for ordering
+# quick fix for ordering e.g. day of week, not alphabetical
 coords$order <- c(5, 1, 4, 2, 3, 6, 7, 8, 11, 9, 10)
 coords <- coords[order(coords[, "order"]), ]
 
-# place the points
+# place the points with separate plot chars and colours
 points(coords[,1:2], pch=rep(16:18, nlev), col=rep(cols, nlev), cex=1.2)
 
 # place the text
@@ -532,7 +583,7 @@ nw <- subset(coords, factor=="Network")
 segments(0, 0, nw[,"Dim1"], nw[, "Dim2"], col = "black", lwd = 0.5, lty = 3)
 
 # add a legend
-legend("topright", legend=c("Day", "Time", "Network"),
+legend("topright", legend=c("Day", "Network", "Time"),
        title="Factor", title.col="black",
        col=cols, text.col=cols, pch=16:18,
        bg="gray95")
@@ -542,7 +593,9 @@ This plot reveals an incredibly strong effect relating NBC and Thursday nights. 
 
 The 9pm slot clusters closer to the other four days than 8pm and 10pm. It turns out that more people are watching TV at 9pm throughout the week than other times. The effect is nothing like as strong, but still enough that NBC audience numbers dipped a little for that time slot, even on Thursday.
 
-CBS had the lion's share on Monday and ABC has Wednesday and Friday, with the audience split evenly on Tuesday.
+CBS had the lion's share on Monday and ABC has Wednesday and Friday but neither channel had any massive crowd pleasers, the way NBC dominated Thursday nights.
+
+Audience was split evenly on Tuesday.
 
 These complex interactions would be much harder to understand on a mosaic plot.
 
@@ -556,8 +609,6 @@ mosaic(xtabs(Freq~Network+Day+Time, TV.df)
 
 # Summary
 
-In our rush to use the latest developments and technologies in Machine Learning and Deep Learning, it's easy forget that none of it would be possible without pioneering statistical research of previous decades. Most of this work is still relevant to everyday problems in Machine Learning practice, and it's always worth a review of the foundations before reaching for the newest tools.
-
 * We have demonstrated some classical statistical techniques that are not usually included in a basic stats curriculum.
 * We have discussed how these techniques can be applied to tasks that are typical in many practical Machine Learning projects.
     * Text/Event Analysis
@@ -567,5 +618,9 @@ In our rush to use the latest developments and technologies in Machine Learning 
 * We have shown that simple R functions and visual analyses are extremely powerful and you don't have to dive deep into stats to get the benefits.
 * Nearly all the resources you need to take the next steps yourself are available in the "vcd" and "vcdExtra" package for R, R~/vignette("vcd")
 * If you want to go much, much deeper with these topics, [Michael Friendly's book](https://www.crcpress.com/Discrete-Data-Analysis-with-R-Visualization-and-Modeling-Techniques-for/Friendly-Meyer/p/book/9781498725835) pulls together decades of research in this field and is a one-stop reference for this branch of statistics.
+
+In our rush to use the latest developments and technologies in Machine Learning and Deep Learning, it's easy forget that none of it would be possible without pioneering statistical research of previous decades. Most of this work is still relevant to everyday problems in Machine Learning practice, and it's always worth a review of the foundations before reaching for the newest tools.
+
+Above all, never under-estimate the power of visual analytics. A well thought out plot can save you paragraphs of explanation.
 
 # References
