@@ -101,6 +101,7 @@ library(knitr)
 library(vcd)
 library(vcdExtra)
 library(ca)
+library(lattice)
 ```
 
 ## Common distributions - the currency of DDA
@@ -154,9 +155,47 @@ For the first task we will look at two common distributions for count data and c
 
 The poisson distribution has just one paramater $\lambda$ for the rate, and both the mean and variance are equal to this parameter.
 
-The negative binomial distribution has two parameters, rate and dispersion. The mean is equal to the rate, but the variance is always greater than the rate. It can appear as a right skewed poisson distribution and behaves as if a poisson distribution is being sampled over a period of time while the rate is non-constant.
+```{r dpois}
+set.seed(12345)
 
-However, data from these two distributions can look very similar. Identifying the best match and estimating the parameters is essential for accurate monitoring and reporting results.
+KL <- expand.grid(k = 0 : 20, lambda = c(1, 5, 10, 20))
+pois_df <- data.frame(KL, prob = dpois(KL$k, KL$lambda))
+pois_df$lambda = factor(pois_df$lambda)
+
+xyplot(prob ~ k | lambda, data = pois_df,
+       type = c("h", "p"), pch = 16, lwd = 2
+       , cex = 1.25, layout = c(4, 1)
+       , main = expression(paste("Poisson Distribution by ", lambda))
+       , xlab = list("Number of events (k)", cex = 1.25)
+       , ylab = list("Probability", cex = 1.25))
+```
+
+The negative binomial distribution has two parameters, rate (size) and dispersion ($\frac{1}{\mathrm{prob}}$). The mean is equal to the rate, but the variance is always greater than the rate. It can appear as a right skewed poisson distribution and behaves as if a poisson distribution is being sampled over a period of time while the rate is non-constant.
+
+```{r dnbin}
+XN <- expand.grid(k = 0 : 20, n = c(1, 5, 10, 20), p = c(0.4, 0.2))
+nbin_df <- data.frame(XN, prob = dnbinom(XN$k, XN$n, XN$p))
+nbin_df$n <- factor(nbin_df$n)
+nbin_df$p <- factor(nbin_df$p)
+
+xyplot(prob ~ k | n + p, data = subset(nbin_df, p == 0.4)
+       , main = "Neg. binom by size and prob"
+       , xlab = list("Number of failures (k)", cex = 1.25)
+       , ylab = list("Probability",  cex = 1.25)
+       , type = c("h", "p"), pch = 16, lwd = 2
+       , strip = strip.custom(strip.names = TRUE)
+)
+xyplot(prob ~ k | n + p, data = subset(nbin_df, p == 0.2)
+       , main = "Neg. binom by size and prob"
+       , xlab = list("Number of failures (k)", cex = 1.25)
+       , ylab = list("Probability",  cex = 1.25)
+       , type = c("h", "p"), pch = 16, lwd = 2
+       , strip = strip.custom(strip.names = TRUE)
+)
+
+```
+
+However, poisson and negative binomial data can look very similar. Identifying the best match and estimating the parameters is essential for accurate event monitoring and reporting results.
 
 ### Case Study in Text Analysis: Marker word frequency
 

@@ -589,3 +589,67 @@ res <- plot(TV3s.ca)
 segments(0, 0, res$cols[,1], res$cols[,2], col = "red", lwd = 1)
 segments(0, 0, res$rows[,1], res$rows[,2], col = "blue", lwd = 0.5, lty = 3)
 ```
+
+# importing data
+data_file <- "C:\\Users\\Crutt\\Documents\\GitHub\\explain_te\\CHIRPS\\datafiles\\bankmark.csv.gz"
+class_col <- "y"
+data_file <- "C:\\Users\\Crutt\\Documents\\GitHub\\explain_te\\CHIRPS\\datafiles\\car.csv.gz"
+class_col <- "acceptability"
+
+# formula from class col name
+fmla <- as.formula(paste(class_col, "~."))
+
+# get data
+dat <- read.csv(gzfile(data_file))
+
+# test train split 70, 30
+idx <- sample(sample(c(TRUE, FALSE)
+                     , replace = TRUE
+                     , size = nrow(dat)
+                     , prob = c(0.7, 0.3)))
+mean(idx)
+dat_train <- dat[idx, ]
+dat_test <- dat[!idx, ]
+
+library(randomForest)
+# no tuning this time
+randfor <- randomForest(fmla, dat_train)
+randfor
+randfor$confusion[, 1:2]
+varImpPlot(randfor)
+dat_test$pred <- predict(randfor, newdata = dat_test)
+
+hist(dat_test$duration)
+hist(log(dat_test$duration))
+
+dat_test$dur_binned <- factor(round(log(dat_test$duration + min(dat_test$duration) + 1)))
+
+table(dat_test[c("y", "pred")])
+fourfold(table(dat_test[c("y", "pred")]),std = "all.max")
+fourfold(table(dat_test[c("y", "pred", "dur_binned")]))
+fourfold(table(dat_test[c("y", "pred", "dur_binned")]),std = "all.max")
+fourfold(table(dat_test[c("y", "pred", "marital")]),std = "all.max")
+fourfold(table(dat_test[c("y", "pred", "job")]),std = "all.max")
+fourfold(table(dat_test[c("y", "pred", "default")]),std = "all.max")
+fourfold(table(dat_test[c("y", "pred", "contact")]),std = "all.max")
+fourfold(table(dat_test[c("y", "pred", "month")]),std = "all.max")
+fourfold(table(dat_test[c("y", "pred", "day_of_week")]),std = "all.max")
+fourfold(table(dat_test[c("y", "pred", "poutcome")]),std = "all.max")
+fourfold(table(dat_test[c("y", "pred", "job")]),std = "all.max")
+
+
+
+
+
+
+table(dat_test[c("acceptability", "pred")])
+fourfold(table(dat_test[c("acceptability", "pred")]), std = "all.max")
+fourfold(table(dat_test[c("acceptability", "pred", "buying")]), std = "all.max")
+fourfold(table(dat_test[c("acceptability", "pred", "maint")]), std = "all.max")
+fourfold(table(dat_test[c("acceptability", "pred", "doors")]), std = "all.max")
+fourfold(table(dat_test[c("acceptability", "pred", "persons")]), std = "all.max")
+fourfold(table(dat_test[c("acceptability", "pred", "lug_boot")]), std = "all.max")
+
+fourfold(table(dat_test[c("acceptability", "pred", "safety")]), std = "all.max")
+fourfold(table(dat_test[c("acceptability", "pred", "poutcome")]), std = "all.max")
+fourfold(table(dat_test[c("acceptability", "pred", "job")]), std = "all.max")
