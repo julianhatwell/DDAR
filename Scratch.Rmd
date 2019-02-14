@@ -590,6 +590,7 @@ segments(0, 0, res$cols[,1], res$cols[,2], col = "red", lwd = 1)
 segments(0, 0, res$rows[,1], res$rows[,2], col = "blue", lwd = 0.5, lty = 3)
 ```
 
+<<<<<<< HEAD
 # importing data
 data_file <- "C:\\Users\\Crutt\\Documents\\GitHub\\explain_te\\CHIRPS\\datafiles\\bankmark.csv.gz"
 class_col <- "y"
@@ -653,3 +654,15 @@ fourfold(table(dat_test[c("acceptability", "pred", "lug_boot")]), std = "all.max
 fourfold(table(dat_test[c("acceptability", "pred", "safety")]), std = "all.max")
 fourfold(table(dat_test[c("acceptability", "pred", "poutcome")]), std = "all.max")
 fourfold(table(dat_test[c("acceptability", "pred", "job")]), std = "all.max")
+=======
+
+ for capturing these irregular and unpredictable interactions. They are much harder to understand on a mosaic plot, which is better suited for loglinear models that have more recognisable patterns e.g. opposite corners, as seen previously.
+
+```{r tv_mosaic}
+# pivoting the dimensions for a clearer view
+mosaic(xtabs(Freq~Network+Day+Time, TV.df)
+       , gp = shading_Friendly # shade = TRUE
+       #, rot_labels = c(top = -20)
+       )
+```
+>>>>>>> 3a26186ab2c9b8df170d7b34e817f9bbc3e9b273
