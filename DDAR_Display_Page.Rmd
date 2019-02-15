@@ -144,17 +144,21 @@ Predictably, the term refers to analysis of discrete data! DDA is a set of tools
 Specifically, contigency tables or crosstabs. The categorical features form the axes, and each cell contains the total number of individuals at the intersection of each feature. Here are some examples:
 
 ```{r tables}
-# In 2D
+# In 2D - collapse over department
 margin.table(UCBAdmissions, 2:1)
 
-# In 3D
-UCBAdmissions
+# 3D table - Admit on rows (D1), Gender on columns (D2)
+# and Department on levels (D3)
 
-# That last one was quite ugly
-# In 3D - pivoted in default order
+UCBAdmissions # Department has 6 levels
+
+# pivot the department onto columns
+aperm(UCBAdmissions, c(2, 3, 1))
+
+# flatten to a crosstab in default order
 structable(UCBAdmissions)
 
-# In 3D - pivoting in an order of my choosing
+# flatten to a crosstab with pivot
 structable(aperm(UCBAdmissions, c(2, 3, 1)))
 
 # More D
@@ -193,7 +197,7 @@ And here's one we would use to show that there is an interaction between feature
 
 *Note, we will touch on statistical distributions later, but not the $\chi^2$ distribution. This distribution comes up all the time in statitistical testing, but doesn't really model anything found in the real world that we actually want to measure.*
 
-### log odds ratios
+### Log Odds Ratios
 
 Most people with some stats knowledge are aware of the log odds $\log(\frac{p}{1-p})$ from logistic regression. The odds is itself a ratio $o = \frac{p}{1-p}$, so if the log odds ratio is $\log(\frac{o_1}{o_2})$ there's a pattern here, which is simply
 
@@ -570,9 +574,14 @@ Correspondence Analysis is an advanced topic. In particular, the way you pivot t
 
 ### When would I use this?
 
-The exploratory data analysis phase of any project. Do this early on in the project once you've gathered and cleaned up your data enough to start sense-making.
+You can use Correspondence Analysis during the exploratory data analysis phase of any project. Do this early on in the project once you've gathered and cleaned up your data enough to start sense-making.
 
-You can also use this method for unsupervised ML. If several features are well clustered you can replace them with the real valued dimensions that this method returns as output. This may convert several categorical dimensions into just a couple of numeric ones that might better suit the next stage of your project.
+This is a good technique for of feature engineering. If several features are well clustered you can replace them with the real valued dimensions that this method returns as output. This may convert several categorical dimensions into just a couple of numeric ones that might better suit the next stage of your project. The following two situations are immediately applicable:
+
+* You want to reduce the number of features in your dataset overall
+* You want to implement a model that requires only numeric, or real-valued functions. For example, k-NN requires a distance metric that works on all the features, while your dataset has some categorical features. Of course you could convert all your categories to factors, integers or binary encode them (aka create dummy variables). However, Correspondence Analysis actually reduces the number of features while retaining information about the way the original features interact.
+
+You could use it as a stand alone model. This is an unsupervised clustering method for categorical features. Use it where you don't have a specific class label, but just want to find out the associations between all the features.
 
 ### Case Study: Analysis of Audience Viewing Data
 
@@ -669,10 +678,10 @@ It turns out that 9pm is the most viewed time slot throughout the week, independ
 
 Dimension 2 is forced to capture differences between ABC and CBS schedules on the other nights as well as possible, but there is undoubtedly more detail to untangle.
 
-Now we have identified this difficulty, we can tackle the problem by making a joint analysis of time and day. This will produce a plot with a point for each time slot over the week and should tease apart the effect of people channel hopping from the "Friends, Seinfeld and ER" effect. It turns out to be very easy to do (see the code for yourself).
+Now we have identified this difficulty, we can tackle the problem. We're going to use the simple (2-Way) Correspondence Analysis to do this. Using the pivoting function *structable()*, we effectively create a new feature that combines time and day. Counter-intuitively, this allows the Correspondence Analysis *more* flexibility along the combined dimension. The resulting plot has a point for each time slot over the week and teases apart the effect of people channel hopping from the "Friends, Seinfeld and ER" effect. It turns out to be very easy to do (see the code for yourself).
 
 ```{r tv_2wayca}
-# Flatten to 2-D by stacking Time onto Network
+# Flatten to 2-D by stacking Time onto Day
 # Note: The data shaping choice here controls the specifics of the analysis.
 TV3s <- as.matrix(structable(Network~Time+Day, TV3))
 
@@ -693,6 +702,13 @@ An interesting feature of this new analysis, is that distance from the origin is
 ```{r TV_monday}
 t(TV3[1,,]) # Monday
 TV3[,2,1] # Every day, 9pm, ABC
+```
+
+If the next stage of your project requires real valued features for modeling (such as a distance or similarity based model), you can access the coordinates of each point via the plot object and replace them in your data set. This is more powerful than converting to an integer series or dummy variables, because so much information is retained. For example, it's very tempting to convert [*Monday, Tuesday, Wednesday, Thursday, Friday*] to [*1,2,3,4,5*]. However, we have seen in this case that this retains none of the information about the feature interactions. Likewise, [*8,9,10*] seems obvious to leave as numbers, but you lose information about the audience figures being higher at 9pm than any other time. Also, what's the natural order for [*ABC,CBS,NBC*]? Alphabetical? Think again!
+
+```{r tv_ca_dims}
+res$rows
+res$cols
 ```
 
 We'll take a look at one more of these, from the 4-D Titanic data set again.
@@ -742,7 +758,6 @@ res <- plot(Titanic.ca)
 segments(0, 0, res$cols[,1], res$cols[,2], col = "red", lwd = 1)
 segments(0, 0, res$rows[,1], res$rows[,2], col = "blue", lwd = 0.5, lty = 3)
 ```
-
 
 As you can see Correspondence Analysis is an extremely powerful dimension reduction and clustering tool for categorical data.
 

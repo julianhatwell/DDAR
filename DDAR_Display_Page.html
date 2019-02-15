@@ -91,9 +91,6 @@ img {
 .tabbed-pane {
   padding-top: 12px;
 }
-.html-widget {
-  margin-bottom: 20px;
-}
 button.code-folding-btn:focus {
   outline: none;
 }
@@ -141,7 +138,7 @@ $(document).ready(function () {
 <li><a href="#the-basic-tools-of-dda"><span class="toc-section-number">2.2</span> The Basic Tools of DDA</a><ul>
 <li><a href="#tables"><span class="toc-section-number">2.2.1</span> Tables</a></li>
 <li><a href="#chi2-test"><span class="toc-section-number">2.2.2</span> <span class="math inline">\(\chi^2\)</span> Test</a></li>
-<li><a href="#log-odds-ratios"><span class="toc-section-number">2.2.3</span> log odds ratios</a></li>
+<li><a href="#log-odds-ratios"><span class="toc-section-number">2.2.3</span> Log Odds Ratios</a></li>
 <li><a href="#discrete-distributions"><span class="toc-section-number">2.2.4</span> Discrete Distributions</a></li>
 </ul></li>
 <li><a href="#common-dda-tasks"><span class="toc-section-number">2.3</span> Common DDA Tasks</a></li>
@@ -280,14 +277,16 @@ library(ca)</code></pre>
 <div id="tables" class="section level3">
 <h3><span class="header-section-number">2.2.1</span> Tables</h3>
 <p>Specifically, contigency tables or crosstabs. The categorical features form the axes, and each cell contains the total number of individuals at the intersection of each feature. Here are some examples:</p>
-<pre class="r"><code># In 2D
+<pre class="r"><code># In 2D - collapse over department
 margin.table(UCBAdmissions, 2:1)</code></pre>
 <pre><code>##         Admit
 ## Gender   Admitted Rejected
 ##   Male       1198     1493
 ##   Female      557     1278</code></pre>
-<pre class="r"><code># In 3D
-UCBAdmissions</code></pre>
+<pre class="r"><code># 3D table - Admit on rows (D1), Gender on columns (D2)
+# and Department on levels (D3)
+
+UCBAdmissions # Department has 6 levels</code></pre>
 <pre><code>## , , Dept = A
 ## 
 ##           Gender
@@ -329,8 +328,22 @@ UCBAdmissions</code></pre>
 ## Admit      Male Female
 ##   Admitted   22     24
 ##   Rejected  351    317</code></pre>
-<pre class="r"><code># That last one was quite ugly
-# In 3D - pivoted in default order
+<pre class="r"><code># pivot the department onto columns
+aperm(UCBAdmissions, c(2, 3, 1))</code></pre>
+<pre><code>## , , Admit = Admitted
+## 
+##         Dept
+## Gender     A   B   C   D   E   F
+##   Male   512 353 120 138  53  22
+##   Female  89  17 202 131  94  24
+## 
+## , , Admit = Rejected
+## 
+##         Dept
+## Gender     A   B   C   D   E   F
+##   Male   313 207 205 279 138 351
+##   Female  19   8 391 244 299 317</code></pre>
+<pre class="r"><code># flatten to a crosstab in default order
 structable(UCBAdmissions)</code></pre>
 <pre><code>##               Gender Male Female
 ## Admit    Dept                   
@@ -346,7 +359,7 @@ structable(UCBAdmissions)</code></pre>
 ##          D            279    244
 ##          E            138    299
 ##          F            351    317</code></pre>
-<pre class="r"><code># In 3D - pivoting in an order of my choosing
+<pre class="r"><code># flatten to a crosstab with pivot
 structable(aperm(UCBAdmissions, c(2, 3, 1)))</code></pre>
 <pre><code>##                 Dept   A   B   C   D   E   F
 ## Gender Admit                                
@@ -439,7 +452,7 @@ CrossTable(margin.table(UCBAdmissions, 2:1)
 <p><em>Note, we will touch on statistical distributions later, but not the <span class="math inline">\(\chi^2\)</span> distribution. This distribution comes up all the time in statitistical testing, but doesn’t really model anything found in the real world that we actually want to measure.</em></p>
 </div>
 <div id="log-odds-ratios" class="section level3">
-<h3><span class="header-section-number">2.2.3</span> log odds ratios</h3>
+<h3><span class="header-section-number">2.2.3</span> Log Odds Ratios</h3>
 <p>Most people with some stats knowledge are aware of the log odds <span class="math inline">\(\log(\frac{p}{1-p})\)</span> from logistic regression. The odds is itself a ratio <span class="math inline">\(o = \frac{p}{1-p}\)</span>, so if the log odds ratio is <span class="math inline">\(\log(\frac{o_1}{o_2})\)</span> there’s a pattern here, which is simply</p>
 <p><span class="math display">\[\log(\frac{a}{b})\]</span></p>
 <p>Why do we like to take the log of a fraction? First of all, I’m going to set two conditions: <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> are always positive, and <span class="math inline">\(b\)</span> can never be <span class="math inline">\(0\)</span>. Now, think about what happens as 1. <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> are equal, 2. <span class="math inline">\(a\)</span> gets much bigger than <span class="math inline">\(b\)</span> and 3. <span class="math inline">\(b\)</span> gets much bigger than <span class="math inline">\(a\)</span>.</p>
@@ -817,8 +830,13 @@ B &lt;- agreementplot(MSP
 </div>
 <div id="when-would-i-use-this-2" class="section level3">
 <h3><span class="header-section-number">3.3.2</span> When would I use this?</h3>
-<p>The exploratory data analysis phase of any project. Do this early on in the project once you’ve gathered and cleaned up your data enough to start sense-making.</p>
-<p>You can also use this method for unsupervised ML. If several features are well clustered you can replace them with the real valued dimensions that this method returns as output. This may convert several categorical dimensions into just a couple of numeric ones that might better suit the next stage of your project.</p>
+<p>You can use Correspondence Analysis during the exploratory data analysis phase of any project. Do this early on in the project once you’ve gathered and cleaned up your data enough to start sense-making.</p>
+<p>This is a good technique for of feature engineering. If several features are well clustered you can replace them with the real valued dimensions that this method returns as output. This may convert several categorical dimensions into just a couple of numeric ones that might better suit the next stage of your project. The following two situations are immediately applicable:</p>
+<ul>
+<li>You want to reduce the number of features in your dataset overall</li>
+<li>You want to implement a model that requires only numeric, or real-valued functions. For example, k-NN requires a distance metric that works on all the features, while your dataset has some categorical features. Of course you could convert all your categories to factors, integers or binary encode them (aka create dummy variables). However, Correspondence Analysis actually reduces the number of features while retaining information about the way the original features interact.</li>
+</ul>
+<p>You could use it as a stand alone model. This is an unsupervised clustering method for categorical features. Use it where you don’t have a specific class label, but just want to find out the associations between all the features.</p>
 </div>
 <div id="case-study-analysis-of-audience-viewing-data" class="section level3">
 <h3><span class="header-section-number">3.3.3</span> Case Study: Analysis of Audience Viewing Data</h3>
@@ -934,8 +952,8 @@ legend(&quot;topright&quot;, legend=c(&quot;Day&quot;, &quot;Network&quot;, &quo
 ##     NBC 1927 1858 2101</code></pre>
 <p>It turns out that 9pm is the most viewed time slot throughout the week, independent of day or network. Yet, notice how the NBC audience numbers dip just a little for that time slot on Thursday, even though they still have far greater numbers than either of the other two channels. This dip in numbers runs counter to the “Friends, Seinfeld and ER” effect which has completely dominated the analysis, and so it has also been captured on Dimension 1.</p>
 <p>Dimension 2 is forced to capture differences between ABC and CBS schedules on the other nights as well as possible, but there is undoubtedly more detail to untangle.</p>
-<p>Now we have identified this difficulty, we can tackle the problem by making a joint analysis of time and day. This will produce a plot with a point for each time slot over the week and should tease apart the effect of people channel hopping from the “Friends, Seinfeld and ER” effect. It turns out to be very easy to do (see the code for yourself).</p>
-<pre class="r"><code># Flatten to 2-D by stacking Time onto Network
+<p>Now we have identified this difficulty, we can tackle the problem. We’re going to use the simple (2-Way) Correspondence Analysis to do this. Using the pivoting function <em>structable()</em>, we effectively create a new feature that combines time and day. Counter-intuitively, this allows the Correspondence Analysis <em>more</em> flexibility along the combined dimension. The resulting plot has a point for each time slot over the week and teases apart the effect of people channel hopping from the “Friends, Seinfeld and ER” effect. It turns out to be very easy to do (see the code for yourself).</p>
+<pre class="r"><code># Flatten to 2-D by stacking Time onto Day
 # Note: The data shaping choice here controls the specifics of the analysis.
 TV3s &lt;- as.matrix(structable(Network~Time+Day, TV3))
 
@@ -959,6 +977,29 @@ segments(0, 0, res$rows[,1], res$rows[,2], col = &quot;blue&quot;, lwd = 0.5, lt
 <pre class="r"><code>TV3[,2,1] # Every day, 9pm, ABC</code></pre>
 <pre><code>##    Monday   Tuesday Wednesday  Thursday    Friday 
 ##      1401      1205      1022       682       907</code></pre>
+<p>If the next stage of your project requires real valued features for modeling (such as a distance or similarity based model), you can access the coordinates of each point via the plot object and replace them in your data set. This is more powerful than converting to an integer series or dummy variables, because so much information is retained. For example, it’s very tempting to convert [<em>Monday, Tuesday, Wednesday, Thursday, Friday</em>] to [<em>1,2,3,4,5</em>]. However, we have seen in this case that this retains none of the information about the feature interactions. Likewise, [<em>8,9,10</em>] seems obvious to leave as numbers, but you lose information about the audience figures being higher at 9pm than any other time. Also, what’s the natural order for [<em>ABC,CBS,NBC</em>]? Alphabetical? Think again!</p>
+<pre class="r"><code>res$rows</code></pre>
+<pre><code>##                     Dim1         Dim2
+## 8_Monday      0.15812304 -0.455606847
+## 8_Tuesday    -0.02638318 -0.010526784
+## 8_Wednesday   0.25070348  0.001493149
+## 8_Thursday   -0.34416868 -0.074239579
+## 8_Friday      0.13899420  0.195131693
+## 9_Monday      0.24587580  0.032709280
+## 9_Tuesday     0.23549271 -0.032622366
+## 9_Wednesday   0.07374072  0.228909131
+## 9_Thursday   -0.46679506  0.046282352
+## 9_Friday      0.23682706  0.094854237
+## 10_Monday     0.16432975 -0.070170394
+## 10_Tuesday    0.33565719 -0.012832280
+## 10_Wednesday -0.12640134  0.130600285
+## 10_Thursday  -0.74421704 -0.028465081
+## 10_Friday     0.13391483  0.086194069</code></pre>
+<pre class="r"><code>res$cols</code></pre>
+<pre><code>##           Dim1         Dim2
+## ABC  0.2489731  0.170454834
+## CBS  0.2711437 -0.225264013
+## NBC -0.3769860 -0.004916094</code></pre>
 <p>We’ll take a look at one more of these, from the 4-D Titanic data set again.</p>
 <pre class="r"><code># one more mca from a 4-D dataset
 # this is simpler than it looks
@@ -1017,7 +1058,8 @@ segments(0, 0, res$rows[,1], res$rows[,2], col = &quot;blue&quot;, lwd = 0.5, lt
 <div id="talking-points-2" class="section level3">
 <h3><span class="header-section-number">3.3.4</span> Talking Points</h3>
 <ul>
-<li>What can you infer from the Titanic Correspondence Analysis Plot?</li>
+<li>What can you infer from the Titanic Correspondence Analysis Plots?</li>
+<li>Compare the two types of Correspondence Analysis (simple and multiple/joint)</li>
 </ul>
 </div>
 </div>
