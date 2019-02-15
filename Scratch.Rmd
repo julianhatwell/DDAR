@@ -1,6 +1,18 @@
 ---
 title: "Scratch"
 output: html_document
+references:
+- id: noack1950
+  title: A class of random variables with discrete distributions.
+  author:
+  - family: Noack
+    given: A.
+  container-title: Annals of Mathematical Statistics
+  volume: 21
+  page: 127-132
+  type: article-journal
+  issued:
+    year: 1950
 ---
 ```{r prologue, results='hide', echo=FALSE}
 knitr::opts_chunk$set(warning = FALSE
@@ -665,4 +677,58 @@ mosaic(xtabs(Freq~Network+Day+Time, TV.df)
        #, rot_labels = c(top = -20)
        )
 ```
->>>>>>> 3a26186ab2c9b8df170d7b34e817f9bbc3e9b273
+
+## Why Would You Be Interested in This?
+
+**Aims:** 
+
+To provide a high-level overview of some less well-known, visual statistical tools that can be applied to very common tasks in Machine Learning practice and research.
+
+**Objectives:**
+
+* Present some visual, statistical tools that are not usually included in a formal stats curriculum
+* Discuss how these could be applied to tasks that are typical in many practical Machine Learning projects
+* Demonstrate this with relevant case studies:
+    * Exploratory Data Analysis of Categorical Data
+    * Unpacking a Confusion Matrix by Important Features
+    * Evaluate a Confusion Matrix for an Ordinal Classification
+    * Dimension Reduction and Clustering of Categorical Data
+    * Text/Event Analysis
+
+**Learning Outcomes:** After this session you will be able to:
+
+* Formulate an appropriate strategy for the Exploratory Data Analysis (EDA) phase of a machine learning project:
+    * Assess a new dataset that contains several discrete features
+    * Develop an intuition about the relationships between those features
+* Demonstrate rigorous and robust, yet visually intuitive reporting of machine learning research results in:
+    * Multi-class problems involving ordinal data
+    * Impact of important categorical features on classification results
+    * Frequency data: events, counts, occurrences, wait-times
+
+EDA is an essential but often overlooked step prior to any analysis task.
+
+
+The overall theme here is applying classical statistical techniques on new problems, or in surprising ways. The case studies are intended to communicate some intuition about how these techniques work and to encourage you to think critically about solving problems in routine ML project work.
+
+
+These distributions are all special cases of the Power Series family of distributions [@noack1950]
+
+```{r loglin_model_HEC}
+HEC_df <- as.data.frame(HEC)
+HEC_df <- within(HEC_df
+                 , bbf <- 1 *
+                   (Hair == "Brown") *
+                   (Eye == "Blue") *
+                  (Sex == "Female"))
+# try with and without bbf
+hec.glm <- glm(Freq~Hair*(Sex+Eye)+bbf, data=HEC_df, family = poisson)
+anova(hec.glm, test="Chisq")
+mosaic(hec.glm
+       , gp = shading_Friendly
+       , formula = ~ Sex + Eye + Hair
+       , residuals_type = "rstandard")
+LRstats(hec.glm)
+
+exp(coef(hec.glm)["bbf"]) # odds ratio of females reporting blue eyes and brown hair compared to men
+```
+

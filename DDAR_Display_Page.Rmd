@@ -1,20 +1,12 @@
 ---
-title: "Discrete Data Analysis for Machine Learning Practitioners, with Examples in R"
+title: "Discrete Data Analysis: A Friendly Guide for Machine Learning Practitioners, with Examples in R"
 author: "Julian Hatwell"
-date: "7 February 2019"
-output: html_document
-references:
-- id: noack1950
-  title: A class of random variables with discrete distributions.
-  author:
-  - family: Noack
-    given: A.
-  container-title: Annals of Mathematical Statistics
-  volume: 21
-  page: 127-132
-  type: article-journal
-  issued:
-    year: 1950
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    theme: united
 ---
 
 ```{r setup, include=FALSE}
@@ -32,58 +24,77 @@ knitr::opts_template$set(
 
 # Introduction
 
-The focus for today will be on visual analytics, not theories and formulas!
+Welcome. If you're reading this, you probably attended a workshop or talk I've given on this topic. If you're here by accident, let me fill you in.
 
-Note: This tutorial is based on material contained in the book [Discrete Data Analysis with R: Visualization and Modeling Techniques for Categorical and Count Data](https://www.crcpress.com/Discrete-Data-Analysis-with-R-Visualization-and-Modeling-Techniques-for/Friendly-Meyer/p/book/9781498725835) by Michael Friendly. Michael Friendly is a pioneer in this field and has contributed to the development of modules and libraries for SAS and R.
+I wanted to write a plain English, quick start guide for anyone working with data sets where many, most or all of the variables are discrete (nominal, ordinal, frequency, counts, events). The reason I wanted to write it is because nothing like it existed when I really needed it some years ago. I had to strain every synapse to get to grips with it at the time. Perhaps that was a blessing in disguise as the work paid off, in many more ways than I had expected. Anyway, I hope this helps anyone out there who just wants to develop some intuition in this area of statistics, without getting bogged down in notation, theory and proofs.
+
+These notes are for you if:
+
+* You need a strategy for the Exploratory Data Analysis (EDA) phase of a machine learning project:
+    * Assess a new dataset that contains several discrete features
+    * Develop an intuition about the relationships between those features
+* You want to demonstrate rigorous and robust, yet visually intuitive reporting of machine learning results in:
+    * Multi-class problems involving ordinal data
+    * Impact of important categorical features on classification results
+    * Frequency data: events, counts, occurrences, wait-times
+    
+I'm also trying to keep the code really simple, so someone who wants to learn just enough R can pick up the basics by osmosis.
+    
+*Note, I hope this is a living document which I can expand as time allows. Check back in a few months. The last date I updated should always be visible in the header.*
+
+The focus is on visual analytics, not theories and formulas! My intention is turn you on to this topic, not send you running.
+
+If you want to know more you can follow the links to the [vignette](https://cran.r-project.org/web/packages/vcdExtra/vignettes/vcd-tutorial.pdf), [video](https://www.youtube.com/watch?v=qfNsoc7Tf60) and [book](https://www.crcpress.com/Discrete-Data-Analysis-with-R-Visualization-and-Modeling-Techniques-for/Friendly-Meyer/p/book/9781498725835) that have been the most useful sources of information for me.
+
+*When I say 'plain English,' there's no offence intended towards Michael Friendly, whose work is extremely accessible and well explained. I wouldn't be doing this without his book in hand. What I want to do here is present a version of things that is as math and formula free as I can make it.*
+
+## R
+
+The examples are all in R. These are the libraries we'll be using. That's all I really want to say about R. 
+
+```{r load_libs}
+# I'm going to load all the R libraries here
+# If you stop, quit R and come back later...
+# ...you need to re-run this chunk.
+library(knitr)
+library(lattice)
+library(vcd)
+library(vcdExtra)
+library(gmodels)
+library(ca)
+```
+
+## Credits
+
+The code examples are mostly based on material contained in the book [Discrete Data Analysis with R: Visualization and Modeling Techniques for Categorical and Count Data](https://www.crcpress.com/Discrete-Data-Analysis-with-R-Visualization-and-Modeling-Techniques-for/Friendly-Meyer/p/book/9781498725835) by Michael Friendly. Michael Friendly is a pioneer in this field and has contributed to the development of modules and libraries for SAS and R.
 
 You can also find a much shorter tutorial on these topics in the long form help for the "vcd" package for R: [vcd vignette](https://cran.r-project.org/web/packages/vcdExtra/vignettes/vcd-tutorial.pdf)
 
+This [video](https://www.youtube.com/watch?v=qfNsoc7Tf60) is a much more in depth lecture, by Michael Friendly, on topics covered in the book.
+
 ## Intended Audience
 
-Data Analytics and Artificial Intelligence Research Group at Birmingham City University. A team of academics, post-doctoral researchers and doctoral candidates.
+Any data professional with some practical experience of Machine Learning (ML), possibly crossing over from another discipline. I assume you have an understanding of the ML project life-cycle, data preparation, exploratory analysis, model building and evaluation, and reporting results. I assume some basic statistical knowledge, such as most people have experienced in high school.
 
-## Why Would You Be Interested in This Workshop?
+You'll get the most benefit if you already know some R. If you don't, maybe this will help you to learn some. The code examples are mostly just a few lines each.
 
-**Aims:** 
+## What We Won't Cover
 
-To provide a high-level overview of some less well-known, visual statistical tools that can be applied to very common tasks in Machine Learning practice and research.
+Bear in mind, this is just an overview! We will only introduce formal statistics and tests where necessary, and will not develop any mathematical notation, theory or proofs. There is lots of material freely available prepared by real experts, rather than people like me. Head over to www.google.com now, if that's what you're looking for.
 
-**Objectives:**
+For now, I am not covering explanatory and predictive modeling. You will probably be already familiar with logistic regression for binary classification. There are related or equivalent techniques for other kinds of classification (ordinal, polytomous/multi-class and counts). Even though these topics fall squarely under both DDA and ML, it's a massive topic that requires a whole course/module to explain. I'll get around to it, but I don't have time right now.
 
-* Present some visual, statistical tools that are not usually included in a formal stats curriculum
-* Discuss how these could be applied to tasks that are typical in many practical Machine Learning projects
-* Demonstrate this with relevant case studies:
-    * Text/Event Analysis
-    * Comparing True and Predicted Classes for Ordinal data
-    * Exploratory Data Analysis of Categorical Data
-    * Dimension Reduction and Clustering of Categorical Data
+I'm not going to cover R at all. I assume that you have enough experience using a computer, at least to locate, download and install some software, and execute some lines of code that have already been written for you.
 
-**Learning Outcomes:** After this session you will be able to:
+## Who am I and Why am I Presenting This?
 
-* Demonstrate rigorous and robust, yet visually intuitive reporting of machine learning research results in:
-    * Frequency data: events, counts, occurrences, wait-times
-    * Multi-class problems involving ordinal data
-* Formulate an appropriate strategy for the Exploratory Data Analysis (EDA) phase of a machine learning project:
-    * Assess a new dataset that contains several discrete features
-    * Develop an intuition about the relationships between those features
+I have been working with data since I first looked at some SQL scripts and a Microsoft SQL Server 2000 and realised it was doing something incredibly powerful while being very easy to understand. After that I travelled a very winding road, but most recently I have taken a career break to study. I have an MSc (Distinction) in Business Intelligence and am now researching a PhD in Machine Learning for Human-in-the-Loop Processes.
 
-EDA is an essential but often overlooked step prior to any analysis task.
-
-## What we won't cover
-
-Bear in mind, this is just an overview! Our seminar session is just long enough for a taster and not much depth.
-
-In this workshop, we will focus on intuitive, visual tools that can reveal patterns in categorical data. We will only introduce formal statistics and tests where necessary, and will not develop any mathematical notation, theory or proofs.
-
-We also won't cover explanatory and predictive modeling. Most of you will already be familiar with logistic regression for binary classification. There are related or equivalent techniques for other kinds of classifiation (ordinal, polytomous/multi-class and counts). Even though these topics fall squarely under both DDA and Machine Learning, this is all out of scope for today because it's a massive topic that requires a whole course/module to explain.
-
-## Why Am I Presenting This Workshop?
-
-This branch of stats peaked my interest at two distinct points in my life:
+This branch of stats peaked my interest at three distinct points in my life:
 
 1. My undergraduate degree in Microbiology - using techniques such as [Most Probable Number](https://en.wikipedia.org/wiki/Most_probable_number) to estimate the number of bacterial cells in a test tube. You certainly can't count them all!
 
-2. My career as a data professional in the tertiary education sector.
+2. My career as a data professional in the tertiary (higher) education sector.
 
 The kinds of questions I used to work on were:
 
@@ -103,28 +114,19 @@ Here are just some of the factors/features to be utilised in the research questi
 * high school attended prior to entry
 * subjects and grades prior to entry
     
-The types of questions we did *not* need to ask was "what is the average height/weight of students across different groups?" So it was obvious that regular descriptive and quantitative stats (i.e. the normal distribution) were not the right tools for this work. 
+The types of questions we did *not* need to answer were "what is the average height/weight of students across different groups?" So it was obvious that regular descriptive and quantitative stats (i.e. the normal distribution) were not the right tools for this work. 
 
-Tables and cross tabs were no use with so many dimensions. Pivot tables were a little better, but couldn't help with signficance testing and predictive analytics. Most importantly, I needed visual tools to communicate findings with the senior management team. I couldn't expect those guys to squint over a page of tables and numbers with me, looking for clues. This is when I came upon Michael Friendly's work on visualising categorical data, and was highly motivated to learn more about it.
+Tables and cross tabs were no use with so many dimensions. Pivot tables were a little better, but couldn't help with significance testing and predictive analytics. Most importantly, I needed visual tools to communicate findings with the senior management team. I couldn't expect those guys to squint over a page of tables and numbers with me, looking for clues. This is when I came upon Michael Friendly's work on visualising categorical data. This was exactly what I was looking for at the time, so I was highly motivated to learn more about it.
 
-That's a story about the BI, management reports and forecasting work that I used to do. Now I am involved in (or evolved into) Machine Learning research and practice, and I face completely new tasks. However, I keep noticing that the old tools and techniques are still applicable. I wanted to share these ideas with you and I hope you also find them useful.
+3. Now I am involved in (or evolved into) Machine Learning research and practice, and I face completely new tasks. However, I keep noticing that the old tools and techniques are still applicable. I wanted to share these ideas with you and I hope you also find them useful.
 
 # Preliminaries
 
-If you prefer, you can simply follow along with the in person presentation but if you want to run the code chunks and see the results in the RStudio UI you need access to a machine with R+RStudio and the source code for [this file](https://raw.githubusercontent.com/julianhatwell/DDAR/master/DDAR_Display_Page.Rmd). After you've downloaded it to your working directory, just ditch all my text move all the code chunks to a new .R file with:
+If you want to run the code chunks and see the results in the R Studio UI you need access to a machine with R + R Studio and the source code for [this file](https://raw.githubusercontent.com/julianhatwell/DDAR/master/DDAR_Display_Page.Rmd). After you've downloaded it to your working directory, just ditch all my text move all the code chunks to a new .R file with:
 
 ```{r purlit, eval=FALSE}
-knitr::purl("DDAR_Display_Page.Rmd")
-```
-
-To save time, make sure the following libraries are installed and loaded before the workshop.
-
-```{r load_libs}
-library(knitr)
-library(vcd)
-library(vcdExtra)
-library(ca)
-library(lattice)
+# Don't run this if you've already got the code in a separate file
+# knitr::purl("DDAR_Display_Page.Rmd")
 ```
 
 ## What is Discrete Data Analysis (DDA)?
@@ -135,24 +137,132 @@ Predictably, the term refers to analysis of discrete data! DDA is a set of tools
 * Ordinal
 * Counts / Frequencies
 
-Nearly everyone with any background in stats has some experience of DDA! We have all performed a $\chi^2$ test for independence or for association. This is a hypothesis test involving categorical and count data. For example:
+## The Basic Tools of DDA
+
+### Tables
+
+Specifically, contigency tables or crosstabs. The categorical features form the axes, and each cell contains the total number of individuals at the intersection of each feature. Here are some examples:
+
+```{r tables}
+# In 2D
+margin.table(UCBAdmissions, 2:1)
+
+# In 3D
+UCBAdmissions
+
+# That last one was quite ugly
+# In 3D - pivoted in default order
+structable(UCBAdmissions)
+
+# In 3D - pivoting in an order of my choosing
+structable(aperm(UCBAdmissions, c(2, 3, 1)))
+
+# More D
+structable(Survived~., data=Titanic)
+
+# More D - another pivot
+structable(Survived+Sex~., data=Titanic)
+```
+
+Tables like this have several disadvantages. Staring at numbers is not very informative, unless there are obvious large or small values, and things start to get tricky in more dimensions.
+
+Adding row, column and table totals can be informative but only works well in 2D.
+
+```{r crosstabs}
+# An old fashioned crosstab - 2D
+CrossTable(margin.table(UCBAdmissions, 2:1)
+           , prop.chisq = FALSE
+           , format = "SPSS")
+```
+
+### $\chi^2$ Test
+
+A huge range of DDA research questions ultimately are answered with a $\chi^2$ test. It'll happen at some point under the hood of most of the functions used in this code. That's simply because tables are the main data structures for DDA and most tasks are driving towards comparing between expected values and actual, observed values.
+
+This test instantly tells you if numbers in table cells are what you expect them to be. You might expect all the numbers to be proportional to the row and column totals, or you might have some very specific numbers you expect. Either way, a $\chi^2$ test reveals whether your observed numbers are near enough to your expected numbers that you can put any small differences down to some random sampling error.
+
+This is good news, right? Nearly everyone who's done any stats has some experience done a $\chi^2$ test and can make sense of the results. A significant result in a $\chi^2$ test means it's very improbable that the data matches what we expected. For reasons that I'm not going into now, you can never really prove anything with absolute, unequivocal certainty with statistics. So, we always phrase such tests in terms of the the reverse of what we're looking for. Essentially, it's more robust if we can demonstrate that some opposing assumption is very likely to be wrong, because it makes it more probable that we're right. This opposite assumption that we state at the beginning of a test is called the null hypothesis, or simply the null. We like to give it the symbol $H_0$
+
+Here is a null for when we want to show that a category of feature A is much more popular:
 
 * $H_0 =$ There is an equal number of instances belonging to each category of feature A. Any observed differences are small enough to be considered a sampling error.
 
-* $H_0 =$ Membership of any category in feature A is independent of membership of any category in feature B. Frequency in each combination is proportional to the joint distribution $P(A) \times P(B)$. Any observed differences are small enough to be considered a sampling error.
+And here's one we would use to show that there is an interaction between features A and B. Certain categories in A and B tend to go together, other combinations don't get chosen very frequently.
 
-## Common distributions - the currency of DDA
+* $H_0 =$ Membership of any category in feature A is independent of membership of any category in feature B. Frequency in each combination is proportional to the joint distribution $P(A) \times P(B)$ for every combination of categories in A and B. Any observed differences are small enough to be considered a sampling error.
 
-There are several distributions to help with the most common DDA research questions. You can recognise them because a random variable from any of these can only be a natural number $\{ 0,1,2,\dots \}$:
+*Note, we will touch on statistical distributions later, but not the $\chi^2$ distribution. This distribution comes up all the time in statitistical testing, but doesn't really model anything found in the real world that we actually want to measure.*
 
-* Binomial - how many heads in n coin tosses?
-* Poisson - how many buses come every n minutes?
+### log odds ratios
+
+Most people with some stats knowledge are aware of the log odds $\log(\frac{p}{1-p})$ from logistic regression. The odds is itself a ratio $o = \frac{p}{1-p}$, so if the log odds ratio is $\log(\frac{o_1}{o_2})$ there's a pattern here, which is simply
+
+$$\log(\frac{a}{b})$$
+
+Why do we like to take the log of a fraction? First of all, I'm going to set two conditions: $a$ and $b$ are always positive, and $b$ can never be $0$. Now, think about what happens as 1. $a$ and $b$ are equal, 2. $a$ gets much bigger than $b$ and 3. $b$ gets much bigger than $a$.
+
+```{r log ratios}
+p <- c(0.05, .1, .25, .50, .75, .9, .95)
+odds <- p / (1 - p)
+logodds <- log(odds)
+logits <- data.frame(p, odds, logodds)
+logits
+
+a <- c(1000, 1000, 1)
+b <- c(1000, 1, 1000)
+
+log(a/b)
+```
+
+Hopefully you can see that while fractions and ratios are centred on $1$ when $a = b$, they have this nasty habit of flying off towards $\infty$ as $a$ gets much bigger, while squashing closer and closer to $0$ as $b$ gets much bigger. The relationship between $a$ and $b$ depends on their position in the fraction itself. That's really unhelpful.
+
+The $\log(\frac{a}{b})$ is centred on zero and completely linear and symmetrical. Swapping the positions of $a$ and $b$ in the fraction simply switches the sign. What a beautiful thing that is! The log function is very special for lots of other reasons, but in DDA it is very helpful to have this neat way to manage ratios. DDA often needs to compare ratios of the numbers in contingency tables along the rows, columns and higher dimensions. The odds can be expressed as a probability which means we can connect the number of times something has happened back to the probability that it happens and compare these probabilities across categories to see if they show any patterns.
+
+That's all I want to say about the log ratio and the log odds ratio right now. We'll come back to it in later sections.
+
+### Discrete Distributions
+
+There are several distributions to help with the most common DDA research questions. You can recognise them because a random variable from any of these can only be a natural number $\{ 0,1,2,\dots \}$ (no negative numbers):
+
+* Binomial - how many heads in $n$ coin tosses?
+* Poisson - how many buses come every $n$ minutes?
 * Geometric - how many minutes do I wait before a bus comes?
-* Negative Binomial - how many minutes waiting time between each bus?
+* Negative Binomial - how many minutes is the gap between each bus?
 
-These distributions are all special cases of the Power Series family of distributions [@noack1950]
+You probably have data matching one of these distributions if you have data that looks like this:
 
-There are lots of other more specialised distributions such as *hurdles* and *zero-inflated* models where a very high prevalence zero success events must be handled appropriately.
+```{r dists_firstlook}
+seed <- 125
+set.seed(seed)
+# the first number is the number of samples
+# the other numbers are the parameters of the distribution
+rbinom(10, size = 10, prob = 0.2) 
+rpois(10, lambda = 5)
+rgeom(10, prob = 0.5)
+size <- 2
+prob <- 0.2
+count <- table(rnbinom(1000, 2, 0.4))
+freq <- count/sum(count)
+waittime <- as.integer(names(count))
+xyplot(freq~waittime
+       , xlab = "Wait Time (minutes)"
+       , ylab = "% of total"
+       , type = c("h", "p") # this will draw lollipops
+       , pch = 16, lwd = 2
+       , main = paste("Negative Binomial. Rate ="
+                    , size
+                    , ", Dispersion ="
+                    , 1/prob)
+       , sub = paste("Data from R's pseudo-random\n number generator with seed = ", seed))
+```
+
+The main reason we like to use distributions in data analysis *where possible*, is that so many clever people have spent the last two or three hundred years researching how they work! This means that all the most accurate, provable and supported tooling for statistics is based on distributions. What we try to do is match the data we have to a known distribution. If we find a good match, we can assume the mathematical properties of the distribution will apply to the real world data. This is what people mean by parametric tests; using all the tried and tested distributional properties to make assumptions about our real-world data.
+
+However, distributions are not real world data. They are just mathematical constructions. They model many things in the real world but you need to be pretty strict about how and when to use them.
+
+On a project using real-world, not simulated data, there simply might not be a distribution that fits and there are hundreds of non-parametric tools that make a model of the data directly from the data itself. That's what a lot of people think of as Machine Learning (though such definitions are highly debatable).
+
+Anyway, the moral of the story. Use a distribution when it makes sense. That's often a good place to start with 1 dimensional data (just a bag of integers as above). If it doesn't, then move on and find another method to analyse your data. Data that is in more than one dimension, with lots of categorical features, needs a lot more work.
 
 ## Common DDA Tasks
 
@@ -168,7 +278,7 @@ This is a non-exhaustive list of common statistical tasks and questions that req
     * Some of my categories are ordinal - what is the right test?
     * Classification problems with ordinal data - how can I quantify the agreement/disagreement between True and Predicted classes when there is a relationship between classes?
 3. n-way analysis:
-    * Visualising multi-dimensional tables for exploratory analysis
+    * Visualising multidimensional tables for exploratory analysis
     * Statistical hypothesis testing in n-way tables
     * Correspondence Analysis, a dimension reduction technique, like PCA and clustering for categorical variables!
 4. Explanatory and Predictive modeling:
@@ -179,7 +289,7 @@ This is a non-exhaustive list of common statistical tasks and questions that req
 
 We don't have time develop a fluency for these tasks in this workshop but if this is something useful for you there are some "building block" skills that are worth spending time on:
 
-1. The most useful data structures for DDA in R are not data frames, but n-dimensinal arrays, n-way tables, and matrices, sometimes data frames with a frequency column (for the count data).
+1. The most useful data structures for DDA in R are not data frames, but n-dimensional arrays, n-way tables, and matrices, sometimes data frames with a frequency column (for the count data).
 
 1. It's good to become fluent with functions for manipulating table data - pivoting and collapsing dimensions, and converting between data structures to suit your analysis. Useful functions to get to know are table(), addmargins(), prop.table(), ftable(), xtabs(), xtable(), structable(), apply(), margin.table(), collapse.table(), aggregate(), aperm(), expand.dft(), subset(), using integer indexing to re-order categories and pivot dimensions. Most of the specialised objects have as.table() and as.data.frame() methods that generate the most intuitive shape for the output data structure.
 
@@ -187,217 +297,186 @@ We don't have time develop a fluency for these tasks in this workshop but if thi
 
 # Workshop
 
-## Task 1: 1-way analysis (goodness of fit) for monitoring the frequency of events.
+## Task: Analysing n-way tables
 
-Count, or frequency data has many varied applications from event monitoring to text analysis. 1-way analysis uses distributions to compare different samples, and monitor for changes in event frequency.
+### What is this for?
 
-For the first task we will look at two common distributions for count data and compare two samples.
+Exploring relationships between categorical features. Mosaic plots are very powerful for visualising categorical data. Area and shading can be used in many ways to highlight important the important interactions. These visual techniques intuitive up to four or five categorical dimensions. This allows you to identify very complex interactions.
 
-The poisson distribution has just one paramater $\lambda$ for the rate, and both the mean and variance are equal to this parameter.
+*Note, the 'strucplot framework' that is the heart of the vcd package requires learning a new approach to structuring data and writing plotting routines compared to previous experience with R. However, it's worth the effort for the intuitive views of complex relationships in the data.*
 
-```{r dpois}
-set.seed(12345)
+### When would I use this?
 
-KL <- expand.grid(k = 0 : 20, lambda = c(1, 5, 10, 20))
-pois_df <- data.frame(KL, prob = dpois(KL$k, KL$lambda))
-pois_df$lambda = factor(pois_df$lambda)
+The exploratory data analysis phase of any project. Do this early on in the project once you've gathered and cleaned up your data enough to start sense-making. It doesn't make any sense to reach for more complex tools before you know what you've got.
 
-xyplot(prob ~ k | lambda, data = pois_df,
-       type = c("h", "p"), pch = 16, lwd = 2
-       , cex = 1.25, layout = c(4, 1)
-       , main = expression(paste("Poisson Distribution by ", lambda))
-       , xlab = list("Number of events (k)", cex = 1.25)
-       , ylab = list("Probability", cex = 1.25))
+Spending some time "getting to know" a new dataset and developing some intuition about important features and interactions will pay off by revealing a better strategy when it comes to modelling.
+
+### Case Study: Exploring the relationships between hair colour, eye colour and gender.
+
+The HairEyeColor dataset ships with base R. It is a survey of 592 statistics students at the University of Delaware in 1974. It is a 3-D array cross-tabulating the observations. The variables and their levels are as follows:
+
+```{r describe_haireye, echo=FALSE}
+hr_desc <- data.frame(No=1:3
+                      , Name=c("Hair", "Eye", "Sex")
+                      , Levels=c("Black, Brown, Red, Blond", "Brown, Blue, Hazel, Green", "Male, Female"))
+kable(hr_desc)
 ```
 
-The negative binomial distribution has two parameters, rate (size) and dispersion ($\frac{1}{\mathrm{prob}}$). The mean is equal to the rate, but the variance is always greater than the rate. It can appear as a right skewed poisson distribution and behaves as if a poisson distribution is being sampled over a period of time while the rate is non-constant.
+For now, we will ignore the sex of each individual by collapsing the 3-D table down to 2-D, and re-order the table from dark to light eye colour (hair is already in that order).
 
-```{r dnbin}
-XN <- expand.grid(k = 0 : 20, n = c(1, 5, 10, 20), p = c(0.4, 0.2))
-nbin_df <- data.frame(XN, prob = dnbinom(XN$k, XN$n, XN$p))
-nbin_df$n <- factor(nbin_df$n)
-nbin_df$p <- factor(nbin_df$p)
+```{r haireye_prep}
+# ignore gender for now
+haireye <- margin.table(HairEyeColor, 1:2)
 
-xyplot(prob ~ k | n + p, data = subset(nbin_df, p == 0.4)
-       , main = "Neg. binom by size and prob"
-       , xlab = list("Number of failures (k)", cex = 1.25)
-       , ylab = list("Probability",  cex = 1.25)
-       , type = c("h", "p"), pch = 16, lwd = 2
-       , strip = strip.custom(strip.names = TRUE)
-)
-xyplot(prob ~ k | n + p, data = subset(nbin_df, p == 0.2)
-       , main = "Neg. binom by size and prob"
-       , xlab = list("Number of failures (k)", cex = 1.25)
-       , ylab = list("Probability",  cex = 1.25)
-       , type = c("h", "p"), pch = 16, lwd = 2
-       , strip = strip.custom(strip.names = TRUE)
-)
-
+# re-arrange order of eye colour from dark to light
+# it's already correct for hair
+haireye <- as.table(haireye[, c("Brown", "Hazel", "Green", "Blue")])
+haireye
 ```
 
-However, poisson and negative binomial data can look very similar. Identifying the best match and estimating the parameters is essential for accurate event monitoring and reporting results.
+Big numbers and small numbers stand out but the table still has 16 cells which is a lot to take in at once. It's not immediately obvious what the relationships are.
 
-### Case Study in Text Analysis: Marker word frequency
+A naive approach might be to produce a bar plot of the counts by groups.
 
-The following technique has been used to determine if documents are written by same or different authors. Distributions of marker words are fit to text that is known to come from one author. 
+```{r not_intuitive}
+# non-intuitive views
+# this is what the Frequency form looks like
+as.data.frame(haireye)
 
-Any previously unseen text can then be tested against these known distributions to determine if they are written by the same author.
+# You're forced to favour one variable over the other
 
-In this simple case study, we will use the Federalist dataset to analyse how many times the word 'may' appear per 200 word block. This is a marker word, that could help identify an author by how often they use it. Most studies of this kind would compare results across many such tests with different words.
+# Does eye colour depend on hair colour
+barplot(haireye, beside = TRUE, legend = TRUE)
 
-Notes:
-
-* The rate is occurences/200 words. 
-* The expected count is the rate parameter $\times$ 200
-* Plotting the square root transformation of the frequency provides more detail on the small numbers in the right tail of these charts. Log transformation would also work but the rootogram visualisations use square root transformation by default. So, this is also applied manually where necessary for comparison.
-
-```{r federalist}
-data("Federalist", package = "vcd")
-Federalist
-sum(Federalist) # number of blocks
-sum(expand.dft(as.data.frame(Federalist))$nMay) # number of occurences
-mean(expand.dft(as.data.frame(Federalist))$nMay)
-var(expand.dft(as.data.frame(Federalist))$nMay)
+# Or does hair colour depend on eye colour
+# pivot the other way
+barplot(aperm(haireye, 2:1), beside = TRUE, legend = TRUE)
 ```
 
-The discriptive stats showed a slightly higher variance but we don't know if this is significant. What's the right test to use here?
+It's hard to compare bars across groups, because your eye has to jump to find each member. A more intuitive view would preserve the table structure and not condition one feature on the other:
 
-A very naive approach is to take the mean and visually compare a poisson distribution with this value for $\lambda$ against the actual data.
-
-```{r pois_naive_expected}
-barplot(sqrt(200 * dpois(0:6, mean(expand.dft(as.data.frame(Federalist))$nMay)
-))
-        , main = "Number of text blocks by Number of Occurrences\nnaive expected values"
-        , ylab = "sqrt(Naive Expected)"
-        , xlab = "Occurences of 'may'"
-        , col = "lightblue")
+```{r tiles}
+tile(haireye) # vcd package
 ```
 
-The actual data looks a bit like this distribution. Could this be a good fit? How can we easily compare them?
+Hopefully, you can see this simple concept of putting categorical features on the axes and plotting a shape whose area is proportional to the count in each cell. A pattern of some kind is self-evident. Let's formally report it with a $\chi^2$ test. The null in this case is just like our second example above.
 
-```{r barplot_actual}
-barplot(sqrt(Federalist)
-        , main = "Number of text blocks by Number of Occurrences\nactual values"
-        , xlab = "Occurences of 'may'"
-        , ylab = "Sqrt(Actual)"
-        , col = "lightgreen"
-)
+```{r hr_chisq}
+chisq.test(haireye)
 ```
 
-Use the goodfit function in the vcd package to estimate the parameters and compare the fit of different distributions. It provides hanging rootograms that are intuitive views of discrete goodness of fit testing.
+With such a small p-value, we have very strong evidence to reject the null hypothesis that there is no relationship between hair colour and eye colour. We can now assume they are interacting, but what exactly is the pattern? The only thing the test tells us is there is a very significant difference between actual and expected counts.
 
-First, a poisson fit using maximum likelihood - exactly what we've just done, but with bells on it:
+Let's use a mosaic plot to visualise expected counts as if there were no interaction between the features. Here's what no interaction looks like:
 
-```{r fed_goodfit_pois_chisq}
-Fed_fit0 <- goodfit(Federalist, type = "poisson")
-# This will show the rate parameter, estimated by Maximum Likelihood
-# This estimate is the same as the naive mean. This is to be expected when fitting a poisson.
-unlist(Fed_fit0$par)
+```{r hr_expected}
+# visualising expected counts for independent features
+expected = independence_table(haireye)
+round(expected, 1)
 
-# This will show a Chi-Square Goodness of fit test against the expected values of a poisson distribution with this parameter
-summary(Fed_fit0)
+mosaic(expected
+      , shade = TRUE
+      , main="Expected frequencies"
+      , labeling = labeling_values
+      , value_type = "expected"
+      , gp_text = gpar(fontface = 1))
 ```
 
-The $\chi^2$ test is very strong evidence to reject the null hypothesis. This sample is not from a poisson distribution with rate = sample mean. However, we don't know much about what caused this result. However, the rootogram plot makes it very clear what the problem is by showing how the variable diverges from the expectations. 
+Note that the areas are proportional to the counts. The grid lines between the tiles are dead straight because each cell is proportional to the marginal totals.
 
-```{r fed_goodfit_pois_plot}
-plot(Fed_fit0, type = "hanging", shade = TRUE)
+Here's what actuals looks like:
+
+```{r hr_actuals}
+# visualising actual counts for independent features
+mosaic(haireye
+      , gp = shading_Friendly # shade = TRUE
+      , main="Actual frequencies"
+      , labeling = labeling_values
+      , value_type = "observed"
+      , gp_text = gpar(fontface = 1)
+      , rot_labels = c(top = -20))
 ```
 
-By hanging each bar top down from the expected distribution, we just need to look at how the bottoms of the bars miss the $y = 0$ reference line. This is visually much more intuitive than comparing the tops of the bars to a curve. The contribution of each bar to the $\chi^2$ statistic is also made clear by the shading.
+Here the grid lines between cells are no longer continuous because the cells are out of proportion with the marginal totals. Unexpectedly large cells show that the combination is over-represented and small cells the reverse.
 
-We can try fitting a poisson using a different estimation method, minimising the $\chi^2$ errors instead:
+The beauty of the mosaic chart is the use of shading to highlight the the cells that differed the most from expected counts. We refer to these differences as the residuals. This shading scheme uses bold fills for statistically significant residuals but also adds an outline colour to highlight the sign of even the non-significant residuals. This is visually very powerful. There is a clear "opposite corner" pattern.
 
-```{r fed_goodfit_pois_mchisq}
-Fed_fit0 <- goodfit(Federalist, type = "poisson", method = "MinChisq")
-# This has found a different value for the rate parameter.
-unlist(Fed_fit0$par)
+Let's take this up to all three dimensions now.
 
-# This will show a Chi-Square Goodness of fit test against the expected values of a poisson distribution with this parameter
-summary(Fed_fit0)
+```{r hec}
+# showing all three dimensions
+HEC <- HairEyeColor[, c("Brown", "Hazel", "Green", "Blue"), ]
+mosaic(HEC
+      , gp = shading_Friendly # shade = TRUE
+      , main="Actual frequencies"
+      , labeling = labeling_values
+      , value_type = "observed"
+      , gp_text = gpar(fontface = 1), rot_labels = c(right = -45)) 
+
+# with a different pivot
+mosaic(aperm(HEC, 3:1)
+      , gp = shading_Friendly # shade = TRUE
+      , main="Actual frequencies"
+      , labeling = labeling_values
+      , value_type = "observed"
+      , gp_text = gpar(fontface = 1), rot_labels = c(right = -45)) 
 ```
 
-The $\chi^2$ test is also very strong evidence against the null.
+We can still see the general opposite corner pattern, and now some additional detail regarding gender. 
 
-```{r fed_goodfit_pois_mplot}
-plot(Fed_fit0, type = "hanging", shade = TRUE)
+This type of plot is still fairly intuitive at 4 dimensions. Take a look at the Titanic dataset. Who died and who survived? Did it depend on some combination of passenger class, gender and age?
+
+```{r titanic_mosaic}
+mosaic(aperm(Titanic, c(4, 2, 1, 3))
+      , gp = shading_Friendly # shade = TRUE
+      , main="Who Died and Who Survived the Titanic?"
+      , labeling = labeling_values
+      , value_type = "observed"
+      , gp_text = gpar(fontface = 1), rot_labels = c(right = -45))
 ```
 
-The rootogram shows that the residuals have just been shuffled around so they balance better by sign. Clearly poisson is not the right choice.
+More dimensions can be added by other means. A cotabplot allows you to stratify over a further dimension. It looks just like facet_wrap() and facet_grid() in ggplot2, or a lattice/trellis plot.
 
-Next, fit a negative binomial fit:
+In this example, with just default settings, two categories have been stratified. You could add further dimensions if you have more and still make sense of the plots.
 
-```{r fed_goodfit_nbinom}
-Fed_fit1 <- goodfit(Federalist, type = "nbinomial")
-# This will show the rate and dispersion parameters, estimated by Maximum Likelihood
-# prob is the rate. Here it's very close to the poisson mean
-# size is the dispersion
-unlist(Fed_fit1$par)
-summary(Fed_fit1)
-
-plot(Fed_fit1, type = "hanging", shade = TRUE)
+```{r titanic_cotab}
+# This doesn't appear to render well on the HTML output
+# note, this is all the defaults except the shading!
+cotabplot(Titanic, gp = shading_Friendly)
 ```
 
-We have estimated some parameters and the $\chi^2$ goodness of fit test result is not significant. We accept that null hypothesis that this sample is from a negative binomial distribution having the estimated parameters. The plot speaks for itself now that the bars drop close to the $y = 0$ reference line, with only insignificant residuals.
-
-We will now assess a different body of text.
-
-```{r nonFederalist}
-# Some dummy data
-nonFederalist <- structure(c(135L, 71L, 36L, 17L, 8L, 4L, 1L), .Dim = 7L, .Dimnames = structure(list(
-    c("0", "1", "2", "3", "4", "5", "6")), .Names = "nMay"), class = "table")
-nonFederalist
-sum(nonFederalist) # number of blocks
-sum(expand.dft(as.data.frame(nonFederalist))$nMay) # number of occurences
-mean(expand.dft(as.data.frame(nonFederalist))$nMay)
-var(expand.dft(as.data.frame(nonFederalist))$nMay)
-barplot(sqrt(nonFederalist)
-        , main = "Number of text blocks by Number of Occurrences\nunseen text"
-        , xlab = "Occurences of 'may'"
-        , ylab = "Sqrt(Actual)"
-        , col = "lightgreen"
-)
-```
-
-The descriptive statistics are a bit larger than Federalist, but is this significant? We can test it properly using the parameters from the goodfit object we just created:
-
-```{r fit_nonfed_chisq}
-# we pass in our fitted parameter list this time
-Fed_fit3 <- goodfit(nonFederalist, type = "nbinomial", par = Fed_fit1$par)
-summary(Fed_fit3)
-```
-
-The $\chi^2$ result is significant, and strong evidence that this new text is not from the same distribution. However, on it's own, the test can't provide detailed information.
-
-```{r fit_nonfed_plot}
-plot(Fed_fit3, type = "hanging", shade = TRUE)
-```
-
-The rootogram hangs the frequency bars off the expected distribution, which this time is fixed with parameters we estimated on the original text. We can now see from the pattern of residuals that the word 'may' seems to appear more frequently in this text. Specifically, the tail, with 3-5 occurences per 200 words is fatter, while blocks where this word is absent are fewer.
+There is a whole methodology around loglinear modeling which allows you to make statistical hypothesis tests about complex n-way relationships between features. We'll leave that for another time.
 
 ### Talking points
 
-* Does this test imply that the second text was not written by the same author?
-* Text analysis has come a long way since these statistical techniques were developed. What are some newer, more sophisticated methods?
-* Can you describe, in plain English, what is the implication of finding a poisson distributed word frequency? Why is the negative binomial a more natural distribution for word frequency? Hints:
-    * Frequency is the number of times the word appeared per block of 200 words
-    * Review the notes about these two distributions at the top of this task
+* Recall that we've made sure the categories are ordered light to dark. There is a very pronounced "opposite corner" relationship. What do you think that reveals (in plain English) and does this fit with intuition?
+* Can you see a difference between males and females? If so, can you explain it? *Note, the original study was a self-reporting survey. The participants categorised themselves.*
+* Why do the grid lines remain aligned horizontally between hair categories on both actual frequencies mosaics?
+* If you discovered important relationships in categorical features during your exploratory phase, how would this affect your Machine Learning strategy?
 
-## Task 2: 2-way analysis for reporting results for multi-class classification of ordinal variables.
+## Task: Analysing a Confusion Matrix from Ordinal Classification
 
-In Machine Learning, the standard way to assess the quality of a supervised classification model is with a confusion matrix. This is a two way table comparing True and Predicted class labels. When classes are well balanced, it's easy to measure accuracy as $\frac{\sum(\textit{diagonal})}{\sum(\textit{total})}$. When they're out of balance you can have a situation such as this:
+### What is this for?
+
+In Machine Learning, the standard way to assess the quality of a supervised classification model is with a confusion matrix. This is a two way table comparing True and Predicted class labels. If you are trying to classify ordered labels, the relationship between the labels matters. Standard accuracy measures penalise near disagreements as if they were full errors. This leads to accuracy estimates that are far too conservative; You might throw out a fairly good model, when there is a good chance you can improve it.
+
+Let's take a step back and recap confusion matrices; when classes are well balanced, it's easy to measure accuracy over a confidence matrix as $\frac{\sum(\textit{diag})}{\sum(\textit{total})}$. When they're out of balance you can have a situation such as this:
 
 The ratio of class 1 : class 2 is 9:1. Predict every instance as class 1 and you will get 90% accuracy. This not a useful result!
 
-So we use Cohen's $\kappa$ statistic to weight according to the occurence of each class in the data. $\kappa = 1$ means perfect agreement while $\kappa = 0$ means no better than chance agreement. The above example would score $\kappa = 0$. 
+So we use Cohen's $\kappa$ statistic to weight according to the occurrence of each class in the data. $\kappa = 1$ means perfect agreement while $\kappa = 0$ means no better than chance agreement. The above example would score $\kappa = 0$. 
 
-That's all well and good, but what if class labels are related to each other? If they have a natural order such as [*least, middle, most*] then you have an additional complication. You want your model to predict as well as possible, but to make an off-by-one error isn't as bad as a full opposite error. Also, the classification distribution might be biased, giving different skew and kurtosis (flattened or polarised) by the predictive model.
+That's all well and good, but what class labels are related to each other by a natural order such as [*least, middle, most*] then you have an additional complication. You want your model to predict as well as possible, but to make an off-by-one error isn't as bad as a full opposite error. Also, the classification distribution might be biased, giving different skew and kurtosis (flattened or polarised) by the predictive model.
 
-If you can detect this kind of bias, you can correct it! This is where agreement plots can help. They are based on statistical techniques for comparing two raters, such as two doctors, two film critics, two wine critics etc, to valdiate ratings and analyse these kinds of bias.
+If you can detect this kind of bias, you can correct it! This is where agreement plots can help. They are based on statistical techniques for comparing two raters, such as two doctors, two film critics, two wine critics etc, to validate ratings and analyse these kinds of bias.
+
+### When would I use this?
+
+After training an ordinal classification model, when you want to evaluate its performance.
 
 ### Case Study: Comparing inter-rater agreement.
 
-In the following example we show how two sets of diagnoses for Multiple Sclerosis compare between two doctors, one in Winnipeg and one in New Orleans. The classes are ordinal ratings:
+In the following example we compare two sets of diagnoses for the same patients suspected of suffering from Multiple Sclerosis. The diagnoses were made by two neurologists, one in Winnipeg and the  other in New Orleans:
 
 1. Certain
 1. Probable
@@ -479,111 +558,21 @@ With a little intervention, guided by this information, these two raters could b
 * Have you worked with, or can you think of an ordinal classification problem?
 * How could you use the Bangdiwala statistic *during* training to improve alignment?
 
-## Task 3: n-way analysis for exploring relationships between features
+## Task: Dimension Reduction and Clustering
 
-Exploratory Analysis is an essential, and frequently overlooked step as practitioners are often keen to use the latest tooling or are under pressure to deliver results. However, spending some time "getting to know" a new dataset and developing some intiution about important features and interactions will pay off by revealing a better strategy when it comes to modelling.
+### What is this for?
 
-Mosic plots are very powerful for visualising categorical data. Everything is based on the simple concept that your categorical features of interest are on the axes, and the area of plotted shapes is proportional to the count or frequency at the intersection of each category. Then, shading can be used in many ways to highlight important interactions. Today we will only use the mosaic plot, but this is the most useful as it scales well to 3 or even 4 dimensions.
+Most Machine Learning practitioners are familiar with dimension reduction. It can radically simplify and compress a dataset, making it easier to handle and train models on. Many dimension reduction techniques also double up as unsupervised learning methods i.e. clustering. This is useful as an end in itself, as well as being an additional tool for exploratory data analysis: multidimensional data is projected into 2-D which makes it intuitive to visualise.
 
-*Note, the 'strucplot framework' that is the heart of the vcd package requires learning a new approach to structuring data and writing plotting routines compared to previous experience with R. However, it's worth the effort for the intuitive views of complex relationships in the data.*
+If you already know something about Principle Components Analysis, this is similar, but not quite the same. Remember, in DDA, the "dimensions" we want to reduce or cluster are not only the features, but also the categories within each feature. PCA identifies new dimensions that capture the most variance. The equivalent concept in Correspondence Analysis is the "inertia" of cells in the table with the largest and smallest numbers. The only way to really describe what's happening is to see some examples.
 
-### Case Study: Exploring the relationships between hair colour, eye colour and gender.
+Correspondence Analysis is an advanced topic. In particular, the way you pivot the multidimensional array controls the analysis. This requires some understanding of the data manipulation and modeling techniques. For today, we will just focus on interpreting the plots.
 
-The HairEyeColor dataset ships with base R. It is a survey of 592 statistics students at the University of Delaware reported by Snee (1974). It is a 3-D array cross-tabulating the observations. The variables and their levels are as follows:
+### When would I use this?
 
-```{r describe_haireye, echo=FALSE}
-hr_desc <- data.frame(No=1:3
-                      , Name=c("Hair", "Eye", "Sex")
-                      , Levels=c("Black, Brown, Red, Blond", "Brown, Blue, Hazel, Green", "Male, Female"))
-kable(hr_desc)
-```
+The exploratory data analysis phase of any project. Do this early on in the project once you've gathered and cleaned up your data enough to start sense-making.
 
-For now, we will ignore the sex of each individual by collapsing the 3-D table down to 2-D, and re-order the table from dark to light eye colour (hair is already in that order).
-
-```{r haireye}
-haireye <- margin.table(HairEyeColor, 1:2)
-haireye <- as.table(haireye[, c("Brown", "Hazel", "Green", "Blue")])
-haireye
-```
-
-Big numbers and small numbers stand out but the table still has 16 cells which is a lot to take in at once. It's not immediately obvious what the relationships are.
-
-Let's recall our old friend the $\chi^2$ test, which compares actual counts to expected counts. A non significant result would indicate that the two variables have no relationship (the null hypothesis).
-
-```{r hr_chisq}
-chisq.test(haireye)
-```
-
-The null hypothesis is rejected. There is a very significant difference between actual and expected counts. Obviously there is a relationship between these two features, but we still don't know what it is.
-
-Expected counts is what we would get if there were no interaction between the features. Here's what no interaction looks like:
-
-```{r hr_expected}
-expected = independence_table(haireye)
-round(expected, 1)
-
-mosaic(expected
-      , shade = TRUE
-      , main="Expected frequencies"
-      , labeling = labeling_values
-      , value_type = "expected"
-      , gp_text = gpar(fontface = 1))
-```
-
-Note that the areas are proportional to the counts. The grid lines between the tiles are dead straight because each cell is proportional to the marginal totals.
-
-Here's what actuals looks like:
-
-```{r hr_actuals}
-mosaic(haireye
-      , gp = shading_Friendly # shade = TRUE
-      , main="Actual frequencies"
-      , labeling = labeling_values
-      , value_type = "observed"
-      , gp_text = gpar(fontface = 1)
-      , rot_labels = c(top = -20))
-```
-
-Here the grid lines between cells are no longer continuous because the cells are out of proportion with the marginal totals. Unexpectedly large cells show that the combination is over-represented and small cells the reverse.
-
-The beauty of the mosaic chart is the use of shading to highlight the $\chi^2$ residuals. This shading scheme uses fills for statistically significant residuals but also adds an outline colour to highlight the sign of even the non-significant residuals. This is visually very powerful. There is a clear "opposite corner" pattern.
-
-Let's take this up to all three dimensions now.
-
-```{r hec}
-HEC <- HairEyeColor[, c("Brown", "Hazel", "Green", "Blue"), ]
-mosaic(HEC
-      , gp = shading_Friendly # shade = TRUE
-      , main="Actual frequencies"
-      , labeling = labeling_values
-      , value_type = "observed"
-      , gp_text = gpar(fontface = 1), rot_labels = c(right = -45)) 
-```
-
-We can still see the general opposite corner pattern, and now some additional detail regarding gender. 
-
-This type of plot is still fairly intuitive at 4 dimensions. More dimensions can be added by other means. There are several options:
-
-* A cotabplot allows you to stratify over a further dimension. It looks just like facet_wrap() and facet_grid() in ggplot2, or a lattice/trellis plot.
-* Mosaics can be featured in a plot matrix or pairs plot, where each feature is compared pairwise and inset on a grid. This is the closest thing to a splom in lattice, or a correlogram for continuous variables.
-* Manipulate the grid spacing between dimensions to put more white space between several 4-way mosaics and a 5th dimensional slice. This is probably the most  fiddly option as you usually have to manage all the label placements, or suppress them.
-
-There is a whole methodology around loglinear modeling which allows you to make statistical hypothesis tests about complex n-way relationships between features. There is enough material to write several books on this topic!
-
-### Talking points
-
-* Recall that we've made sure the categories are ordered light to dark. There is a very pronounced "opposite corner" relationship. What do you think that reveals (in plain English) and does this fit with intuition?
-* Can you see a difference between males and females? If so, can you explain it? *Note, the original study was a self-reporting survey. The participants categorised themselves.*
-* Why do the grid lines remain aligned horizontally between hair categories on both actual frequencies mosaics?
-* If you discovered important relationships in categorical features during your exploratory phase, how would this affect your Machine Learning strategy?
-
-## Task 4: Correspondence Analysis for dimension reduction and clustering
-
-Most Machine Learning practitioners are familiar with dimension reduction. It can radically simplify and compress a dataset, making it easier to handle and train models on. Many dimension reduction techniques also double up as unsupervised learning methods i.e. clustering. This is useful as an end in itself, as well as being an additional tool for exploratory data analysis: multi-dimensional data is projected into 2-D which makes it intuitive to visualise.
-
-If you already know something about Principle Components Analysis, this is similar, but not quite the same. Remember, in DDA, the "dimensions" we want to reduce or cluster are not only the features, but also the categories within each feature. PCA identifies new dimensions that capture the most variance. The equivalent concept in Correspondence Analysis is the "inertia" of the new dimensions.
-
-Correspondence Analysis is an advanced topic. In particular, the way you pivot the multi-dimensional array controls the analysis. This requires some understanding of the data manipulation and modeling techniques. For today, we will just focus on interpreting the plots.
+You can also use this method for unsupervised ML. If several features are well clustered you can replace them with the real valued dimensions that this method returns as output. This may convert several categorical dimensions into just a couple of numeric ones that might better suit the next stage of your project.
 
 ### Case Study: Analysis of Audience Viewing Data
 
@@ -676,9 +665,9 @@ margin.table(TV3, 2)
 t(TV3[4,,]) # Thursday
 ```
 
-It turns out that 9pm is the most viewed timeslot throughout the week, independent of day or network. Yet, notice how the NBC audience numbers dip just a little for that time slot on Thursday, even though they still have far greater numbers than either of the other two channels. This dip in numbers runs counter to the "Friends, Seinfeld and ER" effect which has competely dominated the analysis, and so it has also been captured on Dimension 1.
+It turns out that 9pm is the most viewed time slot throughout the week, independent of day or network. Yet, notice how the NBC audience numbers dip just a little for that time slot on Thursday, even though they still have far greater numbers than either of the other two channels. This dip in numbers runs counter to the "Friends, Seinfeld and ER" effect which has completely dominated the analysis, and so it has also been captured on Dimension 1.
 
-Dimension 2 is forced to capture differences between ABC and CBS schedules on the other nights as well as possible, but there is undoubtedly more detail to untagle.
+Dimension 2 is forced to capture differences between ABC and CBS schedules on the other nights as well as possible, but there is undoubtedly more detail to untangle.
 
 Now we have identified this difficulty, we can tackle the problem by making a joint analysis of time and day. This will produce a plot with a point for each time slot over the week and should tease apart the effect of people channel hopping from the "Friends, Seinfeld and ER" effect. It turns out to be very easy to do (see the code for yourself).
 
@@ -706,7 +695,257 @@ t(TV3[1,,]) # Monday
 TV3[,2,1] # Every day, 9pm, ABC
 ```
 
+We'll take a look at one more of these, from the 4-D Titanic data set again.
+
+```{r Titanic_mca}
+# one more mca from a 4-D dataset
+# this is simpler than it looks
+# all the magic happens here
+titanic.mca <- mjca(Titanic)
+
+# saving the plot object supplies the coordinate positions
+res <- plot(titanic.mca, labels=0, pch='.', cex.lab=1.2)
+
+# extract factor names and levels
+coords <- data.frame(res$cols, titanic.mca$factors)
+
+# everything else is handling base R plotting stuff
+cols <- c("blue", "red", "brown", "black")
+nlev <- c(4,2,2,2)
+points(coords[,1:2], pch=rep(16:19, nlev), col=rep(cols, nlev), cex=1.2)
+pos <- c(3,1,1,3)
+text(coords[,1:2], labels=coords$level, col=rep(cols, nlev), pos=rep(pos,nlev), cex=1.1, xpd=TRUE)
+coords <- coords[ order(coords[,"factor"], coords[,"Dim1"]), ]
+lines(Dim2 ~ Dim1, data=coords, subset=factor=="Class", lty=1, lwd=2, col="blue")
+lines(Dim2 ~ Dim1, data=coords, subset=factor=="Sex",  lty=1, lwd=2, col="red")
+lines(Dim2 ~ Dim1, data=coords, subset=factor=="Age",  lty=1, lwd=2, col="brown")
+lines(Dim2 ~ Dim1, data=coords, subset=factor=="Survived",  lty=1, lwd=2, col="black")
+
+legend("topleft", legend=c("Class", "Sex", "Age", "Survived"),
+       title="Factor", title.col="black",
+       col=cols, text.col=cols, pch=16:19,
+       bg="gray95", cex=1.2)
+```
+
+Note that the two category (binary) features all pass through the origin.
+
+```{r Titanic.ca}
+# Simple ca works on two dimensions
+# pivot table of Titanic
+Titanic_piv <- structable(~Class+Sex+Survived+Age, Titanic)
+Titanic_piv
+# all the work happens here
+Titanic.ca <- ca(as.matrix(Titanic_piv))
+
+# plot and save the object to get the coords for line segments
+res <- plot(Titanic.ca)
+segments(0, 0, res$cols[,1], res$cols[,2], col = "red", lwd = 1)
+segments(0, 0, res$rows[,1], res$rows[,2], col = "blue", lwd = 0.5, lty = 3)
+```
+
+
 As you can see Correspondence Analysis is an extremely powerful dimension reduction and clustering tool for categorical data.
+
+### Talking Points
+
+* What can you infer from the Titanic Correspondence Analysis Plots?
+* Compare the two types of Correspondence Analysis (simple and multiple/joint)
+
+## Task: 1-way analysis (goodness of fit) for monitoring the frequency of events.
+
+Count, or frequency data has many varied applications from event monitoring to text analysis. 1-way analysis uses distributions to compare different samples, and monitor for changes in event frequency.
+
+For the first task we will look at two common distributions for count data and compare two samples.
+
+The Poisson distribution has just one parameter $\lambda$ for the rate, and both the mean and variance are equal to this parameter.
+
+```{r dpois}
+set.seed(12345)
+
+KL <- expand.grid(k = 0 : 20, lambda = c(1, 5, 10, 20))
+pois_df <- data.frame(KL, prob = dpois(KL$k, KL$lambda))
+pois_df$lambda = factor(pois_df$lambda)
+
+xyplot(prob ~ k | lambda, data = pois_df,
+       type = c("h", "p"), pch = 16, lwd = 2
+       , cex = 1.25, layout = c(4, 1)
+       , main = expression(paste("Poisson Distribution by ", lambda))
+       , xlab = list("Number of events (k)", cex = 1.25)
+       , ylab = list("Probability", cex = 1.25))
+```
+
+The negative binomial distribution has two parameters, rate (size) and dispersion ($\frac{1}{\mathrm{prob}}$). The mean is equal to the rate, but the variance is always greater than the rate. It can appear as a right skewed Poisson distribution and behaves as if a Poisson distribution is being sampled over a period of time while the rate is non-constant.
+
+```{r dnbin}
+XN <- expand.grid(k = 0 : 20, n = c(1, 5, 10, 20), p = c(0.4, 0.2))
+nbin_df <- data.frame(XN, prob = dnbinom(XN$k, XN$n, XN$p))
+nbin_df$n <- factor(nbin_df$n)
+nbin_df$p <- factor(nbin_df$p)
+
+xyplot(prob ~ k | n + p, data = subset(nbin_df, p == 0.4)
+       , main = "Neg. binom by size and prob"
+       , xlab = list("Number of failures (k)", cex = 1.25)
+       , ylab = list("Probability",  cex = 1.25)
+       , type = c("h", "p"), pch = 16, lwd = 2
+       , strip = strip.custom(strip.names = TRUE)
+)
+xyplot(prob ~ k | n + p, data = subset(nbin_df, p == 0.2)
+       , main = "Neg. binom by size and prob"
+       , xlab = list("Number of failures (k)", cex = 1.25)
+       , ylab = list("Probability",  cex = 1.25)
+       , type = c("h", "p"), pch = 16, lwd = 2
+       , strip = strip.custom(strip.names = TRUE)
+)
+
+```
+
+However, Poisson and negative binomial data can look very similar. Identifying the best match and estimating the parameters is essential for accurate event monitoring and reporting results.
+
+### Case Study in Text Analysis: Marker word frequency
+
+The following technique has been used to determine if documents are written by same or different authors. Distributions of marker words are fit to text that is known to come from one author. 
+
+Any previously unseen text can then be tested against these known distributions to determine if they are written by the same author.
+
+In this simple case study, we will use the Federalist dataset to analyse how many times the word 'may' appear per 200 word block. This is a marker word, that could help identify an author by how often they use it. Most studies of this kind would compare results across many such tests with different words.
+
+Notes:
+
+* The rate is occurrences/200 words. 
+* The expected count is the rate parameter $\times$ 200
+* Plotting the square root transformation of the frequency provides more detail on the small numbers in the right tail of these charts. Log transformation would also work but the rootogram visualisations use square root transformation by default. So, this is also applied manually where necessary for comparison.
+
+```{r federalist}
+data("Federalist", package = "vcd")
+Federalist
+sum(Federalist) # number of blocks
+sum(expand.dft(as.data.frame(Federalist))$nMay) # number of occurences
+mean(expand.dft(as.data.frame(Federalist))$nMay)
+var(expand.dft(as.data.frame(Federalist))$nMay)
+```
+
+The descriptive stats showed a slightly higher variance but we don't know if this is significant. What's the right test to use here?
+
+A very naive approach is to take the mean and visually compare a Poisson distribution with this value for $\lambda$ against the actual data.
+
+```{r pois_naive_expected}
+barplot(sqrt(200 * dpois(0:6, mean(expand.dft(as.data.frame(Federalist))$nMay)
+))
+        , main = "Number of text blocks by Number of Occurrences\nnaive expected values"
+        , ylab = "sqrt(Naive Expected)"
+        , xlab = "Occurences of 'may'"
+        , col = "lightblue")
+```
+
+The actual data looks a bit like this distribution. Could this be a good fit? How can we easily compare them?
+
+```{r barplot_actual}
+barplot(sqrt(Federalist)
+        , main = "Number of text blocks by Number of Occurrences\nactual values"
+        , xlab = "Occurences of 'may'"
+        , ylab = "Sqrt(Actual)"
+        , col = "lightgreen"
+)
+```
+
+Use the goodfit function in the vcd package to estimate the parameters and compare the fit of different distributions. It provides hanging rootograms that are intuitive views of discrete goodness of fit testing.
+
+First, a Poisson fit using maximum likelihood - exactly what we've just done, but with bells on it:
+
+```{r fed_goodfit_pois_chisq}
+Fed_fit0 <- goodfit(Federalist, type = "poisson")
+# This will show the rate parameter, estimated by Maximum Likelihood
+# This estimate is the same as the naive mean. This is to be expected when fitting a poisson.
+unlist(Fed_fit0$par)
+
+# This will show a Chi-Square Goodness of fit test against the expected values of a poisson distribution with this parameter
+summary(Fed_fit0)
+```
+
+The $\chi^2$ test is very strong evidence to reject the null hypothesis. This sample is not from a Poisson distribution with rate = sample mean. However, we don't know much about what caused this result. However, the rootogram plot makes it very clear what the problem is by showing how the variable diverges from the expectations. 
+
+```{r fed_goodfit_pois_plot}
+plot(Fed_fit0, type = "hanging", shade = TRUE)
+```
+
+By hanging each bar top down from the expected distribution, we just need to look at how the bottoms of the bars miss the $y = 0$ reference line. This is visually much more intuitive than comparing the tops of the bars to a curve. The contribution of each bar to the $\chi^2$ statistic is also made clear by the shading.
+
+We can try fitting a Poisson using a different estimation method, minimising the $\chi^2$ errors instead:
+
+```{r fed_goodfit_pois_mchisq}
+Fed_fit0 <- goodfit(Federalist, type = "poisson", method = "MinChisq")
+# This has found a different value for the rate parameter.
+unlist(Fed_fit0$par)
+
+# This will show a Chi-Square Goodness of fit test against the expected values of a poisson distribution with this parameter
+summary(Fed_fit0)
+```
+
+The $\chi^2$ test is also very strong evidence against the null.
+
+```{r fed_goodfit_pois_mplot}
+plot(Fed_fit0, type = "hanging", shade = TRUE)
+```
+
+The rootogram shows that the residuals have just been shuffled around so they balance better by sign. Clearly Poisson is not the right choice.
+
+Next, fit a negative binomial fit:
+
+```{r fed_goodfit_nbinom}
+Fed_fit1 <- goodfit(Federalist, type = "nbinomial")
+# This will show the rate and dispersion parameters, estimated by Maximum Likelihood
+# prob is the rate. Here it's very close to the poisson mean
+# size is the dispersion
+unlist(Fed_fit1$par)
+summary(Fed_fit1)
+
+plot(Fed_fit1, type = "hanging", shade = TRUE)
+```
+
+We have estimated some parameters and the $\chi^2$ goodness of fit test result is not significant. We accept that null hypothesis that this sample is from a negative binomial distribution having the estimated parameters. The plot speaks for itself now that the bars drop close to the $y = 0$ reference line, with only insignificant residuals.
+
+We will now assess a different body of text.
+
+```{r nonFederalist}
+# Some dummy data
+nonFederalist <- structure(c(135L, 71L, 36L, 17L, 8L, 4L, 1L), .Dim = 7L, .Dimnames = structure(list(
+    c("0", "1", "2", "3", "4", "5", "6")), .Names = "nMay"), class = "table")
+nonFederalist
+sum(nonFederalist) # number of blocks
+sum(expand.dft(as.data.frame(nonFederalist))$nMay) # number of occurences
+mean(expand.dft(as.data.frame(nonFederalist))$nMay)
+var(expand.dft(as.data.frame(nonFederalist))$nMay)
+barplot(sqrt(nonFederalist)
+        , main = "Number of text blocks by Number of Occurrences\nunseen text"
+        , xlab = "Occurences of 'may'"
+        , ylab = "Sqrt(Actual)"
+        , col = "lightgreen"
+)
+```
+
+The descriptive statistics are a bit larger than Federalist, but is this significant? We can test it properly using the parameters from the goodfit object we just created:
+
+```{r fit_nonfed_chisq}
+# we pass in our fitted parameter list this time
+Fed_fit3 <- goodfit(nonFederalist, type = "nbinomial", par = Fed_fit1$par)
+summary(Fed_fit3)
+```
+
+The $\chi^2$ result is significant, and strong evidence that this new text is not from the same distribution. However, on it's own, the test can't provide detailed information.
+
+```{r fit_nonfed_plot}
+plot(Fed_fit3, type = "hanging", shade = TRUE)
+```
+
+The rootogram hangs the frequency bars off the expected distribution, which this time is fixed with parameters we estimated on the original text. We can now see from the pattern of residuals that the word 'may' seems to appear more frequently in this text. Specifically, the tail, with 3-5 occurrences per 200 words is fatter, while blocks where this word is absent are fewer.
+
+### Talking points
+
+* Does this test imply that the second text was not written by the same author?
+* Text analysis has come a long way since these statistical techniques were developed. What are some newer, more sophisticated methods?
+* Can you describe, in plain English, what is the implication of finding a Poisson distributed word frequency? Why is the negative binomial a more natural distribution for word frequency? Hints:
+    * Frequency is the number of times the word appeared per block of 200 words
+    * Review the notes about these two distributions at the top of this task
 
 # Summary
 
@@ -714,7 +953,7 @@ As you can see Correspondence Analysis is an extremely powerful dimension reduct
 * We have discussed how these techniques can be applied to tasks that are typical in many practical Machine Learning projects.
     * Text/Event Analysis
     * Comparing True and Predicted Classes for Ordinal data
-    * Exploratory Data Analyisis
+    * Exploratory Data Analysis
     * Dimension Reduction and Clustering
 * We have shown that simple R functions and visual analyses are extremely powerful and you don't have to dive deep into stats to get the benefits.
 * Nearly all the resources you need to take the next steps yourself are available in the "vcd" and "vcdExtra" package for R, R~/vignette("vcd")
@@ -723,5 +962,3 @@ As you can see Correspondence Analysis is an extremely powerful dimension reduct
 In our rush to use the latest developments and technologies in Machine Learning and Deep Learning, it's easy forget that none of it would be possible without pioneering statistical research of previous decades. Most of this work is still relevant to everyday problems in Machine Learning practice, and it's always worth a review of the foundations before reaching for the newest tools.
 
 Above all, never under-estimate the power of visual analytics. A well thought out plot can save you paragraphs of explanation.
-
-# References
