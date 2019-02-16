@@ -58,10 +58,13 @@ The examples are all in R. These are the libraries we'll be using. That's all I 
 # ...you need to re-run this chunk.
 library(knitr)
 library(lattice)
+library(ggplot2)
 library(vcd)
 library(vcdExtra)
-library(gmodels)
 library(ca)
+library(randomForest)
+library(gmodels)
+library(mvtnorm)
 ```
 
 ## Credits
@@ -139,6 +142,86 @@ Predictably, the term refers to analysis of discrete data! DDA is a set of tools
 
 ## The Basic Tools of DDA
 
+### Plots, Charts and Graphs
+
+The most powerful set of tools we have is our eyes and brains. Humans are pretty damn impressive when it comes to pattern matching. The trick is to choose the right chart that reveals the right information for the task in hand. A chart is often acceptable as statistical evidence, provided it is enhanced with robust statistical information (confidence intervals, significance test results, etc). More importantly, a good chart really doesn't need much explaining.
+
+The next three charts are examples of what we tend to reach for when we have a mix of numeric and discrete data. However, you won't see again these again beyond this introduction because they are **not** the best tools for DDA.
+
+```{r not_DDA}
+# set the random number generator same every time
+set.seed(123)
+
+# a discrete value to match the groups
+n <- 100
+grp <- rep(c(1, 2), each = n)
+
+# a random discrete value
+rnd <- sample(c(1, 2)
+              , replace = TRUE
+              , size = 200)
+numvars1 <- rmvnorm(n, c(0, 0)
+                    , sigma = matrix(c(3,2,2,3)
+                                     , ncol=2))
+
+numvars2 <- rmvnorm(n, c(1, 1)
+                    , sigma = matrix(c(1,0.5,0.5,4)
+                                     , ncol=2))
+numvars <- rbind(numvars1, numvars2)
+
+# a discrete value based on a soft linear boundary
+noise <- rnorm(2*n, mean = 0, sd = 0.5)
+fam <- ifelse(rowSums(numvars) + noise > 3, 1, 2)
+
+# plot, using graphic options to separate the discrete classes
+plot(numvars, col = fam, pch = rnd, cex = grp
+     , main = "scatterplot with size, shape and colour options"
+     , sub = "typical options for stratifying numeric data by discrete data"
+     , xlab = "x"
+     , ylab = "y")
+
+# take row sums then table-apply the sum by each group
+grp_total <- tapply(rowSums(numvars), grp, sum)
+rnd_total <- tapply(rowSums(numvars), rnd, sum)
+fam_total <- tapply(rowSums(numvars), fam, sum)
+
+# totals barplot
+barplot(c(grp_total, rnd_total, fam_total)
+        , col="lightgray", border = 1:2
+        , main="barplot with border options"
+        , sub = "numeric data stratified on groups")
+
+# classic box plot
+# note that you can't tell
+# that grp is the actual groups
+# and rnd is a random labelling
+boxplot(rowSums(numvars)~grp*rnd, border=1:2
+     , main = "boxplot distribution analysis by groups"
+     , sub = "typical options for stratifying numeric data by discrete data"
+     , xlab = "grp1 grp2 rnd1 rnd2"
+     , ylab = "row sum value")
+
+```
+
+The plots above place all the focus on the numeric variables, slicing it into groups by the various discrete variables. We would like charts where the focus is on the discrete variables; something that provides more information about the discrete variables themselves.
+
+```{r count_data}
+# length will count the members
+grp_count <- tapply(rowSums(numvars), grp, length)
+rnd_count <- tapply(rowSums(numvars), rnd, length)
+fam_count <- tapply(rowSums(numvars), fam, length)
+
+# counts barplot
+barplot(c(grp_count, rnd_count, fam_count)
+        , col="lightgray", border = 1:2
+        , main="barplot with border options"
+        , sub="counts by groups")
+```
+
+By counting the group members, the numeric variable is out of the picture entirely. The only trace of it is that *fam* group was based on a linear combination of the simulated data. The *grp* group was fixed at exactly the number of group members, while *rnd* was drawn at random with even odds. It's very easy, using this visual reference, to link the count data to the information we already know.
+
+I will provide much more interesting examples a little later on.
+
 ### Tables
 
 Specifically, contigency tables or crosstabs. The categorical features form the axes, and each cell contains the total number of individuals at the intersection of each feature. Here are some examples:
@@ -199,11 +282,15 @@ And here's one we would use to show that there is an interaction between feature
 
 ### Log Odds Ratios
 
-Most people with some stats knowledge are aware of the log odds $\log(\frac{p}{1-p})$ from logistic regression. The odds is itself a ratio $o = \frac{p}{1-p}$, so if the log odds ratio is $\log(\frac{o_1}{o_2})$ there's a pattern here, which is simply
+Most people with some stats knowledge are aware of the log odds $\log(\frac{p}{1-p})$ from logistic regression. The odds is itself the ratio $o = \frac{p}{q}$ for $p$, the proportion of yes and $q$, the proportion of no in any binary situation, like a coin flip. 
+
+The odds is converted back to a probability by $p = \frac{o}{1+o}$ which means we can connect the number of times something has happened back to the probability that it happens, and compare these probabilities across categories to see if they show any patterns.
+
+An odds ratio is simply a ratio of odds from two binary systems $\frac{o_1}{o_2}$ and the log odds ratio is $\log(\frac{o_1}{o_2})$. There's a pattern here:
 
 $$\log(\frac{a}{b})$$
 
-Why do we like to take the log of a fraction? First of all, I'm going to set two conditions: $a$ and $b$ are always positive, and $b$ can never be $0$. Now, think about what happens as 1. $a$ and $b$ are equal, 2. $a$ gets much bigger than $b$ and 3. $b$ gets much bigger than $a$.
+Let's think about why we like to take the log of a fraction. First of all, I'm going to set two conditions: $a$ and $b$ are always positive, and $b$ can never be $0$. Now, think about what happens as 1. $a$ and $b$ are equal, 2. $a$ gets much bigger than $b$ and 3. $b$ gets much bigger than $a$.
 
 ```{r log ratios}
 p <- c(0.05, .1, .25, .50, .75, .9, .95)
@@ -218,9 +305,15 @@ b <- c(1000, 1, 1000)
 log(a/b)
 ```
 
-Hopefully you can see that while fractions and ratios are centred on $1$ when $a = b$, they have this nasty habit of flying off towards $\infty$ as $a$ gets much bigger, while squashing closer and closer to $0$ as $b$ gets much bigger. The relationship between $a$ and $b$ depends on their position in the fraction itself. That's really unhelpful.
+Hopefully you can see that while fractions and ratios are centred on $1$ when $a = b$, they have this nasty habit of flying off towards $\infty$ as $a$ gets much bigger, while squashing closer and closer to $0$ as $b$ gets much bigger. Comparing counts or ratios of $a:b$ over the levels of third variable $c$, becomes very problematic because we would have to handle to of the most difficult situations in computing - potentially infinite and infinitesimal numbers - in the same operation. That's really unhelpful.
 
-The $\log(\frac{a}{b})$ is centred on zero and completely linear and symmetrical. Swapping the positions of $a$ and $b$ in the fraction simply switches the sign. What a beautiful thing that is! The log function is very special for lots of other reasons, but in DDA it is very helpful to have this neat way to manage ratios. DDA often needs to compare ratios of the numbers in contingency tables along the rows, columns and higher dimensions. The odds can be expressed as a probability which means we can connect the number of times something has happened back to the probability that it happens and compare these probabilities across categories to see if they show any patterns.
+Here are the top three reasons the log odds ratio is so useful in DDA:
+
+* The $\log(\frac{a}{b})$ is centred on zero and completely linear and symmetrical. Swapping the positions of $a$ and $b$ in the fraction simply switches the sign of the result. What a beautiful thing that is! 
+* Massive and tiny numbers are both transformed into a very limited domain: Anything outside the range $-3 < x < 3,\ x = \log(\frac{a}{b})$ reveals enormous relative differences between $a$ and $b$. Again, that's very intuitive.
+* Confidence intervals for statistical results are also symmetrical in the log odds domain, facilitating comparisons between levels of a third feature $c$ as both visually intuitive and statistically robust.
+
+The log function is very special for lots of other reasons but, in DDA especially, it is very helpful to have this neat way to manage ratios.
 
 That's all I want to say about the log ratio and the log odds ratio right now. We'll come back to it in later sections.
 
@@ -458,7 +551,130 @@ There is a whole methodology around loglinear modeling which allows you to make 
 * Why do the grid lines remain aligned horizontally between hair categories on both actual frequencies mosaics?
 * If you discovered important relationships in categorical features during your exploratory phase, how would this affect your Machine Learning strategy?
 
-## Task: Analysing a Confusion Matrix from Ordinal Classification
+## Task: Unpacking a Confusion Matrix by Important Features
+
+### What is this for?
+
+After model training. Use this method to deepen your understanding of how well your model is performing.
+
+This task can be guided by two things. Firstly, if you've done a good exploratory analysis, you will have developed an understanding of which features could be important. Secondly, several well known ML models can output feature importance information in their own right, saving you all the hard work.
+
+However, these feature importance measures tend to be crude. The feature is important, but why? All feature importance really tells you is that the model would be less accurate if you excluded that feature. It doesn't tell anything how that feature is helping.
+
+### When would I use this?
+
+When you are evaluating your classification model performance with a confusion matrix and you have a reason to believe that one or more categorical variables contributed to good/bad perforemance.
+
+### Case Study: Using Random Forest Importance
+
+We will now do some ML and train a random forest model to predict whether each family in a sample will receive a nursery place from the Slovenian state. The target variable is *decision*
+
+```{r nursery_data}
+set.seed(54321)
+nursery <- read.csv(gzfile("nursery.csv.gz"))
+summary(nursery)
+```
+ 
+All the features are categorical. Random forest ought to perform very well on this without any effort.
+
+```{r randfor}
+# train test split
+idx <- sample(c(TRUE, FALSE)
+              , size = nrow(nursery)
+              , prob = c(0.7, 0.3)
+              , replace = TRUE)
+
+nurs_train <- nursery[idx, ]
+nurs_test <- nursery[!idx, ]
+
+# train rf accepting all the defaults
+nurs_rf <- randomForest(decision~., data=nurs_train)
+
+# get the predictions on new data
+nurs_preds <- predict(nurs_rf, newdata = nurs_test)
+
+# confusion matrix
+confmat <- with(nurs_test, table(nurs_preds, decision))
+confmat
+```
+
+Indeed, the model performs well and needed no effort to tune. Ideally, I would like visualise the confusion matrix directly, but it turns out to be a bit of a fussy task in R. I've looked online for any other way to do it, and I can only find some customised ggplot examples. 
+Let's compare the different plotting options from R:
+
+```{r plot_confmat}
+# base
+# there are no words to describe how horrible this is
+image(confmat)
+
+# lattice
+# wrong diagonal aspect, horrible colours
+levelplot(confmat)
+# same
+levelplot(t(confmat))
+
+# ggplot
+# too much fuss, also the wrong diagonal
+# first, convert to frequency form
+confmat_freq <- as.data.frame(confmat)
+# next, tell ggplot what to do
+ggplot(aes(x=nurs_preds
+                 , y=decision
+                 , fill=Freq)
+             , data=confmat_freq) +
+  geom_tile()
+```
+
+I'm not sure if Michael Friendly and the programmers of vcd meant for it to be used this way, but strucplot options are ideal for confusion matrices.
+
+```{r strucplot_confmat}
+# strucplot sieve
+# the shading is a bit too dense on the diagonal
+# there are lots of options
+# it might be possible to customise
+sieve(confmat, labeling = labeling_values)
+
+# strucplot tile - I like this one best
+tile(confmat, labeling = labeling_values)
+```
+
+There is a little bit of confusion among the classes *priority* and *spec_prior*. The model also struggles with the minority *very_recom* class, preferring to label these as *priority*.
+
+One of the most useful features of random forest models is the ability to report variable importance. This measures, for each feature, how much worse the model would do if that feature wasn't available at training time. There is a custom plot function for this.
+
+```{r nurs_varimp}
+varImpPlot(nurs_rf)
+```
+
+We can see from this plot that the health variable seems to hold a majority of the predictive power for this model. Almost all the information is in this and the next three most important variables.
+
+What do we do now we know that? We investigate further! There is always a next question. Now we've become expert in handling 3-D tables, let's stratify (slice) the confusion matrix by this health variable and see what's going on.
+
+```{r nurs_firstvar}
+# unfortunately, there is no cotabplot option for tile
+# this has to be done manually to make any sense
+
+# from the summary, health can take one of three values
+# not_recom, priority, recommended
+
+cm_3d <- with(nurs_test
+              , table(nurs_preds, decision, health))
+
+re <- cm_3d[,,"recommended"]
+pr <- cm_3d[,,"priority"]
+nr <- cm_3d[,,"not_recom"]
+
+tile(re, labeling = labeling_values)
+tile(pr, labeling = labeling_values)
+tile(nr, labeling = labeling_values)
+```
+
+This last plot is very striking. One level of the health feature has all the information required to completely classify one of the class labels. It's not surprising that health is by far the most important variable! However, it turns out to be very uninteresting from a ML point of view. A very simple program could do almost as well as this random forest. 
+
+A situation like this is quite unusual in the real world, and truthfully, should be identified during exploratory analysis. In binary classification, this could never happen, else there would be no ML to do. Problems are often organised to that the two classes are balanced. How could this slicing technique help?
+
+
+
+## Task: Analysing a Confusion Matrix for Ordinal Classification
 
 ### What is this for?
 
