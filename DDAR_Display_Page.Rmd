@@ -1,12 +1,11 @@
 ---
-title: "Discrete Data Analysis: A Friendly Guide for Machine Learning Practitioners, with Examples in R"
+title: "Discrete Data Analysis: A Friendly Guide to Visualising Categorical Data for Machine Learning Practitioners, with Examples in R"
 author: "Julian Hatwell"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
     toc: true
     number_sections: true
-    theme: united
 ---
 
 ```{r setup, include=FALSE}
@@ -26,7 +25,7 @@ knitr::opts_template$set(
 
 Welcome. If you're reading this, you probably attended a workshop or talk I've given on this topic. If you're here by accident, let me fill you in.
 
-I wanted to write a plain English, quick start guide for anyone working with data sets where many, most or all of the variables are discrete (nominal, ordinal, frequency, counts, events). The reason I wanted to write it is because nothing like it existed when I really needed it some years ago. I had to strain every synapse to get to grips with it at the time. Perhaps that was a blessing in disguise as the work paid off, in many more ways than I had expected. Anyway, I hope this helps anyone out there who just wants to develop some intuition in this area of statistics, without getting bogged down in notation, theory and proofs.
+I wanted to write a plain English, quick start guide for anyone working with data sets where many, most or all of the features are discrete (nominal, ordinal, frequency, counts, events). The reason I wanted to write it is because nothing like it existed when I really needed it some years ago. I had to strain every synapse to get to grips with it at the time. Perhaps that was a blessing in disguise as the work paid off, in many more ways than I had expected. Anyway, I hope this helps anyone out there who just wants to develop some intuition in this area of statistics, without getting bogged down in notation, theory and proofs.
 
 These notes are for you if:
 
@@ -65,6 +64,7 @@ library(ca)
 library(randomForest)
 library(gmodels)
 library(mvtnorm)
+library(ROSE)
 ```
 
 ## Credits
@@ -203,7 +203,7 @@ boxplot(rowSums(numvars)~grp*rnd, border=1:2
 
 ```
 
-The plots above place all the focus on the numeric variables, slicing it into groups by the various discrete variables. We would like charts where the focus is on the discrete variables; something that provides more information about the discrete variables themselves.
+The plots above place all the focus on the numeric features, slicing it into groups by the various discrete features. We would like charts where the focus is on the discrete features; something that provides more information about the discrete features themselves.
 
 ```{r count_data}
 # length will count the members
@@ -282,7 +282,7 @@ And here's one we would use to show that there is an interaction between feature
 
 ### Log Odds Ratios
 
-Most people with some stats knowledge are aware of the log odds $\log(\frac{p}{1-p})$ from logistic regression. The odds is itself the ratio $o = \frac{p}{q}$ for $p$, the proportion of yes and $q$, the proportion of no in any binary situation, like a coin flip. 
+Most people with some stats knowledge are aware of the log odds from logistic regression. The odds is itself is the ratio $o = \frac{p}{1-p}$ for $p$, the proportion of yes and $1-p$, the proportion of no in any binary situation, such as a coin flip. The log odds is simply  $\log(\frac{p}{1-p})$.
 
 The odds is converted back to a probability by $p = \frac{o}{1+o}$ which means we can connect the number of times something has happened back to the probability that it happens, and compare these probabilities across categories to see if they show any patterns.
 
@@ -311,7 +311,7 @@ Here are the top three reasons the log odds ratio is so useful in DDA:
 
 * The $\log(\frac{a}{b})$ is centred on zero and completely linear and symmetrical. Swapping the positions of $a$ and $b$ in the fraction simply switches the sign of the result. What a beautiful thing that is! 
 * Massive and tiny numbers are both transformed into a very limited domain: Anything outside the range $-3 < x < 3,\ x = \log(\frac{a}{b})$ reveals enormous relative differences between $a$ and $b$. Again, that's very intuitive.
-* Confidence intervals for statistical results are also symmetrical in the log odds domain, facilitating comparisons between levels of a third feature $c$ as both visually intuitive and statistically robust.
+* A log odds ratio $\phi = \log(\frac{o_a}{o_b})$ is an approximately normally distributed statistic with a mean of $\phi$ and a standard error  $\mathrm{SE}_{\phi} = \sqrt{\frac{1}{p_a} + \frac{1}{1 - p_a} + \frac{1}{p_b} + \frac{1}{1 - p_b}}$. This means that confidence intervals for of odds ratios are also symmetrical in the log, facilitating visually intuitive and statistically robust comparisons of the odds ratio of two binary features $a$ and $b$ between levels of a third feature $c$.
 
 The log function is very special for lots of other reasons but, in DDA especially, it is very helpful to have this neat way to manage ratios.
 
@@ -377,7 +377,7 @@ This is a non-exhaustive list of common statistical tasks and questions that req
 3. n-way analysis:
     * Visualising multidimensional tables for exploratory analysis
     * Statistical hypothesis testing in n-way tables
-    * Correspondence Analysis, a dimension reduction technique, like PCA and clustering for categorical variables!
+    * Correspondence Analysis, a dimension reduction technique, like PCA and clustering for categorical features!
 4. Explanatory and Predictive modeling:
     * Any of the above, measuring the magnitude of interactions
     * Any of the above, measuring the effect of covariates and co-factors
@@ -410,7 +410,7 @@ Spending some time "getting to know" a new dataset and developing some intuition
 
 ### Case Study: Exploring the relationships between hair colour, eye colour and gender.
 
-The HairEyeColor dataset ships with base R. It is a survey of 592 statistics students at the University of Delaware in 1974. It is a 3-D array cross-tabulating the observations. The variables and their levels are as follows:
+The HairEyeColor dataset ships with base R. It is a survey of 592 statistics students at the University of Delaware in 1974. It is a 3-D array cross-tabulating the observations. The features and their levels are as follows:
 
 ```{r describe_haireye, echo=FALSE}
 hr_desc <- data.frame(No=1:3
@@ -440,12 +440,12 @@ A naive approach might be to produce a bar plot of the counts by groups.
 # this is what the Frequency form looks like
 as.data.frame(haireye)
 
-# You're forced to favour one variable over the other
-
-# Does eye colour depend on hair colour
-barplot(haireye, beside = TRUE, legend = TRUE)
+# You're forced to favour one variable over the other?
 
 # Or does hair colour depend on eye colour
+barplot(haireye, beside = TRUE, legend = TRUE)
+
+# Does eye colour depend on hair colour?
 # pivot the other way
 barplot(aperm(haireye, 2:1), beside = TRUE, legend = TRUE)
 ```
@@ -559,15 +559,11 @@ After model training. Use this method to deepen your understanding of how well y
 
 This task can be guided by two things. Firstly, if you've done a good exploratory analysis, you will have developed an understanding of which features could be important. Secondly, several well known ML models can output feature importance information in their own right, saving you all the hard work.
 
-However, these feature importance measures tend to be crude. The feature is important, but why? All feature importance really tells you is that the model would be less accurate if you excluded that feature. It doesn't tell anything how that feature is helping.
+However, these feature importance measures tend to be crude. The feature is important, but why? All feature importance really tells you is that the model would be less accurate if you excluded that feature. It doesn't tell anything about how that feature is helping or hindering.
 
-### When would I use this?
+Before moving on, let's develop some intuition about this and show how the vcd package can help.
 
-When you are evaluating your classification model performance with a confusion matrix and you have a reason to believe that one or more categorical variables contributed to good/bad perforemance.
-
-### Case Study: Using Random Forest Importance
-
-We will now do some ML and train a random forest model to predict whether each family in a sample will receive a nursery place from the Slovenian state. The target variable is *decision*
+We will do some ML and train a random forest model to predict whether families in Slovenia should receive a state sponsored nursery place. The target variable is *decision*
 
 ```{r nursery_data}
 set.seed(54321)
@@ -577,7 +573,7 @@ summary(nursery)
  
 All the features are categorical. Random forest ought to perform very well on this without any effort.
 
-```{r randfor}
+```{r nurs_randfor}
 # train test split
 idx <- sample(c(TRUE, FALSE)
               , size = nrow(nursery)
@@ -613,10 +609,12 @@ levelplot(confmat)
 levelplot(t(confmat))
 
 # ggplot
-# too much fuss, also the wrong diagonal
-# first, convert to frequency form
+# too much fuss
+# default colours not subtle enough to show error
+# also the wrong diagonal
+# First, convert to frequency form
 confmat_freq <- as.data.frame(confmat)
-# next, tell ggplot what to do
+# Next, tell ggplot what to do
 ggplot(aes(x=nurs_preds
                  , y=decision
                  , fill=Freq)
@@ -645,7 +643,7 @@ One of the most useful features of random forest models is the ability to report
 varImpPlot(nurs_rf)
 ```
 
-We can see from this plot that the health variable seems to hold a majority of the predictive power for this model. Almost all the information is in this and the next three most important variables.
+We can see from this plot that the health variable seems to hold a majority of the predictive power for this model. Almost all the information is in this and the next three most important features.
 
 What do we do now we know that? We investigate further! There is always a next question. Now we've become expert in handling 3-D tables, let's stratify (slice) the confusion matrix by this health variable and see what's going on.
 
@@ -668,11 +666,239 @@ tile(pr, labeling = labeling_values)
 tile(nr, labeling = labeling_values)
 ```
 
-This last plot is very striking. One level of the health feature has all the information required to completely classify one of the class labels. It's not surprising that health is by far the most important variable! However, it turns out to be very uninteresting from a ML point of view. A very simple program could do almost as well as this random forest. 
+This last plot is very striking. One level of the health feature has all the information required to completely classify one of the class labels. It's not surprising that health is by far the most important variable! However, it turns out to be very uninteresting from a ML point of view. A very simple program could do almost as well as this random forest.
 
-A situation like this is quite unusual in the real world, and truthfully, should be identified during exploratory analysis. In binary classification, this could never happen, else there would be no ML to do. Problems are often organised to that the two classes are balanced. How could this slicing technique help?
+A situation like this is quite unusual in the real world, and truthfully, should be identified during exploratory analysis. The sensible thing to do is probably to filter out all the instances in this health category and build a new model. However, it serves as a good example to show that confusion matrix results are not as informative as they first appear.
 
+In binary classification, this could never happen. There would be no ML to do if one feature was a perfect representation of the class labels. Furthermore, problems are often organised so that the two classes are balanced and this should remain the case in the confusion matrix of a well performing model. How could this slicing technique help?
 
+### When would I use this?
+
+When you are evaluating your classification model performance with a confusion matrix and you have a reason to believe that one or more categorical features contributed to good/bad perforemance. You need to investigate further to improve model performance or correct for any bias.
+
+You want to use a non-paramtric model, such as a tree based method but your situation is sensitive to unbalanced loss. For example, a medical or financial model where either false positives or false negatives are especially costly. You need a detailed understanding of features and categories where the model is more or less confident.
+
+### Case Study: Investigating High False Negative Rate in a Credit Rating data Using Random Forest Feature Importance
+
+We will now do a random forest binary classification. The german data set is a credit rating data set, where individuals are given either a *good* or *bad* rating. Incorrect *good* predictions cost the business much more, because of the risk of loan defaults. Incorrect *bad* results only result in a small reduction of revenue from loan interest payments in the long term.
+
+Let's refer to correct identification of a *bad* result as a true positive outcome. When there is a high proportion of *bad* instances that are incorrectly classified as good, this gives rise to a high false negative rate and is very undesirable.
+
+We could crudely force the model to be more cautious over all, whereby it will make more false positive results (incorrect *bad* ratings). However, it would be better if we could develop a more targetted strategy to improve the false negative rate.
+
+```{r german_randfor}
+german <- read.csv(gzfile("german.csv.gz"))
+summary(german)
+
+set.seed(54321)
+# train test split
+idx <- sample(c(TRUE, FALSE)
+              , size = nrow(german)
+              , prob = c(0.7, 0.3)
+              , replace = TRUE)
+
+german_train <- german[idx, ]
+german_test <- german[!idx, ]
+
+# make the training data balanced in case over fits good
+# originally 300 bad, 700 good
+german_train <- ovun.sample(rating~.
+                      , data=german_train
+                      , method = "over"
+                      , p = 0.5)$data
+
+# restore the factor levels to correct order
+german_train$rating <- relevel(german_train$rating, "bad") 
+
+# train rf accepting all the defaults
+german_rf <- randomForest(rating~., data=german_train)
+
+# get the predictions on new data
+german_preds <- predict(german_rf, newdata = german_test)
+
+# confusion matrix
+confmat <- with(german_test, table(german_preds, rating))
+confmat
+```
+
+The confusion matrix looks ok, but how does it really do, in light of our high cost of false negatives?
+
+```{r main_cm_stats}
+# accuracy
+sum(diag(confmat))/sum(confmat)
+
+# False Negative Rate FN / (TP + FN)
+confmat[2, 1]/sum(confmat[, 1])
+
+# False Ommision Rate FN / (TN + FN)
+confmat[2, 1]/sum(confmat[2, ])
+```
+
+So it's not a great model, but let's assume it's better than what the company was doing before and move on. These numbers are useful but we want an intuitive visual representation for this, so what works best?
+
+A rose plot is a surprisingly intuitive choice for viewing a binary confusion matrix, which is a $2 \times 2$ table. Rose plots are a twist on the pie chart. Pie charts divide a circle into segments whose internal angle $\theta$ is proportional to the category count. A rose plot does the reverse. The segments all have angle $\theta = \frac{2 \pi}{N}$, for $N$ segments. For a binary matrix with $4$ options $\theta = \frac{\pi}{2} = 90^o$. Then, the radius length  varies in proportion with the count of each cell in the table. This has a useful property that $\mathit{count} \propto \sqrt{\mathit{area}}$, which means the rose plot will gracefully handle numbers that differ by one or two orders of magnitude.
+
+Most rose plot options available in R are basically bar charts that are transformed into polar coordinates. Even for a $2 \times 2$ matrix, this would be fiddly to code because it requires converting the matrix to a frequency data frame and then forcing the plot to arrange the four cell values in a way that preserves the confusion matrix shape.
+
+The vcd package contains a specialised fourfold plot whose purpose is to compare several $2 \times 2$ tables over the levels of a third feature. It is intended for a different purpose than what we want to do, but the behaviour can be easily changed with a parameter to the plot function call that  makes it perfectly suited for our needs.
+
+```{r german_fourf}
+# fourfold plot preserves the table structure it was given
+# however, default balances the areas to compare odds ratios no matter the individual count values
+# that's not what we want
+fourfold(confmat)
+
+# std = "all.max" suppresses balancing the areas
+# behaves like a rose plot
+fourfold(confmat, std = "all.max")
+```
+
+The rose plot makes it visually clear that the model is great a classifying true negatives, but is predicting too many negatives over all and misclassifying more true prositives than it correctly identifies. Such a high FNR is not acceptable. Why is the model not doing well?
+
+If a categorical feature $c$ has a high importance, it would suggest that the model has encoded how the ratio of *good* and *bad* ratings is different over the different levels of $c$ and can make use of that information in predicting.
+
+Let's use feature importance to break down the results. This data set had a mix of numeric and categorical features.
+
+```{r german_varimp}
+varImpPlot(german_rf)
+```
+
+First thing to note is that there is no elbow point where we could safely make the model simpler by just picking the top performing features.
+
+Secondly, and very fortunately for us, several categorical features are considered important, including the top one. Three of them are in the top six. Of course, it doesn't matter if categorical variables don't have high importance. Any numeric variable could be binned/discretised, and then have this technique applied.
+
+As we want to customise the fourfold plot a little, we can make a new function to save repeating the code each time.
+
+```{r my_rose}
+# customise the fourfold plot
+my_rose <- function(cm) {
+  fourfold(cm
+         , std = "all.max" # mimic a 4 way rose plot
+         , conf_level = 0 # suppress confint tests, not useful here
+         , color = c("#FF0000", "#000080") # need to force colours due to suppressing confint test
+         )
+}
+
+# while we're at it, let's make a function to get the numeric statistics that we want from the conf mat
+my_confmat_stats <- function(cm) {
+  cf_stats <- list()
+  for (i in 1:(dim(cm)[3])) {
+    
+    category <- dimnames(cm)[[3]][i]
+    acc <- sum(diag(cm[ , , i]))/sum(cm[ , , i])
+    
+    # False Negative Rate FN / (TP + FN)
+    fnr <- cm[2, 1, i]/sum(cm[ , 1, i])
+    
+    # False Ommision Rate FN / (TN + FN)
+    fomr <- cm[2, 1, i]/sum(cm[2, , i])
+    
+    # collect
+    cf_stats[[category]] <-
+      c(acc=acc, fnr=fnr, fomr=fomr)
+  }
+  
+  return(t(as.data.frame(cf_stats)))
+}
+```
+
+We'll now make rose plots of the confusion matrix, stratified by the top categorical features. Try to relate the numeric stats to the patterns in the plots.
+
+```{r rose_chk}
+# stratify the conf mat by chk
+confmat_c <- with(german_test
+                  , table(german_preds
+                          , rating
+                          , chk))
+
+# view the stats then plot
+my_confmat_stats(confmat_c)
+my_rose(confmat_c)
+```
+
+Here we can see a pattern. When an instance has *chk* $\in \{ \mathrm{A13}, \mathrm{A14} \}$, the model almost always classifies as *good*. One instance in each case was incorrectly classified as *bad*. Instances having *chk* $\in \{ \mathrm{A11}, \mathrm{A12} \}$ have a rather high FNR at $\approx 0.5$
+
+We now proceed with the next two most important categorical features, but leave any further diagnostics as talking points.
+
+```{r rose_others}
+confmat_p <- with(german_test
+                  , table(german_preds
+                          , rating
+                          , pps))
+
+my_confmat_stats(confmat_p)
+my_rose(confmat_p)
+
+confmat_h <- with(german_test
+                  , table(german_preds
+                          , rating
+                          , crhis))
+
+my_confmat_stats(confmat_h)
+my_rose(confmat_h)
+
+confmat_e <- with(german_test
+                  , table(german_preds
+                          , rating
+                          , emp))
+
+my_confmat_stats(confmat_e)
+my_rose(confmat_e)
+```
+
+The *dur* feature is integer valued, with 22 unique levels. This technique scales usefully even up to this number of strata! While the exact details would take some time to analyse fully, there are obvious visible patterns.
+
+```{r my_rose_dur}
+confmat_d <- with(german_test
+                  , table(german_preds
+                          , rating
+                          , dur))
+my_rose(confmat_d)
+
+```
+
+This technique can be scaled to more dimensions, with some sacrifices, using log odds ratios. It is a little less intuitive at first, but can be very useful once you have a clear understanding of that the log odds ratio is telling you.
+
+Recall from the introduction how this statistic was defined. The formula can be rearranged such that
+
+$$\phi = \frac{\mathrm{TP} \times \mathrm{TN}}{\mathrm{FP} \times \mathrm{FN}}$$
+
+The log odds ratio, therefore is larger as the model becomes more accurate. A model that does no better than a random guess has a log odds ratio that is not significantly different from zero. *Note, this approach is not robust to very unbalanced classes.*
+
+A the log odds ratio of a stratified confidence matrix can easily be plotted to see which categories of the stratifying factor provide better accuracy. This will
+scale up to two additional dimensions, using position, colour and plot character. Such plots are be challenging to interpret and only works well if the features have two or three levels each at the most. However, under those circumstances, interesting interactions may be revealed.
+
+*Note, all the following plots are suppressing the confidence interval. The reason for this is that the data set is rather small and slicing along multiple dimensions results in low counts. Large standard errors can dominate the plot.*
+
+```{r lodds_ratio_plots}
+plot(loddsratio(confmat_c), confidence = FALSE)
+plot(loddsratio(confmat_e), confidence = FALSE)
+
+# higher dimensional
+confmat_ce <- with(german_test
+                   , table(german_preds
+                           , rating
+                           , chk
+                           , emp))
+
+confmat_ce <- with(german_test
+                   , table(german_preds
+                           , rating
+                           , chk
+                           , emp))
+plot(loddsratio(confmat_ce), confidence = FALSE)
+
+# back to one stratum, but many levels
+plot(loddsratio(confmat_d), confidence = FALSE)
+```
+
+### Talking Points
+
+* How would you diagnose the patterns in the further rose plots above?
+* Can you determine any interesting interactions between *chk* and *emp* from the log odds ratio plots?
+* How could you use information from the stratified confusion matrices to improve the model?
+* How could you use this information to improve the model?
+* Can you think of other ways to use this information?
 
 ## Task: Analysing a Confusion Matrix for Ordinal Classification
 
@@ -694,7 +920,7 @@ If you can detect this kind of bias, you can correct it! This is where agreement
 
 After training an ordinal classification model, when you want to evaluate its performance.
 
-### Case Study: Comparing inter-rater agreement.
+### Case Study: Comparing Inter-Rater Agreement for Severity of Multiple Sclerosis.
 
 In the following example we compare two sets of diagnoses for the same patients suspected of suffering from Multiple Sclerosis. The diagnoses were made by two neurologists, one in Winnipeg and the  other in New Orleans:
 
@@ -803,7 +1029,7 @@ You could use it as a stand alone model. This is an unsupervised clustering meth
 
 The audience viewing data from Neilsen Media Research for the week starting November 6, 1995
 
-It is a 3-D array cross-tabulating the viewing figures for three networks, between 8-11pm, Monday to Friday. The variables and their levels are as follows:
+It is a 3-D array cross-tabulating the viewing figures for three networks, between 8-11pm, Monday to Friday. The features and their levels are as follows:
 
 ```{r describe_tv, echo=FALSE}
 tv_desc <- data.frame(No=1:3

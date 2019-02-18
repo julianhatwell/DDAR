@@ -732,3 +732,54 @@ LRstats(hec.glm)
 exp(coef(hec.glm)["bbf"]) # odds ratio of females reporting blue eyes and brown hair compared to men
 ```
 
+```{r echo=FALSE}
+library(plotrix)
+
+Ymd.format <- "%Y/%m/%d"
+gantt.info <- list(
+  labels=c("Microsoft SQL DBA", "Software Dev. Manager", "Scrum Master", "Scrum Product Owner", "Programme Director", "Business Analyst", "Data Science MOOC", "Big Data Analytics MOOC",  "Freelance", "Ltd Company", "MSc BI (Distinction)", "PhD Machine Learning")
+  , starts=as.POSIXct(strptime(
+    c("2004/01/01", "2009/07/01", "2010/01/01", "2011/01/01", "2013/01/01", "2015/01/01", "2015/05/01", "2016/03/01", "2016/04/01", "2016/05/01", "2016/09/01", "2017/09/01")
+    , format=Ymd.format))
+  , ends=as.POSIXct(strptime(
+    c("2009/06/30", "2017/06/08", "2017/07/15", "2017/06/27", "2017/07/04", "2017/07/09", "2017/07/15", "2017/08/23", "2017/09/20", "2017/09/21", "2017/09/29", "2020/07/01")
+    , format=Ymd.format))
+  , priorities=c(1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1))
+
+years <- seq(as.Date("2004/01/01"
+                      , "%Y/%m/%d")
+              , by="year"
+              , length.out=18)
+
+yearslab <- format(years, format="%Y")
+
+vgridpos <- as.POSIXct(years, format=Ymd.format)
+
+vgridlab <- yearslab
+
+timeframe <- as.POSIXct(
+  c("2004/01/01", "2021/01/01")
+  , format=Ymd.format)
+
+gantt.chart(gantt.info
+            , taskcolors =
+              c("darkgoldenrod1"
+              , "red")
+            , xlim = timeframe
+            , main = "Dissertation 2017 Gantt Chart"
+            , priority.legend = FALSE
+            , priority.label = "Legend"
+            , priority.extremes = c("Low", "High")
+            , vgridpos = vgridpos
+            , vgridlab = vgridlab
+            , hgrid = TRUE)
+legend("bottomleft", c("UK", "Singapore"
+                      , "Education"
+                      , "Deadline")
+       , pch = 15
+       , col = c("goldenrod", "red"))
+
+```
+
+
+

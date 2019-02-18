@@ -1,0 +1,449 @@
+---
+title: "Discrete Data Analysis"
+subtitle: "A Friendly Guide to Visualising Categorical Data for Machine Learning Practitioners"
+author: "Julian Hatwell"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  beamer_presentation:
+    theme: "Singapore"
+    colortheme: "seahorse"
+    fonttheme: "structurebold"
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+opts_chunk$set(warning = FALSE
+              , message = FALSE
+              , echo = FALSE
+              )
+
+library(lattice)
+library(ggplot2)
+library(vcd)
+library(vcdExtra)
+library(ca)
+library(randomForest)
+library(gmodels)
+library(mvtnorm)
+library(ROSE)
+
+
+```
+
+# Introduction
+
+## Aim and Objectives
+
+**Democratise Machine Learning**
+
+**Turn You On to Discrete Data**
+
+* Share tips and tricks
+* Build intuition, focus on visual analytics
+* By example
+* Relevant to ML project life-cycle
+* Simple, reproducible code
+* Share simple code snippets
+* Plain English
+* Avoid theory and formulas where possible
+
+## Target Audience
+
+Knowledge professionals who
+
+* have some experience of classification on tabular data sets
+* understand different data-types (continuous, nominal, ordinal, count)
+* are aware of ML project life-cycle, in particular:
+    * Exploratory Data Analysis
+    * Classification
+    * Evaluating models
+* know a little stats (you know what a $\chi^2$ test is)
+
+## You can't teach an old dog new tricks$\footnote{Oh, yes you can!}$
+
+**About me**
+
+* BSc (Hons) Microbiology, University of Leeds
+* Over 15 years database design and development through to senior management roles 
+(mostly in higher education sector), UK and Singapore
+* MSc (Distinction) Business Intelligence, Birmingham City University
+* Research to PhD (in progress) in Machine Learning, Birmingham City University
+
+## $\mathbb{E}$(ML project) = ?
+
+1. Not fun - Getting and cleaning data, exploratory analysis, feature engineering
+2. Fun! - Training Models, XVal, Param Tuning
+3. Not fun - Reporting results
+
+```{r long_saus}
+include_graphics("longsausage.jpg", dpi = 200)
+```
+
+This might be what we want, but is it realistic?
+
+## Frequently Observed ML Projects
+
+1. Not fun - Getting and cleaning data, exploratory analysis, feature engineering
+2. Fun! - Training Models, XVal, Param Tuning
+3. Not fun - Reporting results
+
+```{r big_head}
+include_graphics("bighead.jpg", dpi = 225)
+```
+
+## You can teach old tricks to a new dog!
+
+Focus on those head and tail activities:
+
+* Developing a better EDA strategy for categorical data sets
+* Exploring classification results in more detail
+* Demonstrating rigorous and robust, yet visually intuitive reporting of results
+* Correct handling of ordinal classification results
+
+Theme for today:
+
+* Stats based techniques, applied:
+    * in new ways
+    * to new problems
+
+## Essential Tools
+
+* Plots and Charts
+* Tables and Arrays
+* $\chi^2$ Test
+* Log Odds Ratios
+* Discrete Distributions
+
+## Out of Scope
+
+No time to develop theories and proofs
+
+Predictive and Explanatory Models
+
+* Logistic Regression
+* Cumulative Odds Models
+* Loglinear Models
+* Generalised Linear Models
+
+No discussion of R software itself
+
+## Credits
+
+**Michael Friendly** is a pioneer in this field and has contributed to the development of modules and libraries for SAS and R.
+
+Code examples based on material contained in the book [**Discrete Data Analysis with R: Visualization and Modeling Techniques for Categorical and Count Data**](https://www.crcpress.com/Discrete-Data-Analysis-with-R-Visualization-and-Modeling-Techniques-for/Friendly-Meyer/p/book/9781498725835) by Michael Friendly.
+
+Shorter, valuable tutorial on these topics in the [vcd vignette](https://cran.r-project.org/web/packages/vcdExtra/vignettes/vcd-tutorial.pdf). Just type **vignette("vcd")** at the R console.
+
+This **video** https://www.youtube.com/watch?v=qfNsoc7Tf60 is a much more in depth lecture, by Michael Friendly, on topics covered in the book.
+
+# Example One: Exploring Data with Area Based Plots
+
+## Why is Exploratory Analysis so Important?
+
+"Get to know" the data. This always pays off:
+
+* Get rid of noise variables
+* Identify most useful variables early
+* Guide model selection
+* Identify anomalies
+* Develop intuition prior to modeling
+* Develop a research question, if you don't have one
+
+## In 3D with Hair Colour, Eye Colour and Gender
+
+592 stats students, self-categorised, University of Delaware, 1974
+
+```{r describe_haireye, echo=FALSE}
+hr_desc <- data.frame(No=1:3
+                      , Name=c("Hair", "Eye", "Sex")
+                      , Levels=c("Black, Brown, Red, Blond", "Brown, Hazel, Green, Blue", "Male, Female"))
+kable(hr_desc)
+```
+
+## Hard to Parse Lots of Numbers
+
+```{r HEC}
+HEC <- HairEyeColor[, c("Brown", "Hazel", "Green", "Blue"), ]
+
+structable(~Sex+Hair+Eye, HEC)
+```
+
+## What You See Depends on the Pivot
+
+```{r HEC_piv}
+structable(~Hair+Sex+Eye, HEC)
+```
+
+## Naive Approach: Barplot Count in 2-D (ignoring Sex)
+
+You're forced to favour one variable over the other. Does hair colour depend on eye colour?
+
+```{r not_intuitive, fig.width = 6, fig.height = 3.4}
+haireye <- margin.table(HEC, 1:2)
+barplot(haireye, beside = TRUE, legend = TRUE)
+```
+
+***
+
+Or does eye colour depend on hair colour? Comparing between groups is tricky.
+
+```{r not_intuitive2, fig.width = 6, fig.height = 3.5}
+# pivot the other way
+barplot(aperm(haireye, 2:1), beside = TRUE, legend = TRUE)
+```
+
+## Tile Plot - Preserve Table Structure
+
+```{r tiles, echo=TRUE, fig.width = 6, fig.height = 3.5}
+# vcd package: one line of code!
+# (table haireye prepared earlier)
+tile(haireye) 
+```
+
+## Evidence of a Relationship
+
+Relationship between hair colour and eye colour is evident.
+
+The tile plot is exploratory. We need to be rigorous.
+
+To demonstrate pattern is real, not sampling error, we perform a $\chi^2$ test of independence: 
+
+Check observed counts against expected counts.
+
+## Mosaic Plot - Expected Counts
+
+```{r hr_expected}
+# visualising expected counts for independent features
+expected = independence_table(haireye)
+
+mosaic(expected
+      , shade = TRUE
+      , main="Expected frequencies"
+      , labeling = labeling_values
+      , value_type = "expected"
+      , gp_text = gpar(fontface = 1))
+```
+
+## $H_0$: No Association Between Hair and Eye
+
+```{r hr_chisq}
+chisq.test(haireye)
+```
+
+Rejected, obviously. There clearly is a relationship.
+
+$\chi^2$ test gives no details. How to describe it?
+
+$\chi^2$ residuals contain a lot of information!
+
+## Mosaic Plot - Observed Counts
+
+```{r hr_actuals}
+# visualising actual counts for independent features
+mosaic(haireye
+      , gp = shading_hcl # shade = TRUE
+      , main="Actual frequencies"
+      , labeling = labeling_values
+      , value_type = "observed"
+      , gp_text = gpar(fontface = 1))
+```
+
+## Mosaic Plot - Friendly Colour Scheme
+
+```{r hr_actuals_friend}
+# visualising actual counts for independent features
+mosaic(haireye
+      , gp = shading_Friendly # shade = TRUE
+      , main="Actual frequencies"
+      , labeling = labeling_values
+      , value_type = "observed"
+      , gp_text = gpar(fontface = 1))
+```
+
+## Previous + Sex Feature: Now in 3D
+
+```{r hec}
+# showing all three dimensions
+mosaic(HEC
+      , gp = shading_Friendly # shade = TRUE
+      , main="Actual frequencies"
+      , labeling = labeling_values
+      , value_type = "observed"
+      , gp_text = gpar(fontface = 1), rot_labels = c(right = -45)) 
+```
+
+## What You See Depends on the Pivot
+
+```{r hec2}
+# with a different pivot
+mosaic(aperm(HEC, 3:1)
+      , gp = shading_Friendly # shade = TRUE
+      , main="Actual frequencies"
+      , labeling = labeling_values
+      , value_type = "observed"
+      , gp_text = gpar(fontface = 1), rot_labels = c(right = -45)) 
+```
+
+## Mosaic Plot in 4D - Who Survived the Titanic?
+
+```{r titanic_mosaic}
+mosaic(aperm(Titanic, c(4, 2, 1, 3))
+      , gp = shading_Friendly # shade = TRUE
+      , main="Who Died and Who Survived the Titanic?"
+      , labeling = labeling_values
+      , value_type = "observed"
+      , gp_text = gpar(fontface = 1), rot_labels = c(right = -45))
+```
+
+## Mosaic in n-D - Faceting
+
+```{r titanic_cotab, echo=FALSE}
+# note; all defaults except the shading!
+cotabplot(Titanic, gp = shading_Friendly)
+```
+
+## Mosaic - Summary
+
+The final plot didn't render nicely on these slides. Screen real-estate at run time was used more efficiently.
+
+Important points:
+
+* Mosaic plots; area $\propto$ cell count
+* Fill colour by size of deviance residual
+* Option for outline colour by deviance residual sign
+* Scales well to 4-D
+* At least a further 2-D can elevate up to facet
+* Allows visual exploration of n-way interactions
+
+# Example Two: Clustering and Dimension Reduction with Correspondence Analysis
+
+## What is Correspondence Analysis?
+
+Think of CA as somewhere between correlation analysis and PCA for continuous data.
+
+Features and categories that change together, move together. Cells with the largest values have the strongest influence.
+
+```{r correspond}
+include_graphics("correspond.png", dpi = 225)
+```
+
+## Audience Viewing Data
+
+Audience viewing data from Neilsen Media Research for the week starting November 6, 1995
+
+It is a 3-D array cross-tabulating the viewing figures for three networks, between 8-11pm, Monday to Friday. The features and their levels are as follows:
+
+```{r describe_tv, echo=FALSE}
+tv_desc <- data.frame(No=1:3
+                      , Name=c("Day", "Time", "Network")
+                      , Levels=c("Monday, Tuesday, Wednesday, Thursday, Friday", "8, 9, 10", "ABC, CBS, NBC"))
+kable(tv_desc)
+```
+
+```{r tv_dataprep}
+data("TV", package = "vcdExtra")
+# The original data is collected in 15 minutes slices.
+
+# Convert 3-D array to a frequency data frame
+# This has a row for each cell of the array
+# and a new column for the cell value
+TV.df <- as.data.frame.table(TV)
+
+# Convert it into hourly slices
+levels(TV.df$Time) <- rep(c("8", "9", "10"), c(4,4,3))
+
+# Convert frequency data back to 3-D array, now with just 3 time levels
+TV3 <- xtabs(Freq~Day+Time+Network, TV.df)
+```
+
+## CA - A Cinch
+
+```{r tv_3wayca, echo=TRUE}
+# multiple CA - one line of code!
+TV3.mca <- mjca(TV3)
+
+# Flatten to 2-D by stacking time and day
+TV3s <- as.matrix(structable(Network~Time+Day
+                             , TV3))
+
+# simple CA - one line of code!
+TV3s.ca <- ca(TV3s)
+```
+
+## Other Considerations
+
+Constructing a plot needs a little bit more work (not shown).
+
+Really, just a little and all base R graphics.
+
+When you've done it once, it's easy to customise for your needs.
+
+Multiple and Joint CA examines relationships among all features at once and can be used for dimension reduction.
+
+Simple CA only supports 2D data to start with. However, smart use of pivots can actually reveal more information because there are more free points. It will take a bit of trial and error.
+
+## Multiple Correspondence Analysis Plot
+
+```{r TV_mca_plot, fig.width=6, fig.height=5}
+# the plot function uses all base R plot stuff
+# but needs a bit of manipulation
+cols <- c("blue", "black", "red")
+
+# "blank plot"
+res <- plot(TV3.mca, labels=0, pch='.', cex.lab=1.2)
+
+# combine Dims, factor names and levels
+coords <- data.frame(res$cols, TV3.mca$factors)
+
+# hard-coded from known number of levels
+# day, time, network
+nlev <- c(5,3,3)
+
+# everything needs to be in semantic order
+coords <- coords[ order(coords[,"factor"], coords[,"level"]), ]
+# quick fix for ordering e.g. day of week, not alphabetical
+coords$order <- c(5, 1, 4, 2, 3, 6, 7, 8, 11, 9, 10)
+coords <- coords[order(coords[, "order"]), ]
+
+# place the points with separate plot chars and colours
+points(coords[,1:2], pch=rep(16:18, nlev), col=rep(cols, nlev), cex=1.2)
+
+# place the text
+pos <- c(1,4,3)
+text(coords[,1:2], labels=coords$level, col=rep(cols, nlev), pos=rep(pos,nlev), cex=1.1, xpd=TRUE)
+
+# join things in sequence
+lines(Dim2 ~ Dim1, data=coords, subset=factor=="Day", lty=1, lwd=1, col="blue")
+lines(Dim2 ~ Dim1, data=coords, subset=factor=="Time",  lty=1, lwd=1, col="red")
+
+# add segement from the origin to channels
+nw <- subset(coords, factor=="Network")
+segments(0, 0, nw[,"Dim1"], nw[, "Dim2"], col = "black", lwd = 0.5, lty = 3)
+
+# add a legend
+legend("topright", legend=c("Day", "Network", "Time"),
+       title="Factor", title.col="black",
+       col=cols, text.col=cols, pch=16:18,
+       bg="gray95")
+```
+
+## Simple Correspondence Analysis Plot
+
+```{r TV.ca, fig.width=6, fig.height=5}
+# Generate the plot
+res <- plot(TV3s.ca)
+# add some segments from the origin to make things clearer
+segments(0, 0, res$cols[,1], res$cols[,2], col = "red", lwd = 1)
+segments(0, 0, res$rows[,1], res$rows[,2], col = "blue", lwd = 0.5, lty = 3)
+```
+
+## Correspondence Analysis - Summary
+
+* CA is a very powerful technique based on matrix decomposition
+* Offers additional perspective for exploring data
+* Complex, non-parametric relationships are easily visualised can be explored
+* Useful for reducing dimensions
+* Converting categorical dimensions to continuous, while preserving information
+* Sort data by CA dimension rather than natural ordering: [*Monday, Tuesday, Wednesday, Thursday, Friday*] $\nRightarrow$ [*1,2,3,4,5*]
+
