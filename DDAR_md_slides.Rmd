@@ -5,7 +5,6 @@ author: "Julian Hatwell"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
   beamer_presentation:
-    theme: "Singapore"
     colortheme: "seahorse"
     fonttheme: "structurebold"
 ---
@@ -23,109 +22,49 @@ library(vcd)
 library(vcdExtra)
 library(ca)
 library(randomForest)
-library(gmodels)
-library(mvtnorm)
 library(ROSE)
-
-
 ```
 
 # Introduction
 
-## Aim and Objectives
+## About Me
 
-**Democratise Machine Learning**
+* Over 15 years in the for-profit education sector, UK and Singapore - various roles from DBA to Senior Management
+* MSc (Distinction) Business Intelligence, Birmingham City University
+* Research to PhD (in progress) in Machine Learning, Birmingham City University
 
-**Turn You On to Discrete Data**
-
-* Share tips and tricks
-* Build intuition, focus on visual analytics
-* By example
-* Relevant to ML project life-cycle
-* Simple, reproducible code
-* Share simple code snippets
-* Plain English
-* Avoid theory and formulas where possible
-
-## Target Audience
+## About You
 
 Knowledge professionals who
 
 * have some experience of classification on tabular data sets
-* understand different data-types (continuous, nominal, ordinal, count)
+* understand different data-types (continuous, nominal, ordinal, count, etc...)
 * are aware of ML project life-cycle, in particular:
     * Exploratory Data Analysis
     * Classification
     * Evaluating models
 * know a little stats (you know what a $\chi^2$ test is)
 
-## You can't teach an old dog new tricks$\footnote{Oh, yes you can!}$
+## Aim and Objectives
 
-**About me**
+Tips from the Trenches
 
-* BSc (Hons) Microbiology, University of Leeds
-* Over 15 years database design and development through to senior management roles 
-(mostly in higher education sector), UK and Singapore
-* MSc (Distinction) Business Intelligence, Birmingham City University
-* Research to PhD (in progress) in Machine Learning, Birmingham City University
+* Share Practical Experience
+* Relevant to ML project life-cycle
+* Build intuition
+* Focus on visual analytics
+* Plain English
+* By example
+* Avoid theory and formulas
+* Simple, reproducible code
 
-## $\mathbb{E}$(ML project) = ?
+This prez is based on a hands-on tutorial that I deliver at BCU. Ask me for the lecture notes if you're interested.
 
-1. Not fun - Getting and cleaning data, exploratory analysis, feature engineering
-2. Fun! - Training Models, XVal, Param Tuning
-3. Not fun - Reporting results
-
-```{r long_saus}
-include_graphics("longsausage.jpg", dpi = 200)
-```
-
-This might be what we want, but is it realistic?
-
-## Frequently Observed ML Projects
-
-1. Not fun - Getting and cleaning data, exploratory analysis, feature engineering
-2. Fun! - Training Models, XVal, Param Tuning
-3. Not fun - Reporting results
-
-```{r big_head}
-include_graphics("bighead.jpg", dpi = 225)
-```
-
-## You can teach old tricks to a new dog!
-
-Focus on those head and tail activities:
+## Head and tail activities:
 
 * Developing a better EDA strategy for categorical data sets
 * Exploring classification results in more detail
-* Demonstrating rigorous and robust, yet visually intuitive reporting of results
 * Correct handling of ordinal classification results
-
-Theme for today:
-
-* Stats based techniques, applied:
-    * in new ways
-    * to new problems
-
-## Essential Tools
-
-* Plots and Charts
-* Tables and Arrays
-* $\chi^2$ Test
-* Log Odds Ratios
-* Discrete Distributions
-
-## Out of Scope
-
-No time to develop theories and proofs
-
-Predictive and Explanatory Models
-
-* Logistic Regression
-* Cumulative Odds Models
-* Loglinear Models
-* Generalised Linear Models
-
-No discussion of R software itself
 
 ## Credits
 
@@ -175,11 +114,11 @@ structable(~Sex+Hair+Eye, HEC)
 structable(~Hair+Sex+Eye, HEC)
 ```
 
-## Naive Approach: Barplot Count in 2-D (ignoring Sex)
+## Naive Approach: Barplot in 2-D (ignoring Sex)
 
 You're forced to favour one variable over the other. Does hair colour depend on eye colour?
 
-```{r not_intuitive, fig.width = 6, fig.height = 3.4}
+```{r not_intuitive, fig.width = 6, fig.height = 4}
 haireye <- margin.table(HEC, 1:2)
 barplot(haireye, beside = TRUE, legend = TRUE)
 ```
@@ -188,7 +127,7 @@ barplot(haireye, beside = TRUE, legend = TRUE)
 
 Or does eye colour depend on hair colour? Comparing between groups is tricky.
 
-```{r not_intuitive2, fig.width = 6, fig.height = 3.5}
+```{r not_intuitive2, fig.width = 6, fig.height = 5}
 # pivot the other way
 barplot(aperm(haireye, 2:1), beside = TRUE, legend = TRUE)
 ```
@@ -201,15 +140,15 @@ barplot(aperm(haireye, 2:1), beside = TRUE, legend = TRUE)
 tile(haireye) 
 ```
 
-## Evidence of a Relationship
+## $H_0$: No Association Between Hair and Eye
 
-Relationship between hair colour and eye colour is evident.
+```{r hr_chisq}
+chisq.test(haireye)
+```
 
-The tile plot is exploratory. We need to be rigorous.
+Rejected, obviously. There clearly is a relationship.
 
-To demonstrate pattern is real, not sampling error, we perform a $\chi^2$ test of independence: 
-
-Check observed counts against expected counts.
+$\chi^2$ test gives no details. How to describe it?
 
 ## Mosaic Plot - Expected Counts
 
@@ -224,18 +163,6 @@ mosaic(expected
       , value_type = "expected"
       , gp_text = gpar(fontface = 1))
 ```
-
-## $H_0$: No Association Between Hair and Eye
-
-```{r hr_chisq}
-chisq.test(haireye)
-```
-
-Rejected, obviously. There clearly is a relationship.
-
-$\chi^2$ test gives no details. How to describe it?
-
-$\chi^2$ residuals contain a lot of information!
 
 ## Mosaic Plot - Observed Counts
 
@@ -320,7 +247,7 @@ Important points:
 
 ## What is Correspondence Analysis?
 
-Think of CA as somewhere between correlation analysis and PCA for continuous data.
+Think of CA as somewhere between correlation analysis and PCA but for categorical data.
 
 Features and categories that change together, move together. Cells with the largest values have the strongest influence.
 
@@ -428,6 +355,14 @@ legend("topright", legend=c("Day", "Network", "Time"),
        bg="gray95")
 ```
 
+## CA Converts Categorical to Continuous
+
+Order is NOT arbitrary!
+
+```{r res_coords}
+coords[ order(coords[,"factor"], -coords[,"Dim1"]), c("Dim1", "Dim2")]
+```
+
 ## Simple Correspondence Analysis Plot
 
 ```{r TV.ca, fig.width=6, fig.height=5}
@@ -436,6 +371,38 @@ res <- plot(TV3s.ca)
 # add some segments from the origin to make things clearer
 segments(0, 0, res$cols[,1], res$cols[,2], col = "red", lwd = 1)
 segments(0, 0, res$rows[,1], res$rows[,2], col = "blue", lwd = 0.5, lty = 3)
+```
+
+## Multiple Correspondence Analysis Plot in 4-D
+
+```{r Titanic_mca}
+# one more mca from a 4-D dataset
+# this is simpler than it looks
+# all the magic happens here
+titanic.mca <- mjca(Titanic)
+
+# saving the plot object supplies the coordinate positions
+res <- plot(titanic.mca, labels=0, pch='.', cex.lab=1.2)
+
+# extract factor names and levels
+coords <- data.frame(res$cols, titanic.mca$factors)
+
+# everything else is handling base R plotting stuff
+cols <- c("blue", "red", "brown", "black")
+nlev <- c(4,2,2,2)
+points(coords[,1:2], pch=rep(16:19, nlev), col=rep(cols, nlev), cex=1.2)
+pos <- c(3,1,1,3)
+text(coords[,1:2], labels=coords$level, col=rep(cols, nlev), pos=rep(pos,nlev), cex=1.1, xpd=TRUE)
+coords <- coords[ order(coords[,"factor"], coords[,"Dim1"]), ]
+lines(Dim2 ~ Dim1, data=coords, subset=factor=="Class", lty=1, lwd=2, col="blue")
+lines(Dim2 ~ Dim1, data=coords, subset=factor=="Sex",  lty=1, lwd=2, col="red")
+lines(Dim2 ~ Dim1, data=coords, subset=factor=="Age",  lty=1, lwd=2, col="brown")
+lines(Dim2 ~ Dim1, data=coords, subset=factor=="Survived",  lty=1, lwd=2, col="black")
+
+legend("topleft", legend=c("Class", "Sex", "Age", "Survived"),
+       title="Factor", title.col="black",
+       col=cols, text.col=cols, pch=16:19,
+       bg="gray95", cex=1.2)
 ```
 
 ## Correspondence Analysis - Summary
@@ -447,3 +414,351 @@ segments(0, 0, res$rows[,1], res$rows[,2], col = "blue", lwd = 0.5, lty = 3)
 * Converting categorical dimensions to continuous, while preserving information
 * Sort data by CA dimension rather than natural ordering: [*Monday, Tuesday, Wednesday, Thursday, Friday*] $\nRightarrow$ [*1,2,3,4,5*]
 
+# Example Three: Slicing a Confusion Matrix by Important Features
+
+## Overview - The Nursery Data Set
+
+Four possible classes
+
+Three evenly balanced 
+
+Fourth is a tiny minority class
+
+All the predictors are discrete
+
+A random forest is trained on 70% of the data and evaluated on the remaining 30%
+
+***
+
+```{r nursery_data}
+set.seed(54321)
+nursery <- read.csv(gzfile("nursery.csv.gz"))
+summary(nursery)
+```
+
+***
+
+```{r nursery_randfor}
+# train test split
+idx <- sample(c(TRUE, FALSE)
+              , size = nrow(nursery)
+              , prob = c(0.7, 0.3)
+              , replace = TRUE)
+
+nurs_train <- nursery[idx, ]
+nurs_test <- nursery[!idx, ]
+
+# train rf accepting all the defaults
+nurs_rf <- randomForest(decision~., data=nurs_train)
+
+# get the predictions on new data
+nurs_preds <- predict(nurs_rf, newdata = nurs_test)
+
+# confusion matrix
+confmat <- with(nurs_test, table(nurs_preds, decision))
+confmat
+```
+
+## Tile Plot of Confusion Matrix
+
+```{r nurs_cm_tile}
+tile(confmat, labeling = labeling_values)
+```
+
+## Variable Importance Plots
+
+Important in what way?
+
+What does anyone do with this information?
+
+```{r nurs_varimp, fig.height=4}
+varImpPlot(nurs_rf)
+```
+
+Note the elbow. Could we do without half the features?
+
+## Confusion Matrix By health == "recommended"
+
+```{r nurs_cm_health}
+cm_3d <- with(nurs_test
+              , table(nurs_preds, decision, health))
+
+re <- cm_3d[,,"recommended"]
+tile(re, labeling = labeling_values)
+```
+
+## Confusion Matrix By health == "priority"
+
+```{r}
+pr <- cm_3d[,,"priority"]
+tile(pr, labeling = labeling_values)
+```
+
+## Confusion Matrix By health == "not_recom"
+
+```{r}
+nr <- cm_3d[,,"not_recom"]
+tile(nr, labeling = labeling_values)
+```
+
+## What Makes A Variable Important? - Revisited
+
+health feature - very important, and now we know why
+
+health == "not_recom" is a useful decision stump: take outside model?
+
+Thorough EDA should find this prior to modeling
+
+## Applied to Binary Classification
+
+This situation can't come about during binary classification. One feature would be a perfect representation of target.
+
+Can this technique still help?
+
+## Binary Classification $2 \times 2$ Table
+
+Special case $2 \times 2$ table
+
+vcd has a fourfold plot function: compares odds ratios by standardising pie areas
+
+Force the fourfold to represent counts on the radius: 
+
+$$\mathit{count} \propto \sqrt{\mathit{area}}$$
+
+fourfold also automatically stratifies by a third variable! Just a snippet of code required.
+
+This is a very nifty shortcut! vcd always wants to preserve the given table structure. Any other plotting method could not be done in one line of code.
+
+## German Data Set - Credit Rating
+
+A mix of discrete and continuous. Target is rating: "bad" (30%) or "good" (70%)
+
+A predicted bad rating on a true bad rating - True Positive
+
+A predicted good rating on a true bad rating - False Negative
+
+Very high cost per False Negative: Offer of credit to a likely defaulter!
+
+Random Forest can only optimise 0-1 loss
+
+Training data is balanced by over sampling.
+
+***
+
+```{r german_randfor}
+german <- read.csv(gzfile("german.csv.gz"))
+
+set.seed(54321)
+# train test split
+idx <- sample(c(TRUE, FALSE)
+              , size = nrow(german)
+              , prob = c(0.7, 0.3)
+              , replace = TRUE)
+
+german_train <- german[idx, ]
+german_test <- german[!idx, ]
+
+# make the training data balanced in case over fits good
+# originally 300 bad, 700 good
+german_train <- ovun.sample(rating~.
+                      , data=german_train
+                      , method = "over"
+                      , p = 0.5)$data
+
+# restore the factor levels to correct order
+german_train$rating <- relevel(german_train$rating, "bad") 
+
+# train rf accepting all the defaults
+german_rf <- randomForest(rating~., data=german_train)
+
+# get the predictions on new data
+german_preds <- predict(german_rf, newdata = german_test)
+
+# confusion matrix
+confmat <- with(german_test, table(german_preds, rating))
+confmat
+```
+
+***
+
+```{r main_cm_stats, echo=TRUE}
+# accuracy
+sum(diag(confmat))/sum(confmat)
+
+# False Negative Rate FN / (TP + FN)
+confmat[2, 1]/sum(confmat[, 1])
+
+# False Ommision Rate FN / (TN + FN)
+confmat[2, 1]/sum(confmat[2, ])
+```
+
+***
+
+```{r main_cm_rose, echo=TRUE, fig.width=4.5, fig.height=4.5}
+# std = "all.max" suppresses balancing the areas
+# behaves like a rose plot
+fourfold(confmat, std = "all.max")
+```
+
+***
+
+```{r german_varimp}
+varImpPlot(german_rf)
+```
+
+## Fourfold Rose Plot - Confidence Matrix By chk
+
+```{r rose_setup}
+my_rose <- function(cm) {
+  fourfold(cm
+         , std = "all.max" # mimic a 4 way rose plot
+         , conf_level = 0 # suppress confint tests, not useful here
+         , color = c("#FF0000", "#000080") # need to force colours due to suppressing confint test
+         )
+}
+
+# fourfold automatically stratifies by third (and fourth) level of n-dim table
+
+# this is the only code required for the plots you will see next
+confmat_c <- with(german_test
+                  , table(german_preds
+                          , rating
+                          , chk))
+
+my_rose(confmat_c)
+```
+
+## This method REALLY scales!
+
+```{r rose_pps}
+confmat_p <- with(german_test
+                  , table(german_preds
+                          , rating
+                          , pps))
+
+my_rose(confmat_p)
+```
+
+## Integer Valued Feature with 22 Unique Values
+
+```{r my_rose_dur}
+confmat_d <- with(german_test
+                  , table(german_preds
+                          , rating
+                          , dur))
+my_rose(confmat_d)
+```
+
+## 2 & 3-Way Interactions Possible - Log Odds Ratio
+
+The odds ratio for the binary confusion matrix conveniently rearranges to:
+
+$$\phi = \log\Big(\frac{\mathrm{TP} \times \mathrm{TN}}{\mathrm{FP} \times \mathrm{FN}}\Big)$$
+
+Note, all the T in the numerator and all the F in the denominator. 
+
+Very easy to interpret:
+
+* $\phi \in \mathbb{R}^+$ is good but check confidence intervals
+* $\phi > 3 \implies$ ratio of T:F $\approx 20:1$
+
+Bonus: confidence intervals!
+
+***
+
+```{r lodds}
+# higher dimensional
+confmat_ce <- with(german_test
+                   , table(german_preds
+                           , rating
+                           , chk
+                           , emp))
+
+confmat_ce <- with(german_test
+                   , table(german_preds
+                           , rating
+                           , chk
+                           , emp))
+plot(loddsratio(confmat_ce), confidence = FALSE)
+```
+
+## Slicing a Confusion Matrix Summary
+
+Important points:
+
+* Use whenever you have suitable categorical variables
+* Feature importance measure; a helpful guide but not essential.
+* Drill into sources of bias
+* Rose plots are intuitive for $2 \times 2$ tables and easy to produce
+* vcd fourfold scales to tens of levels on one category
+* Explore 2 and 3-way interactions with log odds ratios 
+* Log odds ratios compromise clarity on accuracy measures such as FNR
+
+# Example Four: Handling Ordinal Classification Correctly
+
+## MSPatients Overview
+
+Two Neurologists diagnose the same 218 patients on a severity scale
+
+This is an inter-rater agreement table. We'll pretend it's a confusion matrix. Classes not completely balanced.
+
+## Baseline Score
+
+```{r MSP_2D}
+# combine results from two cities (same raters are involved in all cases)
+MSP <- margin.table(MSPatients, 1:2)
+dimnames(MSP) <- list(prd = c("Certain",  "Probable", "Possible", "Doubtful"), tru = c("Certain",  "Probable", "Possible", "Doubtful"))
+```
+
+```{r MSP_winntrue}
+margin.table(MSP, 2)
+props <- prop.table(margin.table(MSP, 2))
+props
+
+# Baseline accuracy: A constant-guess machine for majority class
+props[which(props == max(props))]
+
+# Actual accuracy (prior to viewing the table)
+cat("Accuracy - sum(diag)/total")
+sum(diag(MSP))/sum(MSP)
+```
+
+## The MSP Confusion Matrix
+
+```{r MSP_confmat}
+MSP
+```
+
+Obviously it's not a constant model and doesn't look like a random guess. So what's wrong?
+
+Check Cohen's $\kappa$ to correct for class imbalance
+
+```{r kappa}
+confint(Kappa(MSP, weights = "Fleiss-Cohen"))
+```
+
+Weighted indicates that off-by-n errors are important
+
+## Agreement Plot
+
+```{r agreement, fig.height=5, fig.width=5}
+op <- par(mar = c(4, 3, 4, 1) + .1)
+B <- agreementplot(MSP
+                   , main = "MS Patient Ratings"
+                   , xlab_rot = -20
+)
+
+par(op)
+```
+
+## Handling Ordinal Classification - Summary
+
+* Ordinal classification is a special case
+* Near disagreement needs to be weighted
+* Weighted $\kappa$ and Bangdiwala stats useful
+* Agreement plot is ideal
+* Plot reveals differences in inter-rater marginal totals, where statistics are insensitive
+
+# It's easy to rush into using the latest tools and technologies. Most Machine Learning is based on years of statistical research. That work is still just as relevant as ever. It's worth reflecting on tried and tested techniques that might easily address today's challenges. 
+
+# End

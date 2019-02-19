@@ -782,4 +782,216 @@ legend("bottomleft", c("UK", "Singapore"
 ```
 
 
+## Plots and Charts - but not these!
 
+These plots stratify continuous data by discrete features. They're not DDA plots.
+
+```{r not_DDA, fig.width = 6, fig.height = 3}
+# set the random number generator same every time
+set.seed(123)
+
+# a discrete value to match the groups
+n <- 100
+grp <- rep(c(1, 2), each = n)
+
+# a random discrete value
+rnd <- sample(c(1, 2)
+              , replace = TRUE
+              , size = 200)
+numvars1 <- rmvnorm(n, c(0, 0)
+                    , sigma = matrix(c(3,2,2,3)
+                                     , ncol=2))
+
+numvars2 <- rmvnorm(n, c(1, 1)
+                    , sigma = matrix(c(1,0.5,0.5,4)
+                                     , ncol=2))
+numvars <- rbind(numvars1, numvars2)
+
+# a discrete value based on a soft linear boundary
+noise <- rnorm(2*n, mean = 0, sd = 0.5)
+fam <- ifelse(rowSums(numvars) + noise > 3, 1, 2)
+
+
+par(mfrow=c(1,3))
+# plot, using graphic options to separate the discrete classes
+plot(numvars, col = fam, pch = rnd, cex = grp
+     , main = "scatterplot with size, shape\nand colour options"
+     , ylab = "y"
+     , xlab = "x")
+
+# take row sums then table-apply the sum by each group
+grp_total <- tapply(rowSums(numvars), grp, sum)
+rnd_total <- tapply(rowSums(numvars), rnd, sum)
+fam_total <- tapply(rowSums(numvars), fam, sum)
+
+# totals barplot
+barplot(c(grp_total, rnd_total, fam_total)
+        , col="lightgray", border = 1:2
+        , main="barplot with border options"
+        )
+
+# classic box plot
+# note that you can't tell
+# that grp is the actual groups
+# and rnd is a random labelling
+boxplot(rowSums(numvars)~grp*rnd, border=1:2
+     , main = "boxplot distribution\nanalysis by groups"
+     , xlab = "grp1 grp2 rnd1 rnd2"
+     , ylab = "row sum value")
+
+par(mfrow=c(1,1))
+```
+
+## Tables and Arrays
+
+Thinking about data as n-dim cube. Background in BI helps.
+
+
+
+
+
+```{r}
+hr_desc <- data.frame(No=1:3
+                      , Name=c("Hair", "Eye", "Sex")
+                      , Levels=c("Black, Brown, Red, Blond", "Brown, Blue, Hazel, Green", "Male, Female"))
+kable(hr_desc)
+
+
+rcdv <- read.csv(gzfile("rcdv.csv.gz"))
+summary(rcdv)
+
+# all these vars are actually categorical
+# most are binary
+rcdv$year <- factor(rcdv$year)
+rcdv$white <- factor(rcdv$white)
+rcdv$alchy <- factor(rcdv$alchy)
+rcdv$junky <- factor(rcdv$junky)
+rcdv$super <- factor(rcdv$super)
+rcdv$married <- factor(rcdv$married)
+rcdv$felon <- factor(rcdv$felon)
+rcdv$workrel <- factor(rcdv$workrel)
+rcdv$proprty <- factor(rcdv$propty)
+rcdv$person <- factor(rcdv$person)
+rcdv$male <- factor(rcdv$male)
+rcdv$missingness <- factor(rcdv$missingness)
+rcdv$recid <- factor(rcdv$recid)
+set.seed(54321)
+
+# train test split
+idx <- sample(c(TRUE, FALSE)
+              , size = nrow(rcdv)
+              , prob = c(0.7, 0.3)
+              , replace = TRUE)
+
+rcdv_train <- rcdv[idx, ]
+rcdv_test <- rcdv[!idx, ]
+
+# train rf accepting all the defaults
+rcdv_rf <- randomForest(recid~., data=rcdv_train)
+
+# get the predictions on new data
+rcdv_preds <- predict(rcdv_rf, newdata = rcdv_test)
+
+# confusion matrix
+confmat <- with(rcdv_test, table(rcdv_preds, recid))
+confmat
+
+confmat_m <- with(rcdv_test, table(rcdv_preds, recid, missingness))
+confmat_m
+
+confmat_w <- with(rcdv_test, table(rcdv_preds, recid, white))
+confmat_w
+
+confmat_y <- with(rcdv_test, table(rcdv_preds, recid, year))
+confmat_y
+
+fourfold(confmat)
+
+fourfold(confmat_y)
+fourfold(confmat_y, std = "ind.max", margin = 1)
+fourfold(confmat_y, std = "ind.max", margin = 2)
+fourfold(confmat_y, std = "all.max")
+
+
+keep <- nurs_test$health != "not_recom"
+
+confmat2 <- with(nurs_test[keep, ]
+                 , table(nurs_preds[keep], decision, has_nurs))
+
+tr_prob <- 0.5
+fl_prob <- 0.5
+tru <- rep(TRUE, 10000 * tr_prob)
+tru <- c(tru, rep(FALSE, 10000 * fl_prob))
+mod <- sample(c(TRUE, FALSE)
+              , size = 10000
+              , replace = TRUE
+              , prob = c(tr_prob, fl_prob))
+mod1 <- sample(c(TRUE, FALSE)
+              , size = 10000
+              , replace = TRUE
+              , prob = c(tr_prob - 0.01, fl_prob + 0.01))
+
+table(tru, mod, mod1)
+confint(Kappa(table(tru, mod)))
+plot(loddsratio(table(tru, mod, mod1)))
+
+```
+
+
+```{r data_cube}
+include_graphics("datacube.jpg", dpi = 300)
+```
+
+## Ideal ML Project?
+
+1. Not fun - Getting and cleaning data, exploratory analysis, feature engineering
+2. Fun! - Training Models, XVal, Param Tuning
+3. Not fun - Reporting results
+
+```{r long_saus}
+include_graphics("longsausage.jpg", dpi = 200)
+```
+
+This might be what we want, but is it realistic?
+
+## Frequently Observed ML Projects
+
+1. Not fun - Getting and cleaning data, exploratory analysis, feature engineering
+2. Fun! - Training Models, XVal, Param Tuning
+3. Not fun - Reporting results
+
+```{r big_head}
+include_graphics("bighead.jpg", dpi = 225)
+```
+
+
+## Essential Tools
+
+* Plots and Charts
+* n-dim Tables and Arrays
+* $\chi^2$ Test
+* Log Odds Ratios
+* Discrete Distributions
+
+## Out of Scope
+
+No time to develop theories and proofs
+
+Predictive and Explanatory Models
+
+* Logistic Regression
+* Cumulative Odds Models
+* Loglinear Models
+* Generalised Linear Models
+
+No discussion of R software itself
+
+## Evidence of a Relationship
+
+Relationship between hair colour and eye colour is evident.
+
+The tile plot is exploratory. We need to be rigorous.
+
+To demonstrate pattern is real, not sampling error, we perform a $\chi^2$ test of independence: 
+
+Observed counts against expected counts.
