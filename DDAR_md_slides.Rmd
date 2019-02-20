@@ -29,13 +29,14 @@ library(ROSE)
 
 ## About Me
 
-* Over 15 years in the for-profit education sector, UK and Singapore - various roles from DBA to Senior Management
-* MSc (Distinction) Business Intelligence, Birmingham City University
+* Over 15 years in enterprise and management information systems in the for-profit education sector, UK and Singapore
+* Completed $> 20$ MOOCs (certified) in data science related subjects 2014-2016
+* MSc (Distinction) Business Intelligence, Birmingham City University, 2017
 * Research to PhD (in progress) in Machine Learning, Birmingham City University
 
 ## About You
 
-Knowledge professionals who
+Researchers, Analysts and Knowledge Professionals who
 
 * have some experience of classification on tabular data sets
 * understand different data-types (continuous, nominal, ordinal, count, etc...)
@@ -44,6 +45,34 @@ Knowledge professionals who
     * Classification
     * Evaluating models
 * know a little stats (you know what a $\chi^2$ test is)
+
+## Enterprise Systems in Educational Institutions
+
+```{r acad_sys, fig.align='center', fig.cap='High-level architecture of integrated academic systems. Paulsen, M. (2002 : p4) Online Education Systems: Discussion and Definition of Terms'}
+include_graphics("acadsys.png", dpi = 175)
+```
+
+## Academic Analytics
+
+* Academic Analytics
+    * Typical BI analysis of sales (recruitment), financial, HR, operations, etc
+    * Additionally, monitor, evaluate and optimise:
+        * student life-cycle: from prospectus to alumni services
+        * recruitment, including best match student-course
+        * retention, minimising drop outs
+        * on-time / on-target completion
+        * progression to next level
+        * student satisfaction, surveys
+        * class room utilisation and exam planning
+        * lecturer management, including externals
+        
+Not the same as
+
+* Educational Data Mining
+    * Analysis of pedogogical data (teaching and learning)
+    * Student engagement data
+    * Models of student understanding and learning
+    * Topic modeling
 
 ## Aim and Objectives
 
