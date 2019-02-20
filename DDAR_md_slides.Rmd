@@ -29,7 +29,7 @@ library(ROSE)
 
 ## About Me
 
-* Over 15 years in enterprise and management information systems in the for-profit education sector, UK and Singapore
+* Over 15 years in enterprise systems, management information systems and BI in the for-profit education sector, UK and Singapore
 * Completed $> 20$ MOOCs (certified) in data science related subjects 2014-2016
 * MSc (Distinction) Business Intelligence, Birmingham City University, 2017
 * Research to PhD (in progress) in Machine Learning, Birmingham City University
@@ -239,6 +239,23 @@ mosaic(aperm(HEC, 3:1)
       , labeling = labeling_values
       , value_type = "observed"
       , gp_text = gpar(fontface = 1), rot_labels = c(right = -45)) 
+```
+
+## Pass in an Expectation
+
+We know Hair and Eye are interacting and expect it. We can "clean up" these residuals and see what remains.
+
+```{r hec_joint_model}
+# convert to frequency form
+HEC_df <- as.data.frame(HEC)
+
+# explanatory model, hair eye interaction
+hec.glm <- glm(Freq~Hair*Eye+Sex, data=HEC_df, family = poisson)
+
+mosaic(hec.glm
+       , gp = shading_Friendly
+       , formula = ~ Sex + Eye + Hair
+       , residuals_type = "rstandard")
 ```
 
 ## Mosaic Plot in 4D - Who Survived the Titanic?
