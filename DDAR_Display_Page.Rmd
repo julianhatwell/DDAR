@@ -53,7 +53,7 @@ These are the libraries we'll be using. If necessarly
 # ...you need to re-run this chunk.
 
 # install these packages if you don't have them already
-# install.package("packageNameHere")
+# install.packages("packageNameHere")
 
 library(knitr)
 library(lattice)
@@ -150,7 +150,7 @@ Predictably, the term refers to analysis of discrete data! DDA is a set of tools
 
 ## The Basic Tools of DDA
 
-### Plots, Charts and Graphs
+### Plots and Charts
 
 The most powerful set of tools we have is our eyes and brains. Humans are pretty damn impressive when it comes to pattern matching. The trick is to choose the right chart that reveals the right information for the task in hand. A chart is often acceptable as statistical evidence, provided it is enhanced with robust statistical information (confidence intervals, significance test results, etc). More importantly, a good chart really doesn't need much explaining.
 
@@ -237,13 +237,13 @@ I will provide much more interesting examples a little later on.
 Specifically, contigency tables or crosstabs. The categorical features form the axes, and each cell contains the total number of individuals at the intersection of each feature. Here are some examples:
 
 ```{r tables}
-# In 2D - collapse over department
-margin.table(UCBAdmissions, 2:1)
-
 # 3D table - Admit on rows (D1), Gender on columns (D2)
 # and Department on levels (D3)
 
 UCBAdmissions # Department has 6 levels
+
+# In 2D - collapse over department
+margin.table(UCBAdmissions, 2:1)
 
 # pivot the department onto columns
 aperm(UCBAdmissions, c(2, 3, 1))
@@ -405,7 +405,7 @@ We don't have time develop a fluency for these tasks but if this is something us
 
 # Workshop
 
-## Task: Analysing n-way tables
+## Task: Analysing n-way Tables with Area Based Plots
 
 ### What is this for?
 
@@ -496,6 +496,17 @@ Here's what actuals looks like:
 
 ```{r hr_actuals}
 # visualising actual counts for independent features
+# A publication ready colour scheme
+mosaic(haireye
+      , gp = shading_hcl # shade = TRUE
+      , main="Actual frequencies"
+      , labeling = labeling_values
+      , value_type = "observed"
+      , gp_text = gpar(fontface = 1)
+      , rot_labels = c(top = -20))
+
+# The Friendly colour scheme suits visual analysis
+# Bolder colours and carries more information in the outlines
 mosaic(haireye
       , gp = shading_Friendly # shade = TRUE
       , main="Actual frequencies"
@@ -573,7 +584,215 @@ cotabplot(Titanic, gp = shading_Friendly)
 * Recall that we've made sure the categories are ordered light to dark. There is a very pronounced "opposite corner" relationship. What do you think that reveals (in plain English) and does this fit with intuition?
 * Can you see a difference between males and females? If so, can you explain it? *Note, the original study was a self-reporting survey. The participants categorised themselves.*
 * Why do the grid lines remain aligned horizontally between hair categories on both actual frequencies mosaics?
-* If you discovered important relationships in categorical features during your exploratory phase, how would this affect your Machine Learning strategy?
+* If you discovered important relationships in categorical features during your exploratory phase, how might this affect the next steps of your project?
+
+## Task: Dimension Reduction and Clustering
+
+### What is this for?
+
+Most Machine Learning practitioners are familiar with dimension reduction. It can radically simplify and compress a dataset, making it easier to handle and train models on. Many dimension reduction techniques also double up as unsupervised learning methods i.e. clustering. This is useful as an end in itself, as well as being an additional tool for exploratory data analysis: multidimensional data is projected into 2-D which makes it intuitive to visualise.
+
+If you already know something about Principle Components Analysis, this is similar, but not quite the same. Remember, in DDA, the "dimensions" we want to reduce or cluster are not only the features, but also the categories within each feature. PCA identifies new dimensions that capture the most variance. The equivalent concept in Correspondence Analysis is the "inertia" of cells in the table with the largest and smallest numbers. The only way to really describe what's happening is to see some examples.
+
+Correspondence Analysis is an advanced topic. In particular, the way you pivot the multidimensional array controls the analysis. This requires some understanding of the data manipulation and modeling techniques. For today, we will just focus on interpreting the plots.
+
+### When would I use this?
+
+You can use Correspondence Analysis during the exploratory data analysis phase of any project. Do this early on in the project once you've gathered and cleaned up your data enough to start sense-making.
+
+This is a good technique for of feature engineering. If several features are well clustered you can replace them with the real valued dimensions that this method returns as output. This may convert several categorical dimensions into just a couple of numeric ones that might better suit the next stage of your project. The following two situations are immediately applicable:
+
+* You want to reduce the number of features in your dataset overall
+* You want to implement a model that requires only numeric, or real-valued functions. For example, k-NN requires a distance metric that works on all the features, while your dataset has some categorical features. Of course you could convert all your categories to factors, integers or binary encode them (aka create dummy variables). However, Correspondence Analysis actually reduces the number of features while retaining information about the way the original features interact.
+
+You could use it as a stand alone model. This is an unsupervised clustering method for categorical features. Use it where you don't have a specific class label, but just want to find out the associations between all the features.
+
+### Case Study: Analysis of Audience Viewing Data
+
+The audience viewing data from Neilsen Media Research for the week starting November 6, 1995
+
+It is a 3-D array cross-tabulating the viewing figures for three networks, between 8-11pm, Monday to Friday. The features and their levels are as follows:
+
+```{r describe_tv, echo=FALSE}
+tv_desc <- data.frame(No=1:3
+                      , Name=c("Day", "Time", "Network")
+                      , Levels=c("Monday, Tuesday, Wednesday, Thursday, Friday", "8, 9, 10", "ABC, CBS, NBC"))
+kable(tv_desc)
+```
+
+```{r tv_dataprep}
+data("TV", package = "vcdExtra")
+# The original data is collected in 15 minutes slices.
+
+# Convert 3-D array to a frequency data frame
+# This has a row for each cell of the array
+# and a new column for the cell value
+TV.df <- as.data.frame.table(TV)
+
+# Convert it into hourly slices
+levels(TV.df$Time) <- rep(c("8", "9", "10"), c(4,4,3))
+
+# Convert frequency data back to 3-D array, now with just 3 time levels
+TV3 <- xtabs(Freq~Day+Time+Network, TV.df)
+```
+
+```{r tv_3wayca}
+# create a multiple correspondence analysis
+TV3.mca <- mjca(TV3)
+
+# the plot function uses all base R plot stuff
+# but needs a bit of manipulation
+cols <- c("blue", "black", "red")
+
+# "blank plot"
+res <- plot(TV3.mca, labels=0, pch='.', cex.lab=1.2)
+
+# combine Dims, factor names and levels
+coords <- data.frame(res$cols, TV3.mca$factors)
+
+# save this for later
+m_coords <- coords[ order(coords[,"factor"], -coords[,"Dim1"]), c("Dim1", "Dim2")]
+
+# hard-coded from known number of levels
+# day, time, network
+nlev <- c(5,3,3)
+
+# everything needs to be in semantic order
+coords <- coords[ order(coords[,"factor"], coords[,"level"]), ]
+# quick fix for ordering e.g. day of week, not alphabetical
+coords$order <- c(5, 1, 4, 2, 3, 6, 7, 8, 11, 9, 10)
+coords <- coords[order(coords[, "order"]), ]
+
+# place the points with separate plot chars and colours
+points(coords[,1:2], pch=rep(16:18, nlev), col=rep(cols, nlev), cex=1.2)
+
+# place the text
+pos <- c(1,4,3)
+text(coords[,1:2], labels=coords$level, col=rep(cols, nlev), pos=rep(pos,nlev), cex=1.1, xpd=TRUE)
+
+# join things in sequence
+lines(Dim2 ~ Dim1, data=coords, subset=factor=="Day", lty=1, lwd=1, col="blue")
+lines(Dim2 ~ Dim1, data=coords, subset=factor=="Time",  lty=1, lwd=1, col="red")
+
+# add segement from the origin to channels
+nw <- subset(coords, factor=="Network")
+segments(0, 0, nw[,"Dim1"], nw[, "Dim2"], col = "black", lwd = 0.5, lty = 3)
+
+# add a legend
+legend("topright", legend=c("Day", "Network", "Time"),
+       title="Factor", title.col="black",
+       col=cols, text.col=cols, pch=16:18,
+       bg="gray95")
+```
+
+This plot reveals an incredibly strong effect relating NBC and Thursday nights. This is apparently most of the inertia captured by Dimension 1. What's going on there?
+
+```{r TV_day_network}
+margin.table(TV3, 1)
+margin.table(TV3, c(1, 3))
+```
+
+Viewing figures are at their highest on Thursdays compared to any night of the week and for NBC they dramatically outnumber the other two channels, but only on this night. NBC has viewing figures that are comparable to the others most other nights. Everyone appears to be glued to NBC all evening. A little digging and domain knowledge (showing my age, here) means we can give this effect a name: This is the "Friends, Seinfeld and ER" effect! These were three of the most popular shows of that [era](https://en.wikipedia.org/wiki/1995%E2%80%9396_United_States_network_television_schedule). 
+
+The 9pm slot clusters closer to the other four days than 8pm and 10pm. What's happening there?
+
+```{r TV_time_network}
+margin.table(TV3, 2)
+t(TV3[4,,]) # Thursday
+```
+
+It turns out that 9pm is the most viewed time slot throughout the week, independent of day or network. Yet, notice how the NBC audience numbers dip just a little for that time slot on Thursday, even though they still have far greater numbers than either of the other two channels. This dip in numbers runs counter to the "Friends, Seinfeld and ER" effect which has completely dominated the analysis, and so it has also been captured on Dimension 1.
+
+Dimension 2 is forced to capture differences between ABC and CBS schedules on the other nights as well as possible, but there is undoubtedly more detail to untangle.
+
+Now we have identified this difficulty, we can tackle the problem. We're going to use the simple (2-Way) Correspondence Analysis to do this. Using the pivoting function *structable()*, we effectively create a new feature that combines time and day. Counter-intuitively, this allows the Correspondence Analysis *more* flexibility along the combined dimension. The resulting plot has a point for each time slot over the week and teases apart the effect of people channel hopping from the "Friends, Seinfeld and ER" effect. It turns out to be very easy to do (see the code for yourself).
+
+```{r tv_2wayca}
+# Flatten to 2-D by stacking Time onto Day
+# Note: The data shaping choice here controls the specifics of the analysis.
+TV3s <- as.matrix(structable(Network~Time+Day, TV3))
+
+# Create the Correspondence Analysis objects
+TV3s.ca <- ca(TV3s)
+
+# Generate the plot
+res.ca <- plot(TV3s.ca)
+# add some segments from the origin to make things clearer
+segments(0, 0, res.ca$cols[,1], res.ca$cols[,2], col = "red", lwd = 1)
+segments(0, 0, res.ca$rows[,1], res.ca$rows[,2], col = "blue", lwd = 0.5, lty = 3)
+```
+
+As you can see, the small channel hop from NBC on Thursday has moved onto Dimension 2, along with the other variations in within-evening viewing patterns. On the previous plot, there is a very slight affinity 8pm-CBS, and 9pm-ABC. Did you notice? Look again. We can see clearly on this new plot, something of great interest at 8pm, Monday, but not later on the same evening and not again at the same time later in the week. We also can see several 9pm slots clustered around ABC.
+
+An interesting feature of this new analysis, is that distance from the origin is proportional to the size of positive residual. What does this mean? Well for example, from 10pm the viewing figures dwindle, independent of day and channel as people go to bed or go out for a late drink. Thursday night, 10pm, NBC has massive audience figures relative to what's normally expected for that time slot the rest of the week. This inertia moves the point furthest from the origin out of all the nightly time slots. Monday at 8pm on CBS is notable for the same reason. Why not Monday 9pm and ABC? There are other nights when ABC is popular at 9pm, making this combination less unusual.
+
+```{r TV_monday}
+t(TV3[1,,]) # Monday
+TV3[,2,1] # Every day, 9pm, ABC
+```
+
+If the next stage of your project requires real valued features for modeling (such as a distance or similarity based model), you can access the coordinates of each point via the plot object and replace them in your data set. This is more powerful than converting to an integer series or dummy variables, because so much information is retained. For example, it's very tempting to convert [*Monday, Tuesday, Wednesday, Thursday, Friday*] to [*1,2,3,4,5*]. However, we have seen in this case that this retains none of the information about the feature interactions. Likewise, [*8,9,10*] seems obvious to leave as numbers, but you lose information about the audience figures being higher at 9pm than any other time. Also, what's the natural order for [*ABC,CBS,NBC*]? Alphabetical? Think again!
+
+```{r tv_ca_dims}
+m_coords
+res.ca$rows[order(res.ca$rows[, 1]), ]
+```
+
+We'll take a look at one more of these, from the 4-D Titanic data set again.
+
+```{r Titanic_mca}
+# one more mca from a 4-D dataset
+# this is simpler than it looks
+# all the magic happens here
+titanic.mca <- mjca(Titanic)
+
+# saving the plot object supplies the coordinate positions
+res <- plot(titanic.mca, labels=0, pch='.', cex.lab=1.2)
+
+# extract factor names and levels
+coords <- data.frame(res$cols, titanic.mca$factors)
+
+# everything else is handling base R plotting stuff
+cols <- c("blue", "red", "brown", "black")
+nlev <- c(4,2,2,2)
+points(coords[,1:2], pch=rep(16:19, nlev), col=rep(cols, nlev), cex=1.2)
+pos <- c(3,1,1,3)
+text(coords[,1:2], labels=coords$level, col=rep(cols, nlev), pos=rep(pos,nlev), cex=1.1, xpd=TRUE)
+coords <- coords[ order(coords[,"factor"], coords[,"Dim1"]), ]
+lines(Dim2 ~ Dim1, data=coords, subset=factor=="Class", lty=1, lwd=2, col="blue")
+lines(Dim2 ~ Dim1, data=coords, subset=factor=="Sex",  lty=1, lwd=2, col="red")
+lines(Dim2 ~ Dim1, data=coords, subset=factor=="Age",  lty=1, lwd=2, col="brown")
+lines(Dim2 ~ Dim1, data=coords, subset=factor=="Survived",  lty=1, lwd=2, col="black")
+
+legend("topleft", legend=c("Class", "Sex", "Age", "Survived"),
+       title="Factor", title.col="black",
+       col=cols, text.col=cols, pch=16:19,
+       bg="gray95", cex=1.2)
+```
+
+Note that the two category (binary) features all pass through the origin.
+
+```{r Titanic.ca}
+# Simple ca works on two dimensions
+# pivot table of Titanic
+Titanic_piv <- structable(~Class+Sex+Survived+Age, Titanic)
+Titanic_piv
+# all the work happens here
+Titanic.ca <- ca(as.matrix(Titanic_piv))
+
+# plot and save the object to get the coords for line segments
+res <- plot(Titanic.ca)
+segments(0, 0, res$cols[,1], res$cols[,2], col = "red", lwd = 1)
+segments(0, 0, res$rows[,1], res$rows[,2], col = "blue", lwd = 0.5, lty = 3)
+```
+
+As you can see Correspondence Analysis is an extremely powerful dimension reduction and clustering tool for categorical data.
+
+### Talking Points
+
+* What can you infer from the Titanic Correspondence Analysis Plots?
+* Compare the two types of Correspondence Analysis (simple and multiple/joint)
+* How might correspondence analysis change your modelling strategy?
 
 ## Task: Unpacking a Confusion Matrix by Important Features
 
@@ -1027,210 +1246,6 @@ With a little intervention, guided by this information, these two raters could b
 * What other statistics, tools and techniques can you use to analyse a confusion matrix?
 * Have you worked with, or can you think of an ordinal classification problem?
 * How could you use the Bangdiwala statistic *during* training to improve alignment?
-
-## Task: Dimension Reduction and Clustering
-
-### What is this for?
-
-Most Machine Learning practitioners are familiar with dimension reduction. It can radically simplify and compress a dataset, making it easier to handle and train models on. Many dimension reduction techniques also double up as unsupervised learning methods i.e. clustering. This is useful as an end in itself, as well as being an additional tool for exploratory data analysis: multidimensional data is projected into 2-D which makes it intuitive to visualise.
-
-If you already know something about Principle Components Analysis, this is similar, but not quite the same. Remember, in DDA, the "dimensions" we want to reduce or cluster are not only the features, but also the categories within each feature. PCA identifies new dimensions that capture the most variance. The equivalent concept in Correspondence Analysis is the "inertia" of cells in the table with the largest and smallest numbers. The only way to really describe what's happening is to see some examples.
-
-Correspondence Analysis is an advanced topic. In particular, the way you pivot the multidimensional array controls the analysis. This requires some understanding of the data manipulation and modeling techniques. For today, we will just focus on interpreting the plots.
-
-### When would I use this?
-
-You can use Correspondence Analysis during the exploratory data analysis phase of any project. Do this early on in the project once you've gathered and cleaned up your data enough to start sense-making.
-
-This is a good technique for of feature engineering. If several features are well clustered you can replace them with the real valued dimensions that this method returns as output. This may convert several categorical dimensions into just a couple of numeric ones that might better suit the next stage of your project. The following two situations are immediately applicable:
-
-* You want to reduce the number of features in your dataset overall
-* You want to implement a model that requires only numeric, or real-valued functions. For example, k-NN requires a distance metric that works on all the features, while your dataset has some categorical features. Of course you could convert all your categories to factors, integers or binary encode them (aka create dummy variables). However, Correspondence Analysis actually reduces the number of features while retaining information about the way the original features interact.
-
-You could use it as a stand alone model. This is an unsupervised clustering method for categorical features. Use it where you don't have a specific class label, but just want to find out the associations between all the features.
-
-### Case Study: Analysis of Audience Viewing Data
-
-The audience viewing data from Neilsen Media Research for the week starting November 6, 1995
-
-It is a 3-D array cross-tabulating the viewing figures for three networks, between 8-11pm, Monday to Friday. The features and their levels are as follows:
-
-```{r describe_tv, echo=FALSE}
-tv_desc <- data.frame(No=1:3
-                      , Name=c("Day", "Time", "Network")
-                      , Levels=c("Monday, Tuesday, Wednesday, Thursday, Friday", "8, 9, 10", "ABC, CBS, NBC"))
-kable(tv_desc)
-```
-
-```{r tv_dataprep}
-data("TV", package = "vcdExtra")
-# The original data is collected in 15 minutes slices.
-
-# Convert 3-D array to a frequency data frame
-# This has a row for each cell of the array
-# and a new column for the cell value
-TV.df <- as.data.frame.table(TV)
-
-# Convert it into hourly slices
-levels(TV.df$Time) <- rep(c("8", "9", "10"), c(4,4,3))
-
-# Convert frequency data back to 3-D array, now with just 3 time levels
-TV3 <- xtabs(Freq~Day+Time+Network, TV.df)
-```
-
-```{r tv_3wayca}
-# create a multiple correspondence analysis
-TV3.mca <- mjca(TV3)
-
-# the plot function uses all base R plot stuff
-# but needs a bit of manipulation
-cols <- c("blue", "black", "red")
-
-# "blank plot"
-res <- plot(TV3.mca, labels=0, pch='.', cex.lab=1.2)
-
-# combine Dims, factor names and levels
-coords <- data.frame(res$cols, TV3.mca$factors)
-
-# hard-coded from known number of levels
-# day, time, network
-nlev <- c(5,3,3)
-
-# everything needs to be in semantic order
-coords <- coords[ order(coords[,"factor"], coords[,"level"]), ]
-# quick fix for ordering e.g. day of week, not alphabetical
-coords$order <- c(5, 1, 4, 2, 3, 6, 7, 8, 11, 9, 10)
-coords <- coords[order(coords[, "order"]), ]
-
-# place the points with separate plot chars and colours
-points(coords[,1:2], pch=rep(16:18, nlev), col=rep(cols, nlev), cex=1.2)
-
-# place the text
-pos <- c(1,4,3)
-text(coords[,1:2], labels=coords$level, col=rep(cols, nlev), pos=rep(pos,nlev), cex=1.1, xpd=TRUE)
-
-# join things in sequence
-lines(Dim2 ~ Dim1, data=coords, subset=factor=="Day", lty=1, lwd=1, col="blue")
-lines(Dim2 ~ Dim1, data=coords, subset=factor=="Time",  lty=1, lwd=1, col="red")
-
-# add segement from the origin to channels
-nw <- subset(coords, factor=="Network")
-segments(0, 0, nw[,"Dim1"], nw[, "Dim2"], col = "black", lwd = 0.5, lty = 3)
-
-# add a legend
-legend("topright", legend=c("Day", "Network", "Time"),
-       title="Factor", title.col="black",
-       col=cols, text.col=cols, pch=16:18,
-       bg="gray95")
-```
-
-This plot reveals an incredibly strong effect relating NBC and Thursday nights. This is apparently most of the inertia captured by Dimension 1. What's going on there?
-
-```{r TV_day_network}
-margin.table(TV3, 1)
-margin.table(TV3, c(1, 3))
-```
-
-Viewing figures are at their highest on Thursdays compared to any night of the week and for NBC they dramatically outnumber the other two channels, but only on this night. NBC has viewing figures that are comparable to the others most other nights. Everyone appears to be glued to NBC all evening. A little digging and domain knowledge (showing my age, here) means we can give this effect a name: This is the "Friends, Seinfeld and ER" effect! These were three of the most popular shows of that [era](https://en.wikipedia.org/wiki/1995%E2%80%9396_United_States_network_television_schedule). 
-
-The 9pm slot clusters closer to the other four days than 8pm and 10pm. What's happening there?
-
-```{r TV_time_network}
-margin.table(TV3, 2)
-t(TV3[4,,]) # Thursday
-```
-
-It turns out that 9pm is the most viewed time slot throughout the week, independent of day or network. Yet, notice how the NBC audience numbers dip just a little for that time slot on Thursday, even though they still have far greater numbers than either of the other two channels. This dip in numbers runs counter to the "Friends, Seinfeld and ER" effect which has completely dominated the analysis, and so it has also been captured on Dimension 1.
-
-Dimension 2 is forced to capture differences between ABC and CBS schedules on the other nights as well as possible, but there is undoubtedly more detail to untangle.
-
-Now we have identified this difficulty, we can tackle the problem. We're going to use the simple (2-Way) Correspondence Analysis to do this. Using the pivoting function *structable()*, we effectively create a new feature that combines time and day. Counter-intuitively, this allows the Correspondence Analysis *more* flexibility along the combined dimension. The resulting plot has a point for each time slot over the week and teases apart the effect of people channel hopping from the "Friends, Seinfeld and ER" effect. It turns out to be very easy to do (see the code for yourself).
-
-```{r tv_2wayca}
-# Flatten to 2-D by stacking Time onto Day
-# Note: The data shaping choice here controls the specifics of the analysis.
-TV3s <- as.matrix(structable(Network~Time+Day, TV3))
-
-# Create the Correspondence Analysis objects
-TV3s.ca <- ca(TV3s)
-
-# Generate the plot
-res <- plot(TV3s.ca)
-# add some segments from the origin to make things clearer
-segments(0, 0, res$cols[,1], res$cols[,2], col = "red", lwd = 1)
-segments(0, 0, res$rows[,1], res$rows[,2], col = "blue", lwd = 0.5, lty = 3)
-```
-
-As you can see, the small channel hop from NBC on Thursday has moved onto Dimension 2, along with the other variations in within-evening viewing patterns. On the previous plot, there is a very slight affinity 8pm-CBS, and 9pm-ABC. Did you notice? Look again. We can see clearly on this new plot, something of great interest at 8pm, Monday, but not later on the same evening and not again at the same time later in the week. We also can see several 9pm slots clustered around ABC.
-
-An interesting feature of this new analysis, is that distance from the origin is proportional to the size of positive residual. What does this mean? Well for example, from 10pm the viewing figures dwindle, independent of day and channel as people go to bed or go out for a late drink. Thursday night, 10pm, NBC has massive audience figures relative to what's normally expected for that time slot the rest of the week. This inertia moves the point furthest from the origin out of all the nightly time slots. Monday at 8pm on CBS is notable for the same reason. Why not Monday 9pm and ABC? There are other nights when ABC is popular at 9pm, making this combination less unusual.
-
-```{r TV_monday}
-t(TV3[1,,]) # Monday
-TV3[,2,1] # Every day, 9pm, ABC
-```
-
-If the next stage of your project requires real valued features for modeling (such as a distance or similarity based model), you can access the coordinates of each point via the plot object and replace them in your data set. This is more powerful than converting to an integer series or dummy variables, because so much information is retained. For example, it's very tempting to convert [*Monday, Tuesday, Wednesday, Thursday, Friday*] to [*1,2,3,4,5*]. However, we have seen in this case that this retains none of the information about the feature interactions. Likewise, [*8,9,10*] seems obvious to leave as numbers, but you lose information about the audience figures being higher at 9pm than any other time. Also, what's the natural order for [*ABC,CBS,NBC*]? Alphabetical? Think again!
-
-```{r tv_ca_dims}
-res$rows
-res$cols
-```
-
-We'll take a look at one more of these, from the 4-D Titanic data set again.
-
-```{r Titanic_mca}
-# one more mca from a 4-D dataset
-# this is simpler than it looks
-# all the magic happens here
-titanic.mca <- mjca(Titanic)
-
-# saving the plot object supplies the coordinate positions
-res <- plot(titanic.mca, labels=0, pch='.', cex.lab=1.2)
-
-# extract factor names and levels
-coords <- data.frame(res$cols, titanic.mca$factors)
-
-# everything else is handling base R plotting stuff
-cols <- c("blue", "red", "brown", "black")
-nlev <- c(4,2,2,2)
-points(coords[,1:2], pch=rep(16:19, nlev), col=rep(cols, nlev), cex=1.2)
-pos <- c(3,1,1,3)
-text(coords[,1:2], labels=coords$level, col=rep(cols, nlev), pos=rep(pos,nlev), cex=1.1, xpd=TRUE)
-coords <- coords[ order(coords[,"factor"], coords[,"Dim1"]), ]
-lines(Dim2 ~ Dim1, data=coords, subset=factor=="Class", lty=1, lwd=2, col="blue")
-lines(Dim2 ~ Dim1, data=coords, subset=factor=="Sex",  lty=1, lwd=2, col="red")
-lines(Dim2 ~ Dim1, data=coords, subset=factor=="Age",  lty=1, lwd=2, col="brown")
-lines(Dim2 ~ Dim1, data=coords, subset=factor=="Survived",  lty=1, lwd=2, col="black")
-
-legend("topleft", legend=c("Class", "Sex", "Age", "Survived"),
-       title="Factor", title.col="black",
-       col=cols, text.col=cols, pch=16:19,
-       bg="gray95", cex=1.2)
-```
-
-Note that the two category (binary) features all pass through the origin.
-
-```{r Titanic.ca}
-# Simple ca works on two dimensions
-# pivot table of Titanic
-Titanic_piv <- structable(~Class+Sex+Survived+Age, Titanic)
-Titanic_piv
-# all the work happens here
-Titanic.ca <- ca(as.matrix(Titanic_piv))
-
-# plot and save the object to get the coords for line segments
-res <- plot(Titanic.ca)
-segments(0, 0, res$cols[,1], res$cols[,2], col = "red", lwd = 1)
-segments(0, 0, res$rows[,1], res$rows[,2], col = "blue", lwd = 0.5, lty = 3)
-```
-
-As you can see Correspondence Analysis is an extremely powerful dimension reduction and clustering tool for categorical data.
-
-### Talking Points
-
-* What can you infer from the Titanic Correspondence Analysis Plots?
-* Compare the two types of Correspondence Analysis (simple and multiple/joint)
 
 ## Task: 1-way analysis (goodness of fit) for monitoring the frequency of events.
 
