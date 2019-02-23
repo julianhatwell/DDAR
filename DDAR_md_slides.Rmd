@@ -99,7 +99,7 @@ This prez is based on a hands-on tutorial that I deliver at BCU. Ask me for the 
 
 **Michael Friendly** is a pioneer in this field and has contributed to the development of modules and libraries for SAS and R.
 
-Code examples based on material contained in the book [**Discrete Data Analysis with R: Visualization and Modeling Techniques for Categorical and Count Data**](https://www.crcpress.com/Discrete-Data-Analysis-with-R-Visualization-and-Modeling-Techniques-for/Friendly-Meyer/p/book/9781498725835) by Michael Friendly.
+Code examples based on material contained in the book [**Discrete Data Analysis with R: Visualization and Modeling Techniques for Categorical and Count Data**](https://www.crcpress.com/Discrete-Data-Analysis-with-R-Visualization-and-Modeling-Techniques-for/Friendly-Meyer/p/book/9781498725835) by Michael Friendly and David Meyer.
 
 Shorter, valuable tutorial on these topics in the [vcd vignette](https://cran.r-project.org/web/packages/vcdExtra/vignettes/vcd-tutorial.pdf). Just type **vignette("vcd")** at the R console.
 

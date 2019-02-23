@@ -1,0 +1,332 @@
+---
+title: 'Discrete Data Analysis: A Friendly Guide to Visualising Categorical Data for
+  Machine Learning Practitioners, with Examples in R'
+author: "Julian Hatwell"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    number_sections: yes
+    toc: yes
+  pdf_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE
+                      , message = FALSE
+                      )
+
+knitr::opts_template$set(
+  fig.wide = list(fig.height = 4.5, fig.width = 8, fig.align='center')
+  , fig.wideX = list(fig.height = 3, fig.width = 9, fig.align='center')
+  , fig.relaxed = list(fig.height = 6, fig.width = 8, fig.align='center')
+  , fig.tile = list(fig.height = 3, fig.width = 3, fig.align='center')
+)
+```
+
+# Introduction
+
+These are the introductory notes for the tutorial session on Discrete Data Analysis for Machine Learning Practitioners.
+
+Please read through these notes before the session. It should only take about 10 minutes. Most of the notes are figures and output from R.
+
+## R
+
+I've kept code examples as simple as I can make them so the less experienced can join in.
+    
+These are the libraries we'll be using. If you are bringing your laptop to the session, please make sure these are installed and loaded.
+
+```{r load_libs}
+# I'm going to load all the R libraries here
+# If you stop, quit R and come back later...
+# ...you need to re-run this chunk.
+
+# install these packages if you don't have them already
+# install.packages("packageNameHere")
+
+library(knitr)
+library(lattice)
+library(ggplot2)
+library(vcd)
+library(vcdExtra)
+library(ca)
+library(randomForest)
+library(gmodels)
+library(mvtnorm)
+library(ROSE)
+```
+
+## What we Will Cover in the Session
+
+This practice-led tutorial is aimed at anyone engaging in Machine Learning projects. We will execute and critique strategies and techniques that are specifically aimed at handling tabular data that contain some/mostly/all discrete data types (nominal, ordinal, binary, count) in ML classification.
+ 
+Note, this is not a session about theory, algorithms and modelling. This will be a practical session aimed at improving productivity, enjoyment and insights gained during the routine (head and tail) tasks of ML project work. Specifically, exploratory analysis and analysing results.
+ 
+The case studies include:
+
+* exploratory data analysis (visualisation, dimension reduction, clustering and feature engineering) with categorical data
+* developing actionable insights from multi-class and binary classification
+* correct handling of ordinal classification results
+
+## What we Won't Cover in the Session
+
+Bear in mind, this is just an overview! We will only introduce formal statistics and tests where necessary, and will not develop any mathematical notation, theory or proofs. 
+
+We will not cover any explanatory or predictive modeling, such as logistic regression for binary classification. These would be covered separately in a Data Mining or Machine Learning session.
+
+## Who am I and Why am I Presenting This?
+
+* Research to PhD (in progress) Data Analytics and Artificial Intelligence Research Group, Birmingham City University
+* MSc. (Distinction), Business Intelligence, Birmingham City University. Master's Dissertation: An Association Rules Based Method for Imputing Missing Likert Scale Data
+* Around 15 years experience in enterprise systems, management information systems and BI, business process improvement and digital transformation in the for-profit education sector, UK and Singapore. This industry vertical includes:
+
+    * Trans-national education – delivery of fully accredited degrees from prestige US, UK and Aus universities in South East Asia
+    * Outsourcing of international foundation college for Russell Group and 2nd tier universities
+    * TEFL colleges and services
+    
+During my career I regularly had to work on business questions involving student demographics, enrolment numbers, satisfaction surveys and so on. With the emergence of data science and machine learning as a differentiator and disruptor for business and enterprise, I came across the work of Michael Friendly when I was searching for ways to help the organisation become more data driven and evidence based in its strategic decision making.
+
+The case studies in this session represent a digest of those tools and techniques that I feel are relevant to our group and worth sharing.
+
+# What is Discrete Data Analysis (DDA)?
+
+Predictably, the term refers to analysis of discrete data! DDA is a set of tools and techniques that you would apply to achieve the similar objectives as any quantitative statistical analysis - exporatory analysis, hypothesis testing - but with these data types:
+
+* Nominal
+* Ordinal
+* Binary
+* Counts / Frequencies
+
+The following sections introduce the foundational tools that we will use in the tutorial session. 
+
+## Plots and Charts
+
+Plots and charts allow us to apply our most powerful analytical assets: our eyes and brains. The trick is to choose the right chart that reveals the right information for the task in hand. A chart is often acceptable as statistical evidence, provided it is enhanced with robust statistical information (confidence intervals, significance test results, etc). More importantly, a good chart really doesn't need much explaining.
+
+The next three charts are examples of quantitative analysis, involving some discrete data. We tend to reach for these types of charts when we see a mix of numeric and discrete data but this is __not__ DDA! It is important to make this distinction. Quantitative analysis holds the numeric data central uses discrete features as slicers:
+
+```{r not_DDA}
+# you need the mvtnorm library loaded to run this code
+# set the random number generator same every time
+set.seed(123)
+
+# a discrete feature to label the groups
+n <- 100
+grp <- rep(c(1, 2), each = n)
+
+# a random discrete feature
+rnd <- sample(c(1, 2)
+              , replace = TRUE
+              , size = 200)
+
+# some random multivariate normal data for grp1
+numvars1 <- rmvnorm(n, c(0, 0)
+                    , sigma = matrix(c(3,2,2,3)
+                                     , ncol=2))
+
+# some random multivariate normal data
+# with different parameters for grp2
+numvars2 <- rmvnorm(n, c(1, 1)
+                    , sigma = matrix(c(1,0.5,0.5,4)
+                                     , ncol=2))
+
+# combine together as one data frame
+numvars <- rbind(numvars1, numvars2)
+
+# add a discrete feature based on a linear combination
+# + noise to make a soft boundary
+noise <- rnorm(2*n, mean = 0, sd = 0.5)
+fam <- ifelse(rowSums(numvars) + noise > 3, 1, 2)
+
+# take row sums then table-apply the sum by each group
+grp_total <- tapply(rowSums(numvars), grp, sum)
+rnd_total <- tapply(rowSums(numvars), rnd, sum)
+fam_total <- tapply(rowSums(numvars), fam, sum)
+
+par(mfrow=c(1,3))
+# plot, using graphic options to separate the discrete classes
+plot(numvars, col = fam, pch = rnd, cex = grp
+     , main = "scatterplot with size, shape\nand colour options"
+     , ylab = "y"
+     , xlab = "x")
+
+# take row sums then table-apply the sum by each group
+grp_total <- tapply(rowSums(numvars), grp, sum)
+rnd_total <- tapply(rowSums(numvars), rnd, sum)
+fam_total <- tapply(rowSums(numvars), fam, sum)
+
+# totals barplot
+barplot(c(grp_total, rnd_total, fam_total)
+        , xlab="grp rnd fam"
+        , col="lightgray", border = 1:2
+        , main="barplot of quantitative\ntotals by groups"
+        )
+
+# classic box plot
+boxplot(rowSums(numvars)~rnd*grp, border=1:2
+     , main = "boxplot distribution\nanalysis by groups"
+     , xlab = "rnd1.grp1 rnd2.grp1 rnd1.grp2 rnd2.grp2"
+     , ylab = "row sum value")
+
+par(mfrow=c(1,1))
+```
+
+The plots above place all the focus on the numeric feature(s), slicing into groups by the various discrete features. We want charts where all the focus is on the discrete features themselves and provides more information about them.
+
+```{r count_data}
+# length will count the members, table apply by category
+grp_count <- tapply(rowSums(numvars), grp, length)
+rnd_count <- tapply(rowSums(numvars), rnd, length)
+fam_count <- tapply(rowSums(numvars), fam, length)
+
+# counts barplot
+barplot(c(grp_count, rnd_count, fam_count)
+        , col="lightgray", border = 1:2
+        , xlab="grp rnd fam"
+        , main="counts by groups")
+```
+
+By counting the group members, the numeric variable is out of the picture entirely and it's very easy, to visually connect the count data to information we already know. The *grp* feature is the class labels themselves, while *rnd* was drawn at random with even odds. For the *fam* feature, membership of category 1 depended on the sum of $(x,y)$ being greater than $3$, which in turn depended on how the random variables were generated.
+
+The main thing to focus on is how the plot reveals that there is an effect controling the ratio of the two categories of *fam*, but nothing of interest is affecting the *grp* or *rnd*. In DDA, we want to find such effects, particularly in exploratory analysis, even when we have no numeric variables to measure.
+
+What happens when we want to look at more than one variable at a time to see how they interact? Here is an example using real-world data.
+
+The HairEyeColor dataset ships with base R. It is a survey of 592 statistics students at the University of Delaware in 1974. It is a 3-D array cross-tabulating the observations. The features and their levels are as follows:
+
+```{r describe_haireye, echo=FALSE}
+hr_desc <- data.frame(No=1:3
+                      , Name=c("Hair", "Eye", "Sex")
+                      , Levels=c("Black, Brown, Red, Blond", "Brown, Blue, Hazel, Green", "Male, Female"))
+kable(hr_desc)
+```
+
+For now, we will ignore the sex of each individual by collapsing the 3-D table down to 2-D, and re-order the table from dark to light eye colour (hair is already in that order).
+
+```{r haireye_prep}
+# ignore gender for now
+haireye <- margin.table(HairEyeColor, 1:2)
+
+# re-arrange order of eye colour from dark to light
+# it's already correct for hair
+haireye <- as.table(haireye[, c("Brown", "Hazel", "Green", "Blue")])
+haireye
+```
+
+Big numbers and small numbers stand out but the table still has 16 cells which is a lot to take in at once. It's not immediately obvious what the relationships are.
+
+A naive approach might be to produce a bar plot of the counts by groups.
+
+```{r not_intuitive}
+# With a grouped bar plot
+# you're forced to favour one variable over the other.
+
+# Does does hair colour depend on eye colour?
+barplot(haireye, beside = TRUE, legend = TRUE)
+
+# Or does eye colour depend on hair colour?
+# pivot the other way
+barplot(aperm(haireye, 2:1), beside = TRUE, legend = TRUE)
+```
+
+It's hard to compare bars across groups, because your eye has to jump to find each member. Can you think of a more intuitive way to view this data?
+
+We will pick up from this point with the first case study.
+
+## Tables
+
+The most useful data structures for DDA in R are n-dimensional arrays, n-way tables, and matrices. Only  sometimes data frames are used with a frequency column (for the count data).
+
+Tables, or more specifically, contigency tables or crosstabs are used in most of the analyses that we'll develop in the workshop. The categorical features form the axes, and each cell contains the total number of individuals at the intersection of each category. 
+
+DDA requires us to be able to manipulate tables and there are several functions for handling them. Here are some examples:
+
+```{r tables}
+# 3D table - Admit on rows (D1), Gender on columns (D2)
+# and Department on levels (D3)
+
+UCBAdmissions # Department has 6 levels
+
+# In 2D - collapse over department
+margin.table(UCBAdmissions, 2:1)
+
+# pivot the department onto columns
+aperm(UCBAdmissions, c(2, 3, 1))
+
+# flatten to a crosstab in default order
+structable(UCBAdmissions)
+
+# flatten to a crosstab with pivot
+structable(aperm(UCBAdmissions, c(2, 3, 1)))
+
+# More D
+structable(Survived~., data=Titanic)
+
+# More D - another pivot
+structable(Survived+Sex~., data=Titanic)
+```
+
+Tables like this have several disadvantages. Staring at numbers is not very informative, unless there are obvious large or small values, and things start to get tricky in more dimensions.
+
+Adding row, column and table totals can be informative but only works well in 2D.
+
+```{r crosstabs}
+# An old fashioned crosstab - 2D
+CrossTable(margin.table(UCBAdmissions, 2:1)
+           , prop.chisq = FALSE
+           , format = "SPSS")
+```
+
+## $\chi^2$ Test
+
+A huge range of DDA research questions ultimately are answered with a $\chi^2$ test. That's simply because tables are the main data structures for DDA and most tasks are driving towards comparing between expected values and actual, observed values.
+
+This test instantly tells you if numbers in table cells are near enough to some expectation that you can put any small differences down to random sampling error.
+
+You might have some very specific expected numbers or patterns, but the most common expectation is of independence between variables. In this case, you expect all the numbers to be proportional to the row and column totals: This expectation implies that belonging to a category in feature A has no effect on the probability of belonging to any of the categories in feature B.
+
+Below is an example using the haireye table that we have seen before. We use a mosaic plot to show the expected values under such an assumption of independence:
+
+```{r hr_expected}
+# visualising expected counts for independent features
+expected = independence_table(haireye)
+round(expected, 1)
+
+mosaic(expected
+      , main="Expected frequencies"
+      , labeling = labeling_values
+      , value_type = "expected"
+      , gp_text = gpar(fontface = 1))
+```
+
+Using tile area is a good way to visualise frequencies or counts. Note how all the grid lines are dead straight, because all the expected counts are in proportion with column and row totals.
+
+How does this mosaic compare to the actual frequencies? You could do a $\chi^2$ test to see if there is evidence against the assumption of independence:
+
+```{r hr_chisq}
+chisq.test(haireye)
+```
+
+This tells us that hair colour and eye colour are interacting, which you will have probably intuited just by looking at the numbers. However, this test can't tell us anything about the nature of the interaction, whether there is a clear pattern that might even agree with or challenge your prior knowledge about hair and eye colour.
+
+We will develop these ideas further in the first case study, using area based plots to search for patterns in discrete data.
+
+In the second case study we will use clustering to find even more complex relationships.
+
+# Recap on Confusion Matrix, Class Imbalance and Cohen's $\kappa$
+
+This quick recap is to remind you of some basic points about confusion matrix analysis, which we will look at in the third case study (time allowing).
+
+In Machine Learning, the standard way to assess the quality of a supervised classification model is with a confusion matrix. This is a two way table comparing True and Predicted class labels. When classes are well balanced, it's easy to measure accuracy over a confusion matrix as $\frac{\sum(\textit{diag})}{\sum(\textit{total})}$. When they're out of balance you can have a situation such as this:
+
+The ratio of class 1 : class 2 is 9:1. Predict every instance as class 1 and you will get 90% accuracy. This not a useful result!
+
+So we use Cohen's $\kappa$ statistic to weight according to the occurrence of each class in the data. $\kappa = 1$ means perfect agreement while $\kappa = 0$ means no better than chance agreement. The above example would score $\kappa = 0$.
+
+# Credits
+
+The code examples are mostly based on material contained in the book [Discrete Data Analysis with R: Visualization and Modeling Techniques for Categorical and Count Data](https://www.crcpress.com/Discrete-Data-Analysis-with-R-Visualization-and-Modeling-Techniques-for/Friendly-Meyer/p/book/9781498725835) by Michael Friendly and David Meyer. Michael Friendly is a pioneer in this field and has contributed to the development of modules and libraries for SAS and R.
+
+You can also find a much shorter tutorial on these topics in the long form help for the "vcd" package for R: [vcd vignette](https://cran.r-project.org/web/packages/vcdExtra/vignettes/vcd-tutorial.pdf)
+
+This video https://www.youtube.com/watch?v=qfNsoc7Tf60 is a much more in depth lecture by Michael Friendly, on topics covered in the book.

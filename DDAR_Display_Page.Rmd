@@ -37,7 +37,7 @@ These notes are for you if:
     * Impact of important categorical features on classification results
     * Frequency data: events, counts, occurrences, wait-times
     
-*Note, I hope this is a living document which I can expand as time allows. Check back in a few months. The last date I updated should always be visible in the header.*
+*Note, I hope this can be a living document which I can expand as time allows. Check back in a few months. The last date I updated should always be visible in the header.*
 
 If you want to know more you can follow the links to the [vignette](https://cran.r-project.org/web/packages/vcdExtra/vignettes/vcd-tutorial.pdf), [video](https://www.youtube.com/watch?v=qfNsoc7Tf60) and [book](https://www.crcpress.com/Discrete-Data-Analysis-with-R-Visualization-and-Modeling-Techniques-for/Friendly-Meyer/p/book/9781498725835) that have been the most useful sources of information for me.
 
@@ -45,7 +45,7 @@ If you want to know more you can follow the links to the [vignette](https://cran
 
 The examples are all in R because it's simply the right tool for the job. I've kept things about as simple as I can make them. Even if you don't know any R you should get along provided you have enough tech savvy to download and install new software. Maybe you'll even learn some R by osmosis.  That's all I really want to say about R.
     
-These are the libraries we'll be using. If necessarly 
+These are the libraries we'll be using.
 
 ```{r load_libs}
 # I'm going to load all the R libraries here
@@ -69,7 +69,7 @@ library(ROSE)
 
 ## Credits
 
-The code examples are mostly based on material contained in the book [Discrete Data Analysis with R: Visualization and Modeling Techniques for Categorical and Count Data](https://www.crcpress.com/Discrete-Data-Analysis-with-R-Visualization-and-Modeling-Techniques-for/Friendly-Meyer/p/book/9781498725835) by Michael Friendly. Michael Friendly is a pioneer in this field and has contributed to the development of modules and libraries for SAS and R.
+The code examples are mostly based on material contained in the book [Discrete Data Analysis with R: Visualization and Modeling Techniques for Categorical and Count Data](https://www.crcpress.com/Discrete-Data-Analysis-with-R-Visualization-and-Modeling-Techniques-for/Friendly-Meyer/p/book/9781498725835) by Michael Friendly and David Meyer. Michael Friendly is a pioneer in this field and has contributed to the development of modules and libraries for SAS and R.
 
 You can also find a much shorter tutorial on these topics in the long form help for the "vcd" package for R: [vcd vignette](https://cran.r-project.org/web/packages/vcdExtra/vignettes/vcd-tutorial.pdf)
 
@@ -98,7 +98,7 @@ Working backwards:
     * Outsourcing of international foundation college for Russell group and 2nd tier universities
     * TEFL colleges and services
 * BSc. (Hons) Microbiology
-    * Yes, this last one seems a bit disconnected. If you know the British education system, you'll probably understand. It's still relevant here because there's a bit stats involved. For example, [Most Probable Number Theory](https://en.wikipedia.org/wiki/Most_probable_number) to estimate the number of bacterial cells in a test tube. You certainly can't count them all!
+    * Yes, this last one seems a bit disconnected. If you know the British education system, you'll probably understand. It's still relevant here because there's a bit of stats involved. For example, [Most Probable Number Theory](https://en.wikipedia.org/wiki/Most_probable_number) to estimate the number of bacterial cells in a test tube. You certainly can't count them all!
 
 In my career as a data professional the kinds of questions I used to work on were:
 
@@ -162,33 +162,45 @@ There are plenty of examples of the right tools in the case studies.
 # set the random number generator same every time
 set.seed(123)
 
-# a discrete value to match the groups
+# a discrete feature to label the groups
 n <- 100
 grp <- rep(c(1, 2), each = n)
 
-# a random discrete value
+# a random discrete feature
 rnd <- sample(c(1, 2)
               , replace = TRUE
               , size = 200)
+
+# some random multivariate normal data for grp1
 numvars1 <- rmvnorm(n, c(0, 0)
                     , sigma = matrix(c(3,2,2,3)
                                      , ncol=2))
 
+# some random multivariate normal data
+# with different parameters for grp2
 numvars2 <- rmvnorm(n, c(1, 1)
                     , sigma = matrix(c(1,0.5,0.5,4)
                                      , ncol=2))
+
+# combine together as one data frame
 numvars <- rbind(numvars1, numvars2)
 
-# a discrete value based on a soft linear boundary
+# add a discrete feature based on a linear combination
+# + noise to make a soft boundary
 noise <- rnorm(2*n, mean = 0, sd = 0.5)
 fam <- ifelse(rowSums(numvars) + noise > 3, 1, 2)
 
+# take row sums then table-apply the sum by each group
+grp_total <- tapply(rowSums(numvars), grp, sum)
+rnd_total <- tapply(rowSums(numvars), rnd, sum)
+fam_total <- tapply(rowSums(numvars), fam, sum)
+
+par(mfrow=c(1,3))
 # plot, using graphic options to separate the discrete classes
 plot(numvars, col = fam, pch = rnd, cex = grp
-     , main = "scatterplot with size, shape and colour options"
-     , sub = "typical options for stratifying numeric data by discrete data"
-     , xlab = "x"
-     , ylab = "y")
+     , main = "scatterplot with size, shape\nand colour options"
+     , ylab = "y"
+     , xlab = "x")
 
 # take row sums then table-apply the sum by each group
 grp_total <- tapply(rowSums(numvars), grp, sum)
@@ -197,20 +209,18 @@ fam_total <- tapply(rowSums(numvars), fam, sum)
 
 # totals barplot
 barplot(c(grp_total, rnd_total, fam_total)
+        , xlab="grp rnd fam"
         , col="lightgray", border = 1:2
-        , main="barplot with border options"
-        , sub = "numeric data stratified on groups")
+        , main="barplot of quantitative\ntotals by groups"
+        )
 
 # classic box plot
-# note that you can't tell
-# that grp is the actual groups
-# and rnd is a random labelling
-boxplot(rowSums(numvars)~grp*rnd, border=1:2
-     , main = "boxplot distribution analysis by groups"
-     , sub = "typical options for stratifying numeric data by discrete data"
-     , xlab = "grp1 grp2 rnd1 rnd2"
+boxplot(rowSums(numvars)~rnd*grp, border=1:2
+     , main = "boxplot distribution\nanalysis by groups"
+     , xlab = "rnd1.grp1 rnd2.grp1 rnd1.grp2 rnd2.grp2"
      , ylab = "row sum value")
 
+par(mfrow=c(1,1))
 ```
 
 The plots above place all the focus on the numeric features, slicing it into groups by the various discrete features. We would like charts where the focus is on the discrete features; something that provides more information about the discrete features themselves.
@@ -228,13 +238,15 @@ barplot(c(grp_count, rnd_count, fam_count)
         , sub="counts by groups")
 ```
 
-By counting the group members, the numeric variable is out of the picture entirely. The only trace of it is that *fam* group was based on a linear combination of the simulated data. The *grp* group was fixed at exactly the number of group members, while *rnd* was drawn at random with even odds. It's very easy, using this visual reference, to link the count data to the information we already know.
+By counting the group members, the numeric variable is out of the picture entirely. The only trace of it remains in the *fam* group, which was based on a linear combination of the simulated data. This plot reveals that there is an effect controling the ratio of the two categories of *fam*. In DDA, we want to find such effects, particularly in exploratory analysis. 
 
-I will provide much more interesting examples a little later on.
+The *grp* group was fixed at exactly the number of group members, while *rnd* was drawn at random with even odds. It's very easy, using this visual reference, to link the count data to the information we already know.
+
+I will provide much more interesting examples in the case studies.
 
 ### Tables
 
-Specifically, contigency tables or crosstabs. The categorical features form the axes, and each cell contains the total number of individuals at the intersection of each feature. Here are some examples:
+Specifically, contigency tables or crosstabs. The categorical features form the axes, and each cell contains the total number of individuals at the intersection of each category. DDA requires us to be able to manipulate tables and there are several functions for handling them. Here are some examples:
 
 ```{r tables}
 # 3D table - Admit on rows (D1), Gender on columns (D2)
@@ -292,7 +304,7 @@ And here's one we would use to show that there is an interaction between feature
 
 ### Log Odds Ratios
 
-Most people with some stats knowledge are aware of the log odds from logistic regression. The odds is itself is the ratio $o = \frac{p}{1-p}$ for $p$, the proportion of yes and $1-p$, the proportion of no in any binary situation, such as a coin flip. The log odds is simply  $\log(\frac{p}{1-p})$.
+This is another commonly used statistic in DDA. Most people with some Machine Learning experience are aware of the log odds from logistic regression. The odds is itself is the ratio $o = \frac{p}{1-p}$ for $p$, the proportion of yes and $1-p$, the proportion of no in any binary situation, such as a coin flip. The log odds is simply  $\log(\frac{p}{1-p})$.
 
 The odds is converted back to a probability by $p = \frac{o}{1+o}$ which means we can connect the number of times something has happened back to the probability that it happens, and compare these probabilities across categories to see if they show any patterns.
 
@@ -397,7 +409,7 @@ This is a non-exhaustive list of common statistical tasks and questions that req
 
 We don't have time develop a fluency for these tasks but if this is something useful for you there are some "building block" skills that are worth spending time on:
 
-1. The most useful data structures for DDA in R are not data frames, but n-dimensional arrays, n-way tables, and matrices, sometimes data frames with a frequency column (for the count data).
+1. The most useful data structures for DDA in R are n-dimensional arrays, n-way tables, and matrices. Only  sometimes data frames are used with a frequency column (for the count data).
 
 1. It's good to become fluent with functions for manipulating table data - pivoting and collapsing dimensions, and converting between data structures to suit your analysis. Useful functions to get to know are table(), addmargins(), prop.table(), ftable(), xtabs(), xtable(), structable(), apply(), margin.table(), collapse.table(), aggregate(), aperm(), expand.dft(), subset(), using integer indexing to re-order categories and pivot dimensions. Most of the specialised objects have as.table() and as.data.frame() methods that generate the most intuitive shape for the output data structure. We had a little practice in the examples above and there will be more in the forthcoming case studies.
 
@@ -411,7 +423,7 @@ We don't have time develop a fluency for these tasks but if this is something us
 
 Exploring relationships between categorical features. Mosaic plots are very powerful for visualising categorical data. Area and shading can be used in many ways to highlight important the important interactions. These visual techniques are intuitive up to four or five categorical dimensions. This allows you to identify very complex interactions.
 
-*Note, the 'strucplot framework' that is the heart of the vcd package requires learning a new approach to structuring data and writing plotting routines, compared to your previous experience with R. However, it's worth the effort for the intuitive views of complex relationships in the data.*
+*Note, the 'strucplot framework' that is the heart of the vcd package requires learning a new approach to structuring data (handling tables) and writing plotting routines (handling graphical parameters), compared to your previous experience with R. However, it's worth the effort for the intuitive views of complex relationships in the data.*
 
 ### When would I use this?
 
@@ -451,12 +463,13 @@ A naive approach might be to produce a bar plot of the counts by groups.
 # this is what the Frequency form looks like
 as.data.frame(haireye)
 
-# You're forced to favour one variable over the other?
+# With a grouped bar plot
+# you're forced to favour one variable over the other.
 
-# Or does hair colour depend on eye colour
+# Does does hair colour depend on eye colour?
 barplot(haireye, beside = TRUE, legend = TRUE)
 
-# Does eye colour depend on hair colour?
+# Or eye colour depend on hair colour?
 # pivot the other way
 barplot(aperm(haireye, 2:1), beside = TRUE, legend = TRUE)
 ```
