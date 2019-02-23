@@ -162,7 +162,6 @@ confmat_h <- with(german_test
                           , rating
                           , crhis))
 
-my_confmat_stats(confmat_h)
 my_rose(confmat_h)
 
 confmat_e <- with(german_test
@@ -170,8 +169,6 @@ confmat_e <- with(german_test
                           , rating
                           , emp))
 
-my_confmat_stats(confmat_e)
-my_rose(confmat_e)
 
 ## ----my_rose_dur---------------------------------------------------------
 confmat_d <- with(german_test

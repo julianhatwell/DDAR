@@ -14,10 +14,6 @@ haireye <- as.table(haireye[, c("Brown", "Hazel", "Green", "Blue")])
 haireye
 
 ## ----not_intuitive-------------------------------------------------------
-# non-intuitive views
-# this is what the Frequency form looks like
-as.data.frame(haireye)
-
 # You're forced to favour one variable over the other?
 
 # Or does hair colour depend on eye colour
@@ -47,6 +43,13 @@ mosaic(expected
 
 ## ----hr_actuals----------------------------------------------------------
 # visualising actual counts for independent features
+mosaic(haireye
+       , main="Actual frequencies"
+       , labeling = labeling_values
+       , value_type = "observed"
+       , gp_text = gpar(fontface = 1)
+       , rot_labels = c(top = -20))
+
 # A publication ready colour scheme
 mosaic(haireye
        , gp = shading_hcl # shade = TRUE
