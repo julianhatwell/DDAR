@@ -4,10 +4,10 @@ title: 'Discrete Data Analysis: A Friendly Guide to Visualising Categorical Data
 author: "Julian Hatwell"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
+  pdf_document:
+    toc: yes
   html_document:
     number_sections: yes
-    toc: yes
-  pdf_document:
     toc: yes
 ---
 

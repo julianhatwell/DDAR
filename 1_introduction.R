@@ -1,34 +1,3 @@
-## ----setup, include=FALSE------------------------------------------------
-knitr::opts_chunk$set(warning = FALSE
-                      , message = FALSE
-                      )
-
-knitr::opts_template$set(
-  fig.wide = list(fig.height = 4.5, fig.width = 8, fig.align='center')
-  , fig.wideX = list(fig.height = 3, fig.width = 9, fig.align='center')
-  , fig.relaxed = list(fig.height = 6, fig.width = 8, fig.align='center')
-  , fig.tile = list(fig.height = 3, fig.width = 3, fig.align='center')
-)
-
-## ----load_libs-----------------------------------------------------------
-# I'm going to load all the R libraries here
-# If you stop, quit R and come back later...
-# ...you need to re-run this chunk.
-
-# install these packages if you don't have them already
-# install.packages("packageNameHere")
-
-library(knitr)
-library(lattice)
-library(ggplot2)
-library(vcd)
-library(vcdExtra)
-library(ca)
-library(randomForest)
-library(gmodels)
-library(mvtnorm)
-library(ROSE)
-
 ## ----not_DDA-------------------------------------------------------------
 # you need the mvtnorm library loaded to run this code
 # set the random number generator same every time
@@ -175,4 +144,23 @@ mosaic(expected
 
 ## ----hr_chisq------------------------------------------------------------
 chisq.test(haireye)
+
+##-----test_ca-----
+data("TV", package = "vcdExtra")
+# The original data is collected in 15 minutes slices.
+
+# Convert 3-D array to a frequency data frame
+# This has a row for each cell of the array
+# and a new column for the cell value
+TV.df <- as.data.frame.table(TV)
+
+# Convert it into hourly slices
+levels(TV.df$Time) <- rep(c("8", "9", "10"), c(4,4,3))
+
+# Convert frequency data back to 3-D array, now with just 3 time levels
+TV3 <- xtabs(Freq~Day+Time+Network, TV.df)
+
+## ----tv_3wayca-----------------------------------------------------------
+# create a multiple correspondence analysis
+TV3.mca <- mjca(TV3)
 
