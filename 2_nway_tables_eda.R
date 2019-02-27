@@ -13,17 +13,7 @@ haireye <- margin.table(HairEyeColor, 1:2)
 haireye <- as.table(haireye[, c("Brown", "Hazel", "Green", "Blue")])
 haireye
 
-## ----not_intuitive-------------------------------------------------------
-# You're forced to favour one variable over the other?
-
-# Or does hair colour depend on eye colour
-barplot(haireye, beside = TRUE, legend = TRUE)
-
-# Does eye colour depend on hair colour?
-# pivot the other way
-barplot(aperm(haireye, 2:1), beside = TRUE, legend = TRUE)
-
-## ----tiles---------------------------------------------------------------
+## ----tiles, area based plotting---------------------------------------------------------------
 tile(haireye) # vcd package
 
 ## ----hr_chisq------------------------------------------------------------
@@ -35,14 +25,28 @@ expected = independence_table(haireye)
 round(expected, 1)
 
 mosaic(expected
-       , shade = TRUE
        , main="Expected frequencies"
        , labeling = labeling_values
        , value_type = "expected"
-       , gp_text = gpar(fontface = 1))
+       , gp_text = gpar(fontface = 1)
+       , rot_labels = c(top = -20))
+
+mosaic(margin.table(haireye, 1)
+       , main="Hair Marginal Totals"
+       , labeling = labeling_values
+       , value_type = "observed"
+       , gp_text = gpar(fontface = 1)
+       , rot_labels = c(top = -20))
+
+mosaic(margin.table(haireye, 2)
+       , split_vertical = TRUE
+       , main="Eye Marginal Totals"
+       , labeling = labeling_values
+       , value_type = "observed"
+       , gp_text = gpar(fontface = 1)
+       , rot_labels = c(top = -20))
 
 ## ----hr_actuals----------------------------------------------------------
-# visualising actual counts for independent features
 mosaic(haireye
        , main="Actual frequencies"
        , labeling = labeling_values

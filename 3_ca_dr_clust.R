@@ -19,9 +19,12 @@ levels(TV.df$Time) <- rep(c("8", "9", "10"), c(4,4,3))
 # Convert frequency data back to 3-D array, now with just 3 time levels
 TV3 <- xtabs(Freq~Day+Time+Network, TV.df)
 
+TV3
+
 ## ----tv_3wayca-----------------------------------------------------------
 # create a multiple correspondence analysis
-TV3.mca <- mjca(TV3)
+TV3.mca <- mjca(TV3) # ca library
+plot(TV3.mca)
 
 # the plot function uses all base R plot stuff
 # but needs a bit of manipulation
@@ -68,17 +71,18 @@ legend("topright", legend=c("Day", "Network", "Time"),
        bg="gray95")
 
 ## ----TV_day_network------------------------------------------------------
-margin.table(TV3, 1)
-margin.table(TV3, c(1, 3))
+margin.table(TV3, 1) # Day Marginal Totals
+margin.table(TV3, c(1, 3)) # Day by Channel
 
 ## ----TV_time_network-----------------------------------------------------
-margin.table(TV3, 2)
+margin.table(TV3, 2) # Time Marginal Totals
 t(TV3[4,,]) # Thursday
 
 ## ----tv_2wayca-----------------------------------------------------------
 # Flatten to 2-D by stacking Time onto Day
 # Note: The data shaping choice here controls the specifics of the analysis.
 TV3s <- as.matrix(structable(Network~Time+Day, TV3))
+TV3s
 
 # Create the Correspondence Analysis objects
 TV3s.ca <- ca(TV3s)
@@ -95,7 +99,9 @@ TV3[,2,1] # Every day, 9pm, ABC
 
 ## ----tv_ca_dims----------------------------------------------------------
 m_coords
-res.ca$rows[order(-res.ca$rows[, 1]), ]
+
+dy <- subset(coords, factor=="Day")
+segments(dy[,"Dim1"], 0, dy[,"Dim1"], dy[, "Dim2"], lty=3, lwd=0.25, col="blue")
 
 ## ----Titanic_mca---------------------------------------------------------
 # one more mca from a 4-D dataset
@@ -125,3 +131,4 @@ legend("topleft", legend=c("Class", "Sex", "Age", "Survived"),
        title="Factor", title.col="black",
        col=cols, text.col=cols, pch=16:19,
        bg="gray95", cex=1.2)
+

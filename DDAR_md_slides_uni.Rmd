@@ -27,12 +27,6 @@ library(ROSE)
 
 # Introduction
 
-## About Me
-
-* Over 15 years in enterprise systems, management information systems and BI in the for-profit education sector, UK and Singapore
-* Completed $> 20$ MOOCs (certified) in data science related subjects 2014-2016
-* MSc (Distinction) Business Intelligence, Birmingham City University, 2017
-* Research to PhD (in progress) in Machine Learning, Birmingham City University
 
 ## About You
 
@@ -45,6 +39,13 @@ Researchers, Analysts and Knowledge Professionals who
     * Classification
     * Evaluating models
 * know a little stats (you know what a $\chi^2$ test is)
+* have read the introductory notes
+
+## About Me
+
+* Over 15 years in enterprise systems, management information systems and BI in the for-profit education sector, UK and Singapore
+* MSc (Distinction) Business Intelligence, Birmingham City University, 2016-17
+* Research to PhD (in progress), DAAI, Birmingham City University
 
 ## Enterprise Systems in Educational Institutions
 
@@ -86,8 +87,6 @@ Tips from the Trenches
 * By example
 * Avoid theory and formulas
 * Simple, reproducible code
-
-This prez is based on a hands-on tutorial that I deliver at BCU. Ask me for the lecture notes if you're interested.
 
 ## Head and tail activities:
 
@@ -178,6 +177,32 @@ chisq.test(haireye)
 Rejected, obviously. There clearly is a relationship.
 
 $\chi^2$ test gives no details. How to describe it?
+
+## Mosaic Plot - Hair Marginal Totals
+
+```{r hmt}
+mosaic(margin.table(haireye, 1)
+       , shade = TRUE
+       , main="Hair Marginal Totals"
+       , labeling = labeling_values
+       , value_type = "observed"
+       , gp_text = gpar(fontface = 1)
+       , rot_labels = c(top = -20))
+```
+
+## Mosaic Plot - Hair Marginal Totals
+
+```{r emt}
+mosaic(margin.table(haireye, 2)
+       , shade = TRUE
+       , split_vertical = TRUE
+       , main="Eye Marginal Totals"
+       , labeling = labeling_values
+       , value_type = "observed"
+       , gp_text = gpar(fontface = 1)
+       , rot_labels = c(top = -20))
+```
+
 
 ## Mosaic Plot - Expected Counts
 

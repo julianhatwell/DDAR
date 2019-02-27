@@ -22,6 +22,7 @@ nurs_preds <- predict(nurs_rf, newdata = nurs_test)
 # confusion matrix
 confmat <- with(nurs_test, table(nurs_preds, decision))
 confmat
+sum(diag(confmat)/sum(confmat))
 
 ## ----strucplot_confmat---------------------------------------------------
 # strucplot tile - I like this one best
@@ -36,7 +37,6 @@ varImpPlot(nurs_rf)
 
 # from the summary, health can take one of three values
 # not_recom, priority, recommended
-
 cm_3d <- with(nurs_test
               , table(nurs_preds, decision, health))
 
@@ -47,6 +47,15 @@ nr <- cm_3d[,,"not_recom"]
 tile(re, labeling = labeling_values)
 tile(pr, labeling = labeling_values)
 tile(nr, labeling = labeling_values)
+
+re_pr <- (re + pr)[2:4, 2:4]
+re_pr
+sum(diag(re_pr)/sum(re_pr))
+
+re_pr_corrected <- re_pr
+re_pr_corrected[, 3] <- re_pr_corrected[, 3] + c(-50, 0, 50)
+re_pr_corrected
+sum(diag(re_pr_corrected)/sum(re_pr_corrected))
 
 ## ----german_randfor------------------------------------------------------
 german <- read.csv(gzfile("german.csv.gz"))

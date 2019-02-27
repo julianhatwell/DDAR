@@ -1,6 +1,9 @@
 ## ----MSP_2D--------------------------------------------------------------
 # combine results from two cities (same raters are involved in all cases)
 MSP <- margin.table(MSPatients, 1:2)
+class_names <- c("Certain",  "Probable", "Possible", "Doubtful")
+dimnames(MSP) <- list(prd = class_names
+                      , tru = class_names)
 
 ## ----MSP_winntrue--------------------------------------------------------
 margin.table(MSP, 2)
