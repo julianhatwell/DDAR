@@ -157,7 +157,7 @@ confmat_c <- with(german_test
 my_confmat_stats(confmat_c)
 my_rose(confmat_c)
 
-## ----rose_others---------------------------------------------------------
+## ----rose_pps---------------------------------------------------------
 confmat_p <- with(german_test
                   , table(german_preds
                           , rating
@@ -165,19 +165,6 @@ confmat_p <- with(german_test
 
 my_confmat_stats(confmat_p)
 my_rose(confmat_p)
-
-confmat_h <- with(german_test
-                  , table(german_preds
-                          , rating
-                          , crhis))
-
-my_rose(confmat_h)
-
-confmat_e <- with(german_test
-                  , table(german_preds
-                          , rating
-                          , emp))
-
 
 ## ----my_rose_dur---------------------------------------------------------
 confmat_d <- with(german_test
@@ -188,6 +175,14 @@ my_rose(confmat_d)
 
 
 ## ----lodds_ratio_plots---------------------------------------------------
+confmat_e <- with(german_test
+                  , table(german_preds
+                          , rating
+                          , emp))
+
+
+
+
 plot(loddsratio(confmat_c), confidence = FALSE)
 plot(loddsratio(confmat_e), confidence = FALSE)
 

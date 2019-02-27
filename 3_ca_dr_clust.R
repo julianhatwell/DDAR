@@ -78,6 +78,15 @@ margin.table(TV3, c(1, 3)) # Day by Channel
 margin.table(TV3, 2) # Time Marginal Totals
 t(TV3[4,,]) # Thursday
 
+## ----feature_engineering----------------------------------------------------------
+m_coords
+
+dy <- subset(coords, factor=="Day")
+segments(dy[,"Dim1"], 0, dy[,"Dim1"], dy[, "Dim2"], lty=3, lwd=0.25, col="blue")
+points(rep(0, length(dy[,"Dim1"]))~dy[,"Dim1"], col="blue")
+segments(0, dy[,"Dim2"], dy[,"Dim1"], dy[, "Dim2"], lty=3, lwd=0.25, col="blue")
+points(dy[,"Dim2"]~rep(0, length(dy[,"Dim2"])), col="blue")
+
 ## ----tv_2wayca-----------------------------------------------------------
 # Flatten to 2-D by stacking Time onto Day
 # Note: The data shaping choice here controls the specifics of the analysis.
@@ -96,12 +105,6 @@ segments(0, 0, res.ca$rows[,1], res.ca$rows[,2], col = "blue", lwd = 0.5, lty = 
 ## ----TV_monday-----------------------------------------------------------
 t(TV3[1,,]) # Monday
 TV3[,2,1] # Every day, 9pm, ABC
-
-## ----tv_ca_dims----------------------------------------------------------
-m_coords
-
-dy <- subset(coords, factor=="Day")
-segments(dy[,"Dim1"], 0, dy[,"Dim1"], dy[, "Dim2"], lty=3, lwd=0.25, col="blue")
 
 ## ----Titanic_mca---------------------------------------------------------
 # one more mca from a 4-D dataset
@@ -131,4 +134,3 @@ legend("topleft", legend=c("Class", "Sex", "Age", "Survived"),
        title="Factor", title.col="black",
        col=cols, text.col=cols, pch=16:19,
        bg="gray95", cex=1.2)
-
