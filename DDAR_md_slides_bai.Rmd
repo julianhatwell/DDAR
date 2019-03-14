@@ -25,44 +25,46 @@ library(ca)
 library(randomForest)
 library(mvtnorm)
 library(ROSE)
+
+# a couple of custom funcs for later
+my_rose <- function(cm) {
+  fourfold(cm
+         , std = "all.max" # mimic a 4 way rose plot
+         , conf_level = 0 # suppress confint tests, not useful here
+         , color = c("#FF0000", "#000080") # need to force colours due to suppressing confint test
+         )
+}
+
+# while we're at it, let's make a function to get the numeric statistics that we want from the conf mat
+my_confmat_stats <- function(cm) {
+  cf_stats <- list()
+  for (i in 1:(dim(cm)[3])) {
+    
+    category <- dimnames(cm)[[3]][i]
+    acc <- sum(diag(cm[ , , i]))/sum(cm[ , , i])
+    
+    # False Negative Rate FN / (TP + FN)
+    fnr <- cm[2, 1, i]/sum(cm[ , 1, i])
+    
+    # False Ommision Rate FN / (TN + FN)
+    fomr <- cm[2, 1, i]/sum(cm[2, , i])
+    
+    # collect
+    cf_stats[[category]] <-
+      c(acc=acc, fnr=fnr, fomr=fomr)
+  }
+  
+  return(t(as.data.frame(cf_stats)))
+}
 ```
 
 # Introduction
 
-## Credits
-
-**Michael Friendly** is a pioneer in this field and has contributed to the development of modules and libraries for SAS and R.
-
-Code examples based on material contained in the book [**Discrete Data Analysis with R: Visualization and Modeling Techniques for Categorical and Count Data**](https://www.crcpress.com/Discrete-Data-Analysis-with-R-Visualization-and-Modeling-Techniques-for/Friendly-Meyer/p/book/9781498725835) by Michael Friendly and David Meyer.
-
-Shorter, valuable tutorial on these topics in the [vcd vignette](https://cran.r-project.org/web/packages/vcdExtra/vignettes/vcd-tutorial.pdf). Just type **vignette("vcd")** at the R console.
-
-This **video** https://www.youtube.com/watch?v=qfNsoc7Tf60 is a much more in depth lecture, by Michael Friendly, on topics covered in the book.
-
-## About You
-
-Researchers, Analysts and Knowledge Professionals who
-
-* have some experience of classification on tabular data sets
-* understand different data-types (continuous, nominal, ordinal, count, etc...)
-* are aware of ML project life-cycle, in particular:
-    * Exploratory Data Analysis
-    * Classification
-    * Evaluating models
-* know a little stats (you know what a $\chi^2$ test is)
-
 ## About Me
 
 * Over 15 years in enterprise systems, management information systems and BI in the for-profit education sector, UK and Singapore
-* Completed $> 20$ MOOCs (certified) in data science related subjects 2014-2016
-* MSc (Distinction) Business Intelligence, Birmingham City University, 2017
-* Research to PhD (in progress) in Machine Learning, Birmingham City University
-
-## Enterprise Systems in Educational Institutions
-
-```{r acad_sys, fig.align='center', fig.cap='High-level architecture of integrated academic systems. Paulsen, M. (2002 : p4) Online Education Systems: Discussion and Definition of Terms'}
-include_graphics("acadsys.png", dpi = 175)
-```
+* MSc (Distinction) Business Intelligence, Birmingham City University. Master's Dissertation: *An Association Rules Based Method for Imputing Missing Likert Scale Data*
+* Research to PhD (in progress): *Designing Explanation Systems for Decision Forests*, Data Analytics and Artifical Intelligence research group, Birmingham City University  
 
 ## Academic Analytics
 
@@ -86,77 +88,17 @@ Not the same as
     * Models of student understanding and learning
     * Topic modeling
 
-## What it's not
+## Credits
 
-```{r not_dda}
+**Michael Friendly** is a pioneer in this field and has contributed to the development of modules and libraries for SAS and R.
 
-# you need the mvtnorm library loaded to run this code
-# set the random number generator same every time
-set.seed(123)
+Code examples based on material contained in the book [**Discrete Data Analysis with R: Visualization and Modeling Techniques for Categorical and Count Data**](https://www.crcpress.com/Discrete-Data-Analysis-with-R-Visualization-and-Modeling-Techniques-for/Friendly-Meyer/p/book/9781498725835) by Michael Friendly and David Meyer.
 
-# a discrete feature to label the groups
-n <- 100
-grp <- rep(c(1, 2), each = n)
+Shorter, valuable tutorial on these topics in the [vcd vignette](https://cran.r-project.org/web/packages/vcdExtra/vignettes/vcd-tutorial.pdf). Just type **vignette("vcd")** at the R console.
 
-# a random discrete feature
-rnd <- sample(c(1, 2)
-              , replace = TRUE
-              , size = 200)
+This **video** https://www.youtube.com/watch?v=qfNsoc7Tf60 is a much more in depth lecture, by Michael Friendly, on topics covered in the book.
 
-# some random multivariate normal data for grp1
-numvars1 <- rmvnorm(n, c(0, 0)
-                    , sigma = matrix(c(3,2,2,3)
-                                     , ncol=2))
-
-# some random multivariate normal data
-# with different parameters for grp2
-numvars2 <- rmvnorm(n, c(1, 1)
-                    , sigma = matrix(c(1,0.5,0.5,4)
-                                     , ncol=2))
-
-# combine together as one data frame
-numvars <- rbind(numvars1, numvars2)
-
-# add a discrete feature based on a linear combination
-# + noise to make a soft boundary
-noise <- rnorm(2*n, mean = 0, sd = 0.5)
-fam <- ifelse(rowSums(numvars) + noise > 3, 1, 2)
-
-# take row sums then table-apply the sum by each group
-grp_total <- tapply(rowSums(numvars), grp, sum)
-rnd_total <- tapply(rowSums(numvars), rnd, sum)
-fam_total <- tapply(rowSums(numvars), fam, sum)
-
-par(mfrow=c(1,3))
-# plot, using graphic options to separate the discrete classes
-plot(numvars, col = fam, pch = rnd, cex = grp
-     , main = "scatterplot with size, shape\nand colour options"
-     , ylab = "y"
-     , xlab = "x")
-
-# take row sums then table-apply the sum by each group
-grp_total <- tapply(rowSums(numvars), grp, sum)
-rnd_total <- tapply(rowSums(numvars), rnd, sum)
-fam_total <- tapply(rowSums(numvars), fam, sum)
-
-# totals barplot
-barplot(c(grp_total, rnd_total, fam_total)
-        , xlab="grp rnd fam"
-        , col="lightgray", border = 1:2
-        , main="barplot of quantitative\ntotals by groups"
-        )
-
-# classic box plot
-boxplot(rowSums(numvars)~rnd*grp, border=1:2
-     , main = "boxplot distribution\nanalysis by groups"
-     , xlab = "rnd1.grp1 rnd2.grp1 rnd1.grp2 rnd2.grp2"
-     , ylab = "row sum value")
-
-par(mfrow=c(1,1))
-```
-
-
-# Example One: Exploring Data with Area Based Plots
+# Exploring Data with Area Based Plots
 
 ## In 3D with Hair Colour, Eye Colour and Gender
 
@@ -171,55 +113,40 @@ kable(hr_desc)
 
 ## Hard to Parse Lots of Numbers
 
+In 2-D, ignoring Sex for now
+
 ```{r HEC}
 HEC <- HairEyeColor[, c("Brown", "Hazel", "Green", "Blue"), ]
 
-structable(~Sex+Hair+Eye, HEC)
+haireye <- margin.table(HEC, 1:2)
+structable(haireye)
 ```
 
-## What You See Depends on the Pivot
+## Naive Approach: Barplot
 
-```{r HEC_piv}
-structable(~Hair+Sex+Eye, HEC)
-```
-
-## Naive Approach: Barplot in 2-D (ignoring Sex)
-
-You're forced to favour one variable over the other. Does hair colour depend on eye colour?
+You're forced to favour one features over the other. Does hair colour depend on eye colour?
 
 ```{r not_intuitive, fig.width = 6, fig.height = 4}
 haireye <- margin.table(HEC, 1:2)
-barplot(haireye, beside = TRUE, legend = TRUE)
+barplot(haireye
+        , ylab = "Count"
+        , beside = TRUE
+        , legend = TRUE)
 ```
 
-***
+## Naive Approach: Barplot
 
-Or does eye colour depend on hair colour? Comparing between groups is tricky.
+Or does eye colour depend on hair colour? We can see there is a relationship, but comparisons are not intuitive.
 
 ```{r not_intuitive2, fig.width = 6, fig.height = 5}
 # pivot the other way
-barplot(aperm(haireye, 2:1), beside = TRUE, legend = TRUE)
+barplot(aperm(haireye, 2:1)
+        , ylab = "Count"
+        , beside = TRUE
+        , legend = TRUE)
 ```
 
-## Tile Plot - Preserve Table Structure
-
-```{r tiles, echo=TRUE, fig.width = 6, fig.height = 3.5}
-# vcd package: one line of code!
-# (table haireye prepared earlier)
-tile(haireye) 
-```
-
-## $H_0$: No Association Between Hair and Eye
-
-```{r hr_chisq}
-chisq.test(haireye)
-```
-
-Rejected, obviously. There clearly is a relationship.
-
-$\chi^2$ test gives no details. How to describe it?
-
-## Mosaic Plot - Expected Counts
+## Mosaic Plot - Hair Marginal Counts
 
 ```{r hr_marg_h}
 mosaic(margin.table(haireye, 1)
@@ -231,7 +158,7 @@ mosaic(margin.table(haireye, 1)
        , rot_labels = c(top = -20))
 ```
 
-## Mosaic Plot - Expected Counts
+## Mosaic Plot - Eye Marginal Counts
 
 ```{r hr_marg_e}
 mosaic(margin.table(haireye, 2)
@@ -305,23 +232,6 @@ mosaic(aperm(HEC, 3:1)
       , gp_text = gpar(fontface = 1), rot_labels = c(right = -45)) 
 ```
 
-## Pass in an Expectation
-
-We know Hair and Eye are interacting and expect it. We can "clean up" these residuals and see what remains.
-
-```{r hec_joint_model}
-# convert to frequency form
-HEC_df <- as.data.frame(HEC)
-
-# explanatory model, hair eye interaction
-hec.glm <- glm(Freq~Hair*Eye+Sex, data=HEC_df, family = poisson)
-
-mosaic(hec.glm
-       , gp = shading_Friendly
-       , formula = ~ Sex + Eye + Hair
-       , residuals_type = "rstandard")
-```
-
 ## Mosaic Plot in 4D - Who Survived the Titanic?
 
 ```{r titanic_mosaic}
@@ -335,7 +245,7 @@ mosaic(aperm(Titanic, c(4, 2, 1, 3))
 
 ## Mosaic in n-D - Faceting
 
-```{r titanic_cotab, echo=FALSE}
+```{r titanic_cotab, echo=TRUE}
 # note; all defaults except the shading!
 cotabplot(Titanic, gp = shading_Friendly)
 ```
@@ -353,17 +263,13 @@ Important points:
 * At least a further 2-D can elevate up to facet
 * Allows visual exploration of n-way interactions
 
-# Example Two: Clustering and Dimension Reduction with Correspondence Analysis
+# Clustering and Feature Engineering with Correspondence Analysis
 
 ## CA - PCA for Discrete Data
 
 Correspondence Analysis is Machine Learning - a different model with different data.
 
 Correspondence Analysis is a matrix decomposition - deterministic for same data.
-
-```{r correspond}
-include_graphics("correspond.png", dpi = 225)
-```
 
 ## Audience Viewing Data
 
@@ -437,12 +343,18 @@ pos <- c(1,4,3)
 text(coords[,1:2], labels=coords$level, col=rep(cols, nlev), pos=rep(pos,nlev), cex=1.1, xpd=TRUE)
 
 # join things in sequence
-lines(Dim2 ~ Dim1, data=coords, subset=factor=="Day", lty=1, lwd=1, col="blue")
-lines(Dim2 ~ Dim1, data=coords, subset=factor=="Time",  lty=1, lwd=1, col="red")
+# lines(Dim2 ~ Dim1, data=coords, subset=factor=="Day", lty=1, lwd=1, col="blue")
+# lines(Dim2 ~ Dim1, data=coords, subset=factor=="Time",  lty=1, lwd=1, col="red")
 
-# add segement from the origin to channels
+# add segements from the origin to points
 nw <- subset(coords, factor=="Network")
-segments(0, 0, nw[,"Dim1"], nw[, "Dim2"], col = "black", lwd = 0.5, lty = 3)
+segments(0, 0, nw[,"Dim1"], nw[, "Dim2"], col = "black", lwd = 1, lty = 3)
+
+tm <- subset(coords, factor=="Time")
+segments(0, 0, tm[,"Dim1"], tm[, "Dim2"], col = "red", lwd = 1, lty = 3)
+
+dy <- subset(coords, factor=="Day")
+segments(0, 0, dy[,"Dim1"], dy[, "Dim2"], col = "blue", lwd = 0.75, lty = 3)
 
 # add a legend
 legend("topright", legend=c("Day", "Network", "Time"),
@@ -493,7 +405,7 @@ segments(0, 0, res$rows[,1], res$rows[,2], col = "blue", lwd = 0.5, lty = 3)
 ```{r ca_findings}
 cat("Monday")
 t(TV3[1,,]) # Monday
-cat("9pm, Every Day, ABC")
+cat("Every Day, 9pm, ABC")
 TV3[,2,1] # Every day, 9pm, ABC
 ```
 
@@ -579,134 +491,29 @@ legend("topleft", legend=c("Class", "Sex", "Age", "Survived"),
 * Converting categorical dimensions to continuous, while preserving information
 * Sort data by CA dimension rather than natural ordering: [*Monday, Tuesday, Wednesday, Thursday, Friday*] $\nRightarrow$ [*1,2,3,4,5*]
 
-# Example Three: Slicing a Confusion Matrix by Important Features
+# Slicing a Confusion Matrix by Important Features
 
-## Overview - The Nursery Data Set
+## Exploring Binary Classification with Rose Plots
 
-Four possible classes
-
-Three evenly balanced 
-
-Fourth is a tiny minority class
-
-All the predictors are discrete
-
-A random forest is trained on 70% of the data and evaluated on the remaining 30%
-
-***
-
-```{r nursery_data}
-set.seed(54321)
-nursery <- read.csv(gzfile("nursery.csv.gz"))
-summary(nursery)
-```
-
-***
-
-```{r nursery_randfor}
-# train test split
-idx <- sample(c(TRUE, FALSE)
-              , size = nrow(nursery)
-              , prob = c(0.7, 0.3)
-              , replace = TRUE)
-
-nurs_train <- nursery[idx, ]
-nurs_test <- nursery[!idx, ]
-
-# train rf accepting all the defaults
-nurs_rf <- randomForest(decision~., data=nurs_train)
-
-# get the predictions on new data
-nurs_preds <- predict(nurs_rf, newdata = nurs_test)
-
-# confusion matrix
-confmat <- with(nurs_test, table(nurs_preds, decision))
-confmat
-```
-
-## Tile Plot of Confusion Matrix
-
-```{r nurs_cm_tile}
-tile(confmat, labeling = labeling_values)
-```
-
-## Variable Importance Plots
-
-Important in what way?
-
-What does anyone do with this information?
-
-```{r nurs_varimp, fig.height=4}
-varImpPlot(nurs_rf)
-```
-
-Note the elbow. Could we do without half the features?
-
-## Confusion Matrix By health == "recommended"
-
-```{r nurs_cm_health}
-cm_3d <- with(nurs_test
-              , table(nurs_preds, decision, health))
-
-re <- cm_3d[,,"recommended"]
-tile(re, labeling = labeling_values)
-```
-
-## Confusion Matrix By health == "priority"
-
-```{r}
-pr <- cm_3d[,,"priority"]
-tile(pr, labeling = labeling_values)
-```
-
-## Confusion Matrix By health == "not_recom"
-
-```{r}
-nr <- cm_3d[,,"not_recom"]
-tile(nr, labeling = labeling_values)
-```
-
-## What Makes A Variable Important? - Revisited
-
-health feature - very important, and now we know why
-
-health == "not_recom" is a useful decision stump: take outside model?
-
-Thorough EDA should find this prior to modeling
-
-## Applied to Binary Classification
-
-This situation can't come about during binary classification. One feature would be a perfect representation of target.
-
-Can this technique still help?
-
-## Binary Classification $2 \times 2$ Table
-
-Special case $2 \times 2$ table
-
-vcd has a fourfold plot function: compares odds ratios by standardising pie areas
-
-Force the fourfold to represent counts on the radius: 
+Special case $2 \times 2$ table. vcd package has a fourfold plot function which we can "trick" into behaving like a rose plot. This is a pie with fixed angles that represents counts on the radius: 
 
 $$\mathit{count} \propto \sqrt{\mathit{area}}$$
 
-fourfold also automatically stratifies by a third variable! Just a snippet of code required.
-
-This is a very nifty shortcut! vcd always wants to preserve the given table structure. Any other plotting method could not be done in one line of code.
+vcd fourfold also automatically stratifies by a third variable! Just a snippet of code required to slice and dice our results.
 
 ## German Data Set - Credit Rating
 
-A mix of discrete and continuous. Target is rating: "bad" (30%) or "good" (70%)
+A mix of discrete and continuous features. Target is rating: "bad" (30%) or "good" (70%)
 
-A predicted bad rating on a true bad rating - True Positive
+A correctly classified bad rating - True Positive
 
-A predicted good rating on a true bad rating - False Negative
+A good classification of a true bad rating - False Negative
 
-Very high cost per False Negative: Offer of credit to a likely defaulter!
+Very high cost per False Negative: Offer of cheap credit to customer with high risk of default!
 
 Random Forest can only optimise 0-1 loss
 
-Training data is balanced by over sampling.
+A random forest is trained on 70% of the data (balanced by over-sampling) and evaluated on the remaining 30% (not balanced).
 
 ***
 
@@ -744,8 +551,6 @@ confmat <- with(german_test, table(german_preds, rating))
 confmat
 ```
 
-***
-
 ```{r main_cm_stats, echo=TRUE}
 # accuracy
 sum(diag(confmat))/sum(confmat)
@@ -757,43 +562,43 @@ confmat[2, 1]/sum(confmat[, 1])
 confmat[2, 1]/sum(confmat[2, ])
 ```
 
-***
+## Rose Plot Confusion Matrix
 
 ```{r main_cm_rose, echo=TRUE, fig.width=4.5, fig.height=4.5}
-# std = "all.max" suppresses balancing the areas
-# behaves like a rose plot
+# std = "all.max" forces rose plot behaviour
 fourfold(confmat, std = "all.max")
 ```
 
-***
+## Variable Importance Plots
+
+Important in what way?
+
+What does anyone do with this information?
 
 ```{r german_varimp}
 varImpPlot(german_rf)
 ```
 
-## Fourfold Rose Plot - Confidence Matrix By chk
+## Stratified Confusion Matrix Stats
 
-```{r rose_setup}
-my_rose <- function(cm) {
-  fourfold(cm
-         , std = "all.max" # mimic a 4 way rose plot
-         , conf_level = 0 # suppress confint tests, not useful here
-         , color = c("#FF0000", "#000080") # need to force colours due to suppressing confint test
-         )
-}
-
-# fourfold automatically stratifies by third (and fourth) level of n-dim table
-
-# this is the only code required for the plots you will see next
+```{r confmat_c_stats, echo=TRUE}
 confmat_c <- with(german_test
                   , table(german_preds
                           , rating
                           , chk))
 
+my_confmat_stats(confmat_c)
+```
+
+## Stratified Rose Plot - Confusion Matrix By chk
+
+```{r confmat_c_rose}
+# fourfold automatically stratifies by third (and fourth) level of n-dim table
+
 my_rose(confmat_c)
 ```
 
-## This method REALLY scales!
+## Scaling to Higher Dims: 10 Factor Levels
 
 ```{r rose_pps}
 confmat_p <- with(german_test
@@ -831,7 +636,7 @@ Bonus: confidence intervals!
 
 ***
 
-```{r lodds_ce}
+```{r lodds}
 # higher dimensional
 confmat_ce <- with(german_test
                    , table(german_preds
@@ -842,25 +647,19 @@ plot(loddsratio(confmat_ce), confidence = FALSE)
 ```
 
 ***
-```{r lodds_ch}
-confmat_ch <- with(german_test
-                   , table(german_preds
-                           , rating
-                           , chk
-                           , crhis))
-plot(loddsratio(confmat_ch), confidence = FALSE)
-```
 
-***
-```{r lodds_3way}
+```{r lodds2}
+# higher dimensional
 confmat_che <- with(german_test
                    , table(german_preds
                            , rating
                            , chk
                            , crhis
                            , emp))
+
 plot(loddsratio(confmat_che), confidence = FALSE)
 ```
+
 
 ## Slicing a Confusion Matrix Summary
 
@@ -872,75 +671,8 @@ Important points:
 * Rose plots are intuitive for $2 \times 2$ tables and easy to produce
 * vcd fourfold scales to tens of levels on one category
 * Explore 2 and 3-way interactions with log odds ratios 
-* Log odds ratios compromise clarity on accuracy measures such as FNR
+* Log odds ratios can't show the asymmetry in FNR and FPR
 
-# Example Four: Handling Ordinal Classification Correctly
-
-## MSPatients Overview
-
-Two Neurologists diagnose the same 218 patients on a severity scale
-
-This is an inter-rater agreement table. We'll pretend it's a confusion matrix. Classes not completely balanced.
-
-## Baseline Score
-
-```{r MSP_2D}
-# combine results from two cities (same raters are involved in all cases)
-MSP <- margin.table(MSPatients, 1:2)
-class_names <- c("Certain",  "Probable", "Possible", "Doubtful")
-dimnames(MSP) <- list(prd = class_names
-                      , tru = class_names)
-```
-
-```{r MSP_winntrue}
-margin.table(MSP, 2)
-props <- prop.table(margin.table(MSP, 2))
-props
-
-# Baseline accuracy: A constant-guess machine for majority class
-props[which(props == max(props))]
-
-# Actual accuracy (prior to viewing the table)
-cat("Accuracy - sum(diag)/total")
-sum(diag(MSP))/sum(MSP)
-```
-
-## The MSP Confusion Matrix
-
-```{r MSP_confmat}
-MSP
-```
-
-Obviously it's not a constant model and doesn't look like a random guess. So what's wrong?
-
-Check Cohen's $\kappa$ to correct for class imbalance
-
-```{r kappa}
-confint(Kappa(MSP, weights = "Fleiss-Cohen"))
-```
-
-Weighted indicates that off-by-n errors are important
-
-## Agreement Plot
-
-```{r agreement, fig.height=5, fig.width=5}
-op <- par(mar = c(4, 3, 4, 1) + .1)
-B <- agreementplot(MSP
-                   , main = "MS Patient Ratings"
-                   , xlab_rot = -20
-)
-
-par(op)
-```
-
-## Handling Ordinal Classification - Summary
-
-* Ordinal classification is a special case
-* Near disagreement needs to be weighted
-* Weighted $\kappa$ and Bangdiwala stats useful
-* Agreement plot is ideal
-* Plot reveals differences in inter-rater marginal totals, where statistics are insensitive
-
-# It's easy to rush into using the latest tools and technologies. Most Machine Learning is based on years of statistical research. That work is still just as relevant as ever. It's worth reflecting on tried and tested techniques that might easily address today's challenges. 
+# While it's tempting to rush into using the latest tools and technologies, most Machine Learning is based on years of statistical research. That work continues to be relevant and applicable to today's challenges.
 
 # End

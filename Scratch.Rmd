@@ -995,3 +995,73 @@ The tile plot is exploratory. We need to be rigorous.
 To demonstrate pattern is real, not sampling error, we perform a $\chi^2$ test of independence: 
 
 Observed counts against expected counts.
+
+
+## Why is Exploratory Analysis so Important?
+
+"Get to know" the data. This always pays off:
+
+* Get rid of noise variables
+* Identify most useful variables early
+* Guide model selection
+* Identify anomalies
+* Develop intuition prior to modeling
+* Develop a research question, if you don't have one
+
+## Aim and Objectives
+
+Tips from the Trenches
+
+* Share Practical Experience
+* Relevant to ML project life-cycle
+* Build intuition
+* Focus on visual analytics
+* Plain English
+* By example
+* Avoid theory and formulas
+* Simple, reproducible code
+
+This prez is based on a hands-on tutorial that I deliver at BCU. Ask me for the lecture notes if you're interested.
+
+## Other Considerations
+
+Constructing a plot needs a little bit more work (not shown).
+
+Really, just a little and all base R graphics.
+
+When you've done it once, it's easy to customise for your needs.
+
+Multiple and Joint CA examines relationships among all features at once and can be used for dimension reduction.
+
+Simple CA only supports 2D data to start with. However, smart use of pivots can actually reveal more information because there are more free points. It will take a bit of trial and error.
+
+## $\chi^2$ Test for Independence
+
+$H_0$: No Association Between Hair and Eye
+
+```{r hr_chisq}
+chisq.test(haireye)
+```
+
+$H_0$ is rejected but $\chi^2$ test gives no details.
+
+How to investigate and describe this relationship?
+
+## Pass in an Expectation
+
+We know Hair and Eye are interacting and expect it. We can "clean up" these residuals and see what remains.
+
+```{r hec_joint_model}
+# convert to frequency form
+HEC_df <- as.data.frame(HEC)
+
+# explanatory model, hair eye interaction
+hec.glm <- glm(Freq~Hair*Eye+Sex, data=HEC_df, family = poisson)
+
+mosaic(hec.glm
+       , gp = shading_Friendly
+       , formula = ~ Sex + Eye + Hair
+       , residuals_type = "rstandard")
+```
+
+
