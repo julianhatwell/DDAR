@@ -99,6 +99,7 @@ HEC_df <- as.data.frame(HEC)
 hec.glm <- glm(Freq~Hair*Eye+Sex, data=HEC_df, family = poisson)
 
 mosaic(hec.glm
+       , main="Allowing for Hair*Eye"
        , gp = shading_Friendly
        , formula = ~ Sex + Eye + Hair
        , residuals_type = "rstandard")
