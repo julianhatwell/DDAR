@@ -16,7 +16,6 @@ opts_chunk$set(warning = FALSE
               , echo = FALSE
               )
 
-library(knitr)
 library(lattice)
 library(ggplot2)
 library(vcd)
