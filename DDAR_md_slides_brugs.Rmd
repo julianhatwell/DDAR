@@ -33,7 +33,13 @@ source("KTheme.R")
 * MSc (Distinction) Business Intelligence, Birmingham City University. Master's Dissertation: *An Association Rules Based Method for Imputing Missing Likert Scale Data*
 * Research to PhD (in progress): *Designing Explanation Systems for Decision Forests*, Data Analytics and Artifical Intelligence research group, Birmingham City University  
 
-## Academic Analytics: 
+## Academic Analytics
+
+```{r}
+include_graphics("acadsys.png")
+```
+
+## Academic Analytics
 
 **Monitor, Evaluate and Optimise**
 
@@ -63,6 +69,12 @@ include_graphics("ddar_book_info.png", dpi=30)
 
 :::
 :::
+
+## Analysis of Categorical Data
+
+**Rigorous statistical analysis of categorical data is not only supported by visual tools, it is best performed visually.**
+
+This is the main theme of Michael Friendly's work.
 
 ## Exploring Data with Area Based Plots
 
@@ -130,10 +142,9 @@ grid.arrange(g1, g2, nrow=1)
 * Several Variants: mosaic, sieve, tile, assoc, spine, doubledecker
 * Focus of this talk: mosaic (most versatile, higher dimensional)
 * Properties of mosaic plots:
-  1. Tile area proportional to frequency.
-  1. Independence assumption: marginal frequencies of one feature are constant over all levels of another feature.
-  1. Independence expectation: straight grid lines in the mosaic.
-  1. Deviations from expectation show up as deviations in the grid lines. Shading provides a visual cue.
+    1. Tile area $\propto$ frequency.
+    1. Independence expectation: straight grid lines in the mosaic when marginal frequencies of one feature are constant over all levels of another feature.
+    1. Deviations from expectation show up as deviations in the grid lines. Shading provides a visual cue.
 
 **Con:** Another plotting system to learn.
 
@@ -149,7 +160,7 @@ mosaic(myTable
      sp = unit(0.5, "lines"))
    , value_type = "observed"
    , gp_text = gpar(fontface = 1) # graphical params
-   , rot_labels = c(top = -20)) # tidy label rotation
+   , rot_labels = c(0, 90, 0, -30)) # tidy label rotation
 ```
 
 ## Hair Marginal Totals
@@ -179,7 +190,7 @@ mosaic(margin.table(haireye, 2)
 expected <- independence_table(haireye)
 ```
 
-## Expected Frequencies
+## Expected Frequencies Under Independence Assumption
 
 ```{r exp_freqs}
 mosaic(expected
@@ -214,7 +225,7 @@ mosaic(haireye
       , gp_text = gpar(fontface = 1))
 ```
 
-## Code
+## Code for the Previous Mosaic
 
 ```{r hr_actuals_friend, eval=FALSE, echo=TRUE}
 ```
@@ -233,11 +244,20 @@ mosaic(HEC
 
 ## What You See Depends on the Pivot
 
+The base R comes with lots of functions for maniptulating tables. Packages "vcd" and "vcdExtra" provide many more.
+
+```{r aperm_piv, echo=TRUE}
+# pivoting example
+HEC_pivot <- aperm(HEC, 3:1)
+```
+
+## What You See Depends on the Pivot
+
 ```{r hec2}
 # with a different pivot
-mosaic(aperm(HEC, 3:1)
+mosaic(HEC_pivot
       , gp = shading_Friendly # shade = TRUE
-      , main="Actual frequencies"
+      , main="Actual frequencies HEC_pivot"
       , labeling = labeling_values
       , value_type = "observed"
       , gp_text = gpar(fontface = 1), rot_labels = c(right = -45)) 
@@ -247,21 +267,125 @@ mosaic(aperm(HEC, 3:1)
 
 Two discrete variables *A* with *I* possible values and  *B* with *J* possible values. A sample can be described by an *I* $\times$ *J* contingency table
 
+```{r conting_table_example}
+dimnames(haireye) <- list(A = c("A_1", "A_2", "A_3", "A_4")
+                          , B = c("B_1", "B_2", "B_3", "B_4"))
+haireye
+```
+
+Under independence, each cell count in the table is assumed to be a Poisson distibuted random variable:
+
+$$n_{ij} \sim \mathit{Pois}(\frac{n_{i+} \cdot n_{+j}}{n_{++}})$$
+
+## Loglinear Models
+
+Rearranging, we get a model that is linear in all the logs:
+
+$$\frac{n_{i+} \cdot n_{+j}}{n_{++}} = \log(n_{i+}) + \log(n_{+j}) - \log(n_{++})$$
+
+This is usually represented as:
+
+$$\mu + \lambda^A_i + \lambda^B_j$$
+
+where the $\lambda$ terms are the "main" effects and $\mu$ is in "intercept" term that is a property of the total count.
+
+Under independence, the main effects can be calculated directly from the marginal totals.
+
+## Loglinear Models
+
+Deviation from independence implies an interaction term:
+
+$$\mu + \lambda^A_i + \lambda^B_j + \lambda^{AB}_{ij}$$
+
+Constraining $\sum^I_{i = 1} \sum^J_{j = 1} \lambda^{AB}_{ij} = 0$ means that there are $(I-1)(J-1)$ degrees of freedom.
+
+This scales to more variables as follows:
+
+$$\mu + \lambda^A_i + \lambda^B_j + \lambda^C_k + \lambda^{AB}_{ij} + \lambda^{BC}_{jk} + \lambda^{AC}_{ik} + \lambda^{ABC}_{ijk}$$
+
+This is referred to as the saturated model - will be a near perfect fit.
+
+## Loglinear Models
+
+When modelling, we seek the most parsimious, best fit. Find a model that is:
+
+* as "good" as the saturated model
+* does not use all the degrees of freedom
+
+This can be done using:
+
+* generalised linear models
+* comparing various interactions (joint, conditional)
+* dummy variables can capture very specific interactions
+
+Anova tests and AIC/BIC are used to determine the best model.
+
+## Loglinear Models
+
 ```{r freq_glm, echo=TRUE}
 # convert to frequency form data frame
 HEC_df <- as.data.frame(HEC)
 head(HEC_df, 3)
 
 # explanatory model, hair eye interaction
-hec.glm <- glm(Freq~Hair*Eye+Sex, data=HEC_df, family = poisson)
+hec.glm <- glm(Freq~Hair*Eye+Sex
+               , data=HEC_df
+               , family = poisson)
+```
+
+## HEC Observed
+
+```{r hec2, eval=TRUE}
+```
+
+
+## HEC GLM
+
+```{r hec_glm, echo=TRUE, eval=FALSE}
+mosaic(hec.glm # invokes the glm plotting method
+       , main="Hair*Eye"
+       , gp = shading_Friendly
+       , formula = ~ Sex + Eye + Hair # mosaic layout
+       , residuals_type = "rstandard")
 ```
 
 ## HEC GLM
 
-```{r hec_glm, echo=TRUE}
-mosaic(hec.glm, main="Hair*Eye", gp = shading_Friendly
-       , formula = ~ Sex + Eye + Hair
+```{r hec_glm, eval=TRUE}
+```
+
+## HEC GLM 2
+
+```{r glm2, echo=TRUE, eval=FALSE}
+# convert to frequency form data frame
+HEC_df$Blbl <- factor(ifelse(HEC_df$Hair == "Blond" &
+                               HEC_df$Eye == "Blue" &
+                               HEC_df$Sex == "Female"
+                             , TRUE
+                             , FALSE))
+
+# explanatory model, hair eye interaction
+hec.glm2 <- glm(Freq~Hair*Eye+Sex+Blbl
+               , data=HEC_df
+               , family = poisson)
+
+mosaic(hec.glm2 # invokes the glm plotting method
+       , main="Hair*Eye | Blond-Blue*Sex"
+       , gp = shading_Friendly
+       , formula = ~ Sex + Eye + Hair # mosaic layout
        , residuals_type = "rstandard")
 ```
 
+## HEC GLM 2
+
+```{r glm2, eval=TRUE}
+```
+
+## HEC GLM tests
+
+```{r glmtests, echo=TRUE}
+anova(hec.glm, hec.glm2)
+LRstats(hec.glm2) # compare to saturated
+
+```
 # End

@@ -48,7 +48,7 @@ glm2 <- glm(Freq~(faculty + hqual)^2 + (grad + faculty)^2 + grad + year
             , grad_stats_df
             , family = poisson)
 
-mosaic(glm3
+mosaic(glm2
        , shade = TRUE
        , formula = ~ faculty + grad + hqual + year
        , residuals_type = "rstandard"
@@ -65,19 +65,7 @@ mosaic(glm3
        , rot_labels = c(0, -60, -30, 90))
 
 
-glm3 <- glm(Freq~(faculty + hqual + grad)^2 + year
-            , grad_stats_df
-            , family = poisson)
-
-mosaic(glm3
-       , shade = TRUE
-       , formula = ~ faculty + grad + hqual + year
-       , residuals_type = "rstandard"
-       , rot_labels = c(0, -60, -30, 90))
-
-LRstats(glm3)
-
-glm4 <- glm(Freq~(faculty + hqual + grad + year)^2
+glm4 <- glm(Freq~(faculty + hqual + grad)^2 + year
             , grad_stats_df
             , family = poisson)
 
@@ -88,16 +76,8 @@ mosaic(glm4
        , rot_labels = c(0, -60, -30, 90))
 
 LRstats(glm4)
-anova(glm1, glm2, glm3, glm4)
 
-grad_stats_df$dipfin <- factor(ifelse(grad_stats_df$faculty == "fin" &
-                                     grad_stats_df$hqual == "dip" 
-                                   , TRUE, FALSE))
-grad_stats_df$dipmgmt <- factor(ifelse(grad_stats_df$faculty == "mgmt" &
-                                     grad_stats_df$hqual == "dip" 
-                                   , TRUE, FALSE))
-
-glm5 <- glm(Freq~(faculty + hqual + grad)^2 + (faculty + hqual + grad)^3 + (faculty + hqual + year)^2
+glm5 <- glm(Freq~(faculty + hqual + grad + year)^2
             , grad_stats_df
             , family = poisson)
 
@@ -107,8 +87,17 @@ mosaic(glm5
        , residuals_type = "rstandard"
        , rot_labels = c(0, -60, -30, 90))
 
+LRstats(glm5)
+anova(glm1, glm2, glm3, glm4, glm5)
 
-glm6 <- glm(Freq~(faculty + hqual + grad + year)^2 + (faculty + hqual + grad)^3
+grad_stats_df$dipfin <- factor(ifelse(grad_stats_df$faculty == "fin" &
+                                     grad_stats_df$hqual == "dip" 
+                                   , TRUE, FALSE))
+grad_stats_df$dipmgmt <- factor(ifelse(grad_stats_df$faculty == "mgmt" &
+                                     grad_stats_df$hqual == "dip" 
+                                   , TRUE, FALSE))
+
+glm6 <- glm(Freq~(faculty + hqual + grad)^2 + (faculty + hqual + grad)^3 + (faculty + hqual + year)^2
             , grad_stats_df
             , family = poisson)
 
@@ -119,7 +108,18 @@ mosaic(glm6
        , rot_labels = c(0, -60, -30, 90))
 
 
-anova(glm1, glm2, glm3, glm4, glm5, glm6)
+glm7 <- glm(Freq~(faculty + hqual + grad + year)^2 + (faculty + hqual + grad)^3
+            , grad_stats_df
+            , family = poisson)
+
+mosaic(glm7
+       , shade = TRUE
+       , formula = ~ faculty + grad + hqual + year
+       , residuals_type = "rstandard"
+       , rot_labels = c(0, -60, -30, 90))
+
+
+anova(glm1, glm2, glm3, glm4, glm5, glm6, glm7)
 LRstats(glm5)
 LRstats(glm6)
 

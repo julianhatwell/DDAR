@@ -21,17 +21,17 @@ my_mosaic <- function(x) {
          , rot_labels = c(30, 0, 0, 90))
 }
 
+year_intake <- c(2014, 2015)
+faculty_business <- c("fin", "law"
+                      , "mgmt", "hsp"
+                      , "hr")
+nat <- c("dom", "int")
+fin <- c("self", "spons")
+genders <- c("F", "M")
+quals <- c("dip", "dip-other", "hs", "hs-equiv")
+
 acad_data <- function() {
   set.seed(2024)
-  
-  year_intake <- c(2014, 2015)
-  faculty_business <- c("fin", "law"
-                        , "mgmt", "hsp"
-                        , "hr")
-  nat <- c("dom", "int")
-  fin <- c("self", "spons")
-  genders <- c("F", "M")
-  quals <- c("dip", "dip-other", "hs", "hs-equiv")
   
   pois_parms <- expand.grid(year = year_intake
                             , faculty = faculty_business
