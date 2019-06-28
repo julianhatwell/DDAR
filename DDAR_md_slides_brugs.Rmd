@@ -22,7 +22,9 @@ library(cowplot)
 library(gridExtra)
 library(vcd)
 library(vcdExtra)
+library(ca)
 source("KTheme.R")
+source("acad_data.R")
 ```
 
 # Introduction
@@ -35,7 +37,7 @@ source("KTheme.R")
 
 ## Academic Analytics
 
-```{r}
+```{r acad_anal_png, fig.cap='High-level architecture of integrated academic systems. Source: Paulsen (2002 : p4)', out.width = '90%'}
 include_graphics("acadsys.png")
 ```
 
@@ -63,8 +65,8 @@ include_graphics("acadsys.png")
 :::
 ::: {.column}
 
-```{r book_info, echo=FALSE, fig.cap="Discrete Data Analysis with R: Visualization and Modeling Techniques for Categorical and Count Data", out.width = '100%'}
-include_graphics("ddar_book_info.png", dpi=30)
+```{r book_info, echo=FALSE, fig.cap="Discrete Data Analysis with R: Visualization and Modeling Techniques for Categorical and Count Data", out.width = '75%'}
+include_graphics("ddar_book_info.png")
 ```
 
 :::
@@ -74,11 +76,9 @@ include_graphics("ddar_book_info.png", dpi=30)
 
 **Rigorous statistical analysis of categorical data is not only supported by visual tools, it is best performed visually.**
 
-This is the main theme of Michael Friendly's work.
+*The main theme of Michael Friendly's work.*
 
-## Exploring Data with Area Based Plots
-
-HairEyeColor (R datasets)
+## HairEyeColor (R datasets)
 
 592 stats students, self-categorised, University of Delaware, 1974.
 
@@ -154,7 +154,7 @@ grid.arrange(g1, g2, nrow=1)
 mosaic(myTable
    , shade = TRUE # highlight deviations?
    , split_vertical = TRUE # control split directions
-   , main="Title"
+   , main = "Title"
    , labeling = labeling_values # show cell values?
    , spacing = spacing_equal(
      sp = unit(0.5, "lines"))
@@ -190,7 +190,7 @@ mosaic(margin.table(haireye, 2)
 expected <- independence_table(haireye)
 ```
 
-## Expected Frequencies Under Independence Assumption
+## Expected Frequencies (Assume Independence)
 
 ```{r exp_freqs}
 mosaic(expected
@@ -273,7 +273,7 @@ dimnames(haireye) <- list(A = c("A_1", "A_2", "A_3", "A_4")
 haireye
 ```
 
-Under independence, each cell count in the table is assumed to be a Poisson distibuted random variable:
+Under independence, each cell count in the table is assumed to be a Poisson distributed random variable:
 
 $$n_{ij} \sim \mathit{Pois}(\frac{n_{i+} \cdot n_{+j}}{n_{++}})$$
 
@@ -281,7 +281,7 @@ $$n_{ij} \sim \mathit{Pois}(\frac{n_{i+} \cdot n_{+j}}{n_{++}})$$
 
 Rearranging, we get a model that is linear in all the logs:
 
-$$\frac{n_{i+} \cdot n_{+j}}{n_{++}} = \log(n_{i+}) + \log(n_{+j}) - \log(n_{++})$$
+$$\log(\frac{n_{i+} \cdot n_{+j}}{n_{++}}) = \log(n_{i+}) + \log(n_{+j}) - \log(n_{++})$$
 
 This is usually represented as:
 
@@ -297,7 +297,7 @@ Deviation from independence implies an interaction term:
 
 $$\mu + \lambda^A_i + \lambda^B_j + \lambda^{AB}_{ij}$$
 
-Constraining $\sum^I_{i = 1} \sum^J_{j = 1} \lambda^{AB}_{ij} = 0$ means that there are $(I-1)(J-1)$ degrees of freedom.
+Normally, there is a constraint on $\sum^I_{i = 1} \sum^J_{j = 1} \lambda^{AB}_{ij} = 0$. There are $(I-1)(J-1)$ degrees of freedom.
 
 This scales to more variables as follows:
 
@@ -314,7 +314,7 @@ When modelling, we seek the most parsimious, best fit. Find a model that is:
 
 This can be done using:
 
-* generalised linear models
+* generalised linear models (family = poisson)
 * comparing various interactions (joint, conditional)
 * dummy variables can capture very specific interactions
 
@@ -328,7 +328,7 @@ HEC_df <- as.data.frame(HEC)
 head(HEC_df, 3)
 
 # explanatory model, hair eye interaction
-hec.glm <- glm(Freq~Hair*Eye+Sex
+hec.glm1 <- glm(Freq~Hair*Eye+Sex
                , data=HEC_df
                , family = poisson)
 ```
@@ -342,7 +342,7 @@ hec.glm <- glm(Freq~Hair*Eye+Sex
 ## HEC GLM
 
 ```{r hec_glm, echo=TRUE, eval=FALSE}
-mosaic(hec.glm # invokes the glm plotting method
+mosaic(hec.glm1 # invokes the glm plotting method
        , main="Hair*Eye"
        , gp = shading_Friendly
        , formula = ~ Sex + Eye + Hair # mosaic layout
@@ -359,13 +359,12 @@ mosaic(hec.glm # invokes the glm plotting method
 ```{r glm2, echo=TRUE, eval=FALSE}
 # convert to frequency form data frame
 HEC_df$Blbl <- factor(ifelse(HEC_df$Hair == "Blond" &
-                               HEC_df$Eye == "Blue" &
-                               HEC_df$Sex == "Female"
+                               HEC_df$Eye == "Blue"
                              , TRUE
                              , FALSE))
 
 # explanatory model, hair eye interaction
-hec.glm2 <- glm(Freq~Hair*Eye+Sex+Blbl
+hec.glm2 <- glm(Freq~Hair*Eye+Sex*Blbl
                , data=HEC_df
                , family = poisson)
 
@@ -384,8 +383,92 @@ mosaic(hec.glm2 # invokes the glm plotting method
 ## HEC GLM tests
 
 ```{r glmtests, echo=TRUE}
-anova(hec.glm, hec.glm2)
+anova(hec.glm1, hec.glm2)
 LRstats(hec.glm2) # compare to saturated
 
 ```
+
+# Case Study
+
+## Analysis of Negative Trend in Student Outcomes
+
+Academic life-cycle data for undergraduates. 2014 and 2015 intakes, graduating in 2017 and 2018 respectively. In 2018, rates of non-graduation (fails and withdrawals) were found to be signinficantly higher than the previous year.
+
+An analysis was conducted to determine the factors associated with this trend.
+
+*This is a synthetic data set, designed to replicate and exagerate some problems found in a real life scenario*
+
+## Academic Data
+
+```{r acad_data1}
+cat("Total Students")
+nrow(sts)
+summary(sts[, 1:3])
+summary(sts[, 9:10])
+```
+
+## Fourfold Plots
+
+A specialised plot for 2 $\times$ 2 contingency tables. The layout encompasses a log odds ratio test.
+
+```{r ffold, echo=TRUE, fig.align='center', out.width='60%'}
+fourfold(with(sts, table(grad, year)))
+```
+
+The log odds ratio statistic is standard normal random variable. A significant difference in the ratios shows up as non-overlapping CI.
+
+## Correspondence Analysis
+
+Unsupervised/Clustering Method. R Package "ca".
+
+```{r sts_ca, echo=TRUE}
+# ca is a simple correspondence analysis
+# determines per level associations for just two features
+sts_ca_hq_out <- ca(with(sts, table(hqual, outcome)))
+
+sts_ca_fc_out <- ca(with(sts, table(faculty, outcome)))
+```
+
+## Correspondence Analysis
+
+```{r plot_ca1}
+# Generate the plot
+res.ca <- plot(sts_ca_hq_out)
+# add some segments from the origin to make things clearer
+segments(0, 0, res.ca$cols[,1], res.ca$cols[,2], col = "red", lwd = 1)
+segments(0, 0, res.ca$rows[,1], res.ca$rows[,2], col = "blue", lwd = 0.5, lty = 3)
+```
+
+## Correspondence Analysis
+
+```{r plot_ca2}
+# Generate the plot
+res.ca <- plot(sts_ca_fc_out)
+# add some segments from the origin to make things clearer
+segments(0, 0, res.ca$cols[,1], res.ca$cols[,2], col = "red", lwd = 1)
+segments(0, 0, res.ca$rows[,1], res.ca$rows[,2], col = "blue", lwd = 0.5, lty = 3)
+```
+
+## Correspondence Analysis
+
+```{r sts_ca, echo=TRUE}
+# a pivot table creates rows for combos of > 1 feature
+# this makes simple ca very flexible
+sts_ca_hqfc_out <- ca(as.matrix(
+  structable(outcome~hqual+faculty
+  , data = sts)))
+```
+
+## Correspondence Analysis
+
+```{r plot_ca3}
+# Generate the plot
+res.ca <- plot(sts_ca_hqfc_out)
+# add some segments from the origin to make things clearer
+segments(0, 0, res.ca$cols[,1], res.ca$cols[,2], col = "red", lwd = 1)
+segments(0, 0, res.ca$rows[,1], res.ca$rows[,2], col = "blue", lwd = 0.5, lty = 3)
+```
+
+
+
 # End
