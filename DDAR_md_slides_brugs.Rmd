@@ -1,0 +1,267 @@
+---
+title: "Discrete Data Analysis"
+subtitle: "A Friendly Guide to Visualising Categorical Data"
+author: "Julian Hatwell"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  beamer_presentation:
+    colortheme: "seahorse"
+    fonttheme: "structurebold"
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+opts_chunk$set(warning = FALSE
+              , message = FALSE
+              , echo = FALSE
+              )
+
+library(lattice)
+library(ggplot2)
+library(cowplot)
+library(gridExtra)
+library(vcd)
+library(vcdExtra)
+source("KTheme.R")
+```
+
+# Introduction
+
+## About Me
+
+* Over 15 years in enterprise systems, management information systems and BI in the for-profit education sector, UK and Singapore
+* MSc (Distinction) Business Intelligence, Birmingham City University. Master's Dissertation: *An Association Rules Based Method for Imputing Missing Likert Scale Data*
+* Research to PhD (in progress): *Designing Explanation Systems for Decision Forests*, Data Analytics and Artifical Intelligence research group, Birmingham City University  
+
+## Academic Analytics: 
+
+**Monitor, Evaluate and Optimise**
+
+* Typical BI analysis of sales and marketing (student recruitment), financial, HR, operations, etc
+* **student life-cycle**: recruitment to alumni services
+* class room utilisation and exam planning
+* lecturer management (part-time and adjunct)
+
+## Credits
+
+::: {.columns}
+::: {.column}
+* **Michael Friendly** is a pioneer in this field and has contributed to the development of modules and libraries for SAS and R. Ideas and examples based on material contained in this book.
+
+* Shorter, valuable tutorial on these topics:
+  * **R> library("vcd")**
+  * **R> vignette("vcd")**
+
+* https://www.youtube.com/watch?v=qfNsoc7Tf60 for an in depth lecture, by Michael Friendly.
+
+:::
+::: {.column}
+
+```{r book_info, echo=FALSE, fig.cap="Discrete Data Analysis with R: Visualization and Modeling Techniques for Categorical and Count Data", out.width = '100%'}
+include_graphics("ddar_book_info.png", dpi=30)
+```
+
+:::
+:::
+
+## Exploring Data with Area Based Plots
+
+HairEyeColor (R datasets)
+
+592 stats students, self-categorised, University of Delaware, 1974.
+
+```{r describe_haireye, echo=FALSE}
+hr_desc <- data.frame(No=1:3
+                      , Name=c("Hair", "Eye", "Sex")
+                      , Levels=c("Black, Brown, Red, Blond", "Brown, Hazel, Green, Blue", "Male, Female"))
+kable(hr_desc)
+```
+
+## Limitations of Working with Tables Directly
+
+```{r HEC, echo=TRUE}
+# re-order the eye colours dark to light.
+HEC <- HairEyeColor[, c("Brown", "Hazel"
+                        , "Green", "Blue"), ]
+
+# collapse over 3rd margin (Sex)
+haireye <- margin.table(HEC, 1:2)
+
+# vcd::structable package makes pivot tables
+structable(haireye)
+```
+
+## Naive Approach: Barplots
+
+Does hair colour depend on eye colour or does eye colour depend on hair colour?
+
+Can we succinctly describe the relationship?
+
+```{r not_intuitive, fig.fullwidth=TRUE, fig.height = 4}
+my_gbars <- function(g) {
+  g + stat_identity(geom = "bar"
+                , position = position_dodge()) +
+  myGgFillScale4 +
+  theme_bw() +
+  myGgTheme
+}
+
+g1 <- ggplot(data = as.data.frame(haireye)
+             , aes(x = Hair
+                   , fill = Eye
+                   , y = Freq))
+g1 <- my_gbars(g1)
+  
+
+g2 <- ggplot(data = as.data.frame(haireye)
+             , aes(x = Eye
+                   , fill = Hair
+                   , y = Freq))
+
+g2 <- my_gbars(g2)
+
+grid.arrange(g1, g2, nrow=1)
+```
+
+## Introducing the Strucplot Framework
+
+* Purpose built for handling tables - no dependent/independent variables.
+* Respects the table structure given.
+* Several Variants: mosaic, sieve, tile, assoc, spine, doubledecker
+* Focus of this talk: mosaic (most versatile, higher dimensional)
+* Properties of mosaic plots:
+  1. Tile area proportional to frequency.
+  1. Independence assumption: marginal frequencies of one feature are constant over all levels of another feature.
+  1. Independence expectation: straight grid lines in the mosaic.
+  1. Deviations from expectation show up as deviations in the grid lines. Shading provides a visual cue.
+
+**Con:** Another plotting system to learn.
+
+## Example Code
+
+```{r example_mosaic, echo=TRUE, eval=FALSE}
+mosaic(myTable
+   , shade = TRUE # highlight deviations?
+   , split_vertical = TRUE # control split directions
+   , main="Title"
+   , labeling = labeling_values # show cell values?
+   , spacing = spacing_equal(
+     sp = unit(0.5, "lines"))
+   , value_type = "observed"
+   , gp_text = gpar(fontface = 1) # graphical params
+   , rot_labels = c(top = -20)) # tidy label rotation
+```
+
+## Hair Marginal Totals
+
+```{r h_marg}
+mosaic(margin.table(haireye, 1)
+       , main="Hair Marginal Totals"
+       , shade = TRUE
+       , labeling = labeling_values
+       , spacing = spacing_equal(sp = unit(0.5, "lines"))
+       , value_type = "observed"
+       , gp_text = gpar(fontface = 1))
+```
+
+## Eye Marginal Totals
+
+```{r e_marg}
+mosaic(margin.table(haireye, 2)
+       , split_vertical = TRUE
+       , main="Eye Marginal Totals"
+       , shade = TRUE
+       , labeling = labeling_values
+       , spacing = spacing_equal(sp = unit(0.5, "lines"))
+       , value_type = "observed"
+       , gp_text = gpar(fontface = 1))
+
+expected <- independence_table(haireye)
+```
+
+## Expected Frequencies
+
+```{r exp_freqs}
+mosaic(expected
+      , main="Expected frequencies"
+      , shade = TRUE
+      , labeling = labeling_values
+      , spacing = spacing_equal(sp = unit(0.5, "lines"))
+      , value_type = "expected"
+      , gp_text = gpar(fontface = 1))
+```
+
+## Observed Frequencies
+
+```{r hr_actuals}
+mosaic(haireye
+      , gp = shading_hcl # shade = TRUE
+      , main="Actual frequencies"
+      , labeling = labeling_values
+      , value_type = "observed"
+      , gp_text = gpar(fontface = 1))
+```
+
+## Friendly Colour Scheme
+
+```{r hr_actuals_friend}
+# visualising actual counts for independent features
+mosaic(haireye
+      , gp = shading_Friendly # shade = TRUE
+      , main="Actual frequencies"
+      , labeling = labeling_values
+      , value_type = "observed"
+      , gp_text = gpar(fontface = 1))
+```
+
+## Code
+
+```{r hr_actuals_friend, eval=FALSE, echo=TRUE}
+```
+
+## Previous + Sex Feature: Now in 3-D
+
+```{r hec}
+# showing all three dimensions
+mosaic(HEC
+      , gp = shading_Friendly # shade = TRUE
+      , main="Actual frequencies"
+      , labeling = labeling_values
+      , value_type = "observed"
+      , gp_text = gpar(fontface = 1), rot_labels = c(right = -45)) 
+```
+
+## What You See Depends on the Pivot
+
+```{r hec2}
+# with a different pivot
+mosaic(aperm(HEC, 3:1)
+      , gp = shading_Friendly # shade = TRUE
+      , main="Actual frequencies"
+      , labeling = labeling_values
+      , value_type = "observed"
+      , gp_text = gpar(fontface = 1), rot_labels = c(right = -45)) 
+```
+
+## Loglinear Models
+
+Two discrete variables *A* with *I* possible values and  *B* with *J* possible values. A sample can be described by an *I* $\times$ *J* contingency table
+
+```{r freq_glm, echo=TRUE}
+# convert to frequency form data frame
+HEC_df <- as.data.frame(HEC)
+head(HEC_df, 3)
+
+# explanatory model, hair eye interaction
+hec.glm <- glm(Freq~Hair*Eye+Sex, data=HEC_df, family = poisson)
+```
+
+## HEC GLM
+
+```{r hec_glm, echo=TRUE}
+mosaic(hec.glm, main="Hair*Eye", gp = shading_Friendly
+       , formula = ~ Sex + Eye + Hair
+       , residuals_type = "rstandard")
+```
+
+# End

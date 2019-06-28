@@ -1,7 +1,7 @@
 library(dplyr)
 library(vcd)
 library(vcdExtra)
-library(gam)
+# library(gam)
 library(car)
 library(effects)
 
@@ -14,6 +14,12 @@ random_binary_from_logits <- function(lgt) {
            , prob = expit_prob(x))
   }))}
 
+my_mosaic <- function(x) {
+  mosaic(x
+         , gp = shading_Friendly
+         , spacing = spacing_equal(sp = unit(0.5, "lines"))
+         , rot_labels = c(30, 0, 0, 90))
+}
 
 acad_data <- function() {
   set.seed(2024)
@@ -37,9 +43,9 @@ acad_data <- function() {
   reps <- 2 # 2 per year
   pois_parms <- pois_parms %>%
     # main effects
-    mutate(lamb = ifelse(year == year_intake[1], 200, 250)
+    mutate(lamb = ifelse(year == year_intake[1], 250, 300)
            , lamb = ifelse(gender == genders[1]
-                           , lamb * 0.91
+                           , lamb * 0.92
                            , lamb * 0.90)
            , lamb = ifelse(natmix == nat[1]
                            , lamb
@@ -50,15 +56,15 @@ acad_data <- function() {
            # joint effects nat fin
            , lamb = ifelse(natmix == nat[2] & finance == fin[2]
                            , lamb
-                           , lamb * 0.75)
+                           , lamb * 0.7)
            # joint effects nat year
            , lamb = ifelse(natmix == nat[2] & year == year_intake[2]
-                           , lamb * 0.75
+                           , lamb * 0.7
                            , lamb)
            
            # main effects
            , lamb = ifelse(faculty == faculty_business[2]
-                           , lamb * 0.95
+                           , lamb * 0.8
                            , lamb)
            , lamb = ifelse(faculty == faculty_business[3]
                            , lamb * 0.9
@@ -92,87 +98,87 @@ acad_data <- function() {
                            , lamb * 0.25
                            , lamb)
            , lamb = ifelse(hqual == quals[3]
-                           , lamb * 0.6
+                           , lamb * 0.7
                            , lamb)
            , lamb = ifelse(hqual == quals[4]
-                           , lamb * 0.7
+                           , lamb * 0.4
                            , lamb)
            
            # joint effects quals and gender
-           # gender quals
+           # gender qual
            , lamb = ifelse(gender == genders[1] &
                              hqual == quals[1]
-                           , lamb * 0.9
+                           , lamb * 0.8
                            , lamb)
            , lamb = ifelse(gender == genders[1] &
                              hqual == quals[2]
-                           , lamb * 0.75
+                           , lamb * 0.7
                            , lamb)
            , lamb = ifelse(gender == genders[2] &
                              faculty == faculty_business[1]
-                           , lamb * 0.9
+                           , lamb * 0.8
                            , lamb)
            , lamb = ifelse(gender == genders[1] &
                              faculty == faculty_business[3]
-                           , lamb * 0.9
+                           , lamb * 0.8
                            , lamb)
            , lamb = ifelse(gender == genders[2] &
                              faculty == faculty_business[5]
-                           , lamb * 0.8
+                           , lamb * 0.7
                            , lamb)
            
            # joint effects quals and faculty
            , lamb = ifelse(faculty == faculty_business[1] &
                              hqual == quals[1]
-                           , lamb * 0.8
-                           , lamb)
-           , lamb = ifelse(faculty == faculty_business[1] &
-                             hqual == quals[2]
                            , lamb * 0.75
                            , lamb)
            , lamb = ifelse(faculty == faculty_business[1] &
-                             hqual == quals[3]
-                           , lamb * 1.1
-                           , lamb)
-           , lamb = ifelse(faculty == faculty_business[2] &
-                             hqual == quals[3]
-                           , lamb
-                           , lamb * 0.95)
-           , lamb = ifelse(faculty == faculty_business[2] &
-                             hqual == quals[4]
-                           , lamb
-                           , lamb * 0.95)
-           , lamb = ifelse(faculty == faculty_business[3] &
-                             hqual == quals[1]
-                           , lamb * 0.9
-                           , lamb)
-           , lamb = ifelse(faculty == faculty_business[3] &
                              hqual == quals[2]
-                           , lamb * 0.95
+                           , lamb * 0.5
                            , lamb)
-           , lamb = ifelse(faculty == faculty_business[3] &
+           , lamb = ifelse(faculty == faculty_business[1] &
                              hqual == quals[3]
-                           , lamb * 0.8
+                           , lamb * 1.2
                            , lamb)
-           , lamb = ifelse(faculty == faculty_business[3] &
-                             hqual == quals[4]
-                           , lamb * 0.75
-                           , lamb)
-           , lamb = ifelse(faculty == faculty_business[4] &
-                             hqual == quals[1]
+           , lamb = ifelse(faculty == faculty_business[2] &
+                             hqual == quals[3]
                            , lamb
                            , lamb * 0.9)
-           , lamb = ifelse(faculty == faculty_business[4] &
-                             hqual == quals[2]
-                           , lamb * 0.95
+           , lamb = ifelse(faculty == faculty_business[2] &
+                             hqual == quals[4]
+                           , lamb
+                           , lamb * 0.8)
+           , lamb = ifelse(faculty == faculty_business[3] &
+                             hqual == quals[1]
+                           , lamb * 1.2
                            , lamb)
-           , lamb = ifelse(faculty == faculty_business[4] &
+           , lamb = ifelse(faculty == faculty_business[3] &
+                             hqual == quals[2]
+                           , lamb * 1.1
+                           , lamb)
+           , lamb = ifelse(faculty == faculty_business[3] &
                              hqual == quals[3]
+                           , lamb * 0.7
+                           , lamb)
+           , lamb = ifelse(faculty == faculty_business[3] &
+                             hqual == quals[4]
                            , lamb * 0.8
                            , lamb)
            , lamb = ifelse(faculty == faculty_business[4] &
+                             hqual == quals[1]
+                           , lamb * 1.2
+                           , lamb)
+           , lamb = ifelse(faculty == faculty_business[4] &
+                             hqual == quals[2]
+                           , lamb * 1.1
+                           , lamb)
+           , lamb = ifelse(faculty == faculty_business[4] &
+                             hqual == quals[3]
+                           , lamb * 0.7
+                           , lamb)
+           , lamb = ifelse(faculty == faculty_business[4] &
                              hqual == quals[4]
-                           , lamb * 0.75
+                           , lamb * 0.5
                            , lamb)
            , lamb = ifelse(faculty == faculty_business[5] &
                              hqual == quals[1]
@@ -200,59 +206,59 @@ acad_data <- function() {
            , lamb = ifelse(faculty == faculty_business[1] &
                              hqual == quals[2] &
                              year == year_intake[1]
-                           , lamb * 0.4
+                           , lamb * 0.85
                            , lamb)
            , lamb = ifelse(faculty == faculty_business[1] &
                              hqual == quals[3] &
                              year == year_intake[1]
-                           , lamb * 1.1
+                           , lamb * 1.2
                            , lamb)
            , lamb = ifelse(faculty == faculty_business[2] &
                              hqual == quals[1] &
                              year == year_intake[1]
-                           , lamb * 0.9
+                           , lamb * 0.95
                            , lamb)
            , lamb = ifelse(faculty == faculty_business[2] &
                              hqual == quals[2] &
                              year == year_intake[1]
-                           , lamb * 0.6
+                           , lamb * 0.9
                            , lamb)
            # joint effects natmix, finance and qual
            , lamb = ifelse(natmix == nat[2] &
                              hqual == quals[1]
-                           , lamb * 0.65
+                           , lamb * 0.6
                            , lamb)
            , lamb = ifelse(natmix == nat[2] &
                              hqual == quals[2]
-                           , lamb * 0.25
+                           , lamb * 0.2
                            , lamb)
            , lamb = ifelse(natmix == nat[2] &
                              hqual == quals[4]
-                           , lamb * 0.8
+                           , lamb * 1.1
                            , lamb)
            , lamb = ifelse(finance == fin[2] &
                              hqual == quals[1]
-                           , lamb * 0.6
+                           , lamb * 0.3
                            , lamb)
            , lamb = ifelse(finance == fin[2] &
                              hqual == quals[2]
-                           , lamb * 0.5
+                           , lamb * 0.1
                            , lamb)
            , lamb = ifelse(finance == fin[2] &
                              hqual == quals[4]
-                           , lamb * 0.8
+                           , lamb * 1.2
                            , lamb)
            , lamb = ifelse(natmix == nat[2] &
                              faculty == faculty_business[1]
-                           , lamb * 0.8
+                           , lamb * 0.7
                            , lamb)
            , lamb = ifelse(natmix == nat[2] &
                              faculty == faculty_business[2]
-                           , lamb * 0.9
+                           , lamb * 0.75
                            , lamb)
            , lamb = ifelse(natmix == nat[2] &
                              faculty == faculty_business[3]
-                           , lamb * 1.2
+                           , lamb * 1.3
                            , lamb)
            , lamb = ifelse(finance == fin[2] &
                              hqual %in% quals[3:4] &
@@ -267,7 +273,7 @@ acad_data <- function() {
            , lamb = ifelse(finance == fin[2] &
                              hqual %in% quals[3:4] &
                              faculty %in% faculty_business[3]
-                           , lamb * 1.1
+                           , lamb * 1.4
                            , lamb)
            , lamb = ifelse(natmix == nat[2] &
                              hqual %in% quals[2] &
@@ -276,8 +282,8 @@ acad_data <- function() {
                            , lamb)
            , lamb = ifelse(natmix == nat[1] &
                              hqual %in% quals[1:2] &
-                             faculty %in% faculty_business[4:5]
-                           , lamb * 1.2
+                             faculty %in% faculty_business[3:4]
+                           , lamb * 1.4
                            , lamb)
     )
   
@@ -296,13 +302,16 @@ acad_data <- function() {
   
   students <- students %>%
     mutate(year = factor(year)
-           , logit_abs_rate = -3.178 +
+           , logit_abs_rate = -3.2 +
              0.1 * (finance == fin[1]) +
-             0.2 * (natmix == nat[1]) +
-             0.1 * (hqual == quals[1]) +
-             0.15 * (hqual == quals[2]) +
+             -0.2 * (finance == fin[2]) +
+             0.1 * (natmix == nat[1]) +
+             -0.2 * (natmix == nat[2]) +
+             0.2 * (hqual == quals[1]) +
+             0.25 * (hqual == quals[2]) +
              0.075 * (hqual == quals[4]) +
-             0.1 * (gender == genders[2]) +
+             -0.05 * (gender == genders[1]) +
+             0.15 * (gender == genders[2]) +
              0.15 * (faculty == faculty_business[3]) +
              0.2 * (faculty == faculty_business[4]) +
              0.05 * (faculty == faculty_business[5]) +
@@ -416,7 +425,7 @@ acad_data <- function() {
             , outcome = factor(case_when(withdraw == TRUE ~ "wthdr"
                                         # , defer == TRUE ~ "defer"
                                         , expit(logit_outcome) > 0.70 ~ "dist"
-                                        , expit(logit_outcome) > 0.625 ~ "merit"
+                                        , expit(logit_outcome) > 0.63 ~ "merit"
                                         , expit(logit_outcome) > 0.50 ~ "pass"
                                         , TRUE ~ "fail"
            ))
@@ -428,6 +437,10 @@ acad_data <- function() {
 }
 
 students <- acad_data()
+
+sts <- students[,  c("year", "faculty", "natmix"
+                     , "finance", "gender", "hqual"
+                     , "t1_success", "outcome", "grad")]
 
 nrow(students)
 prop.table(with(students
@@ -459,21 +472,10 @@ mosaic(with(students
        , shade = TRUE
        , rot_labels = c(45, 0, 0, 90))
 
-prop.table(with(students
-                , table(year, outcome))[, c(1, 3, 4, 2, 5)]#[, c(2, 4, 5, 3, 1, 6)]
-           )
-
-# mosaic(with(students[students$outcome != "defer", ]
-#             , table(year, outcome))[, c(2, 4, 5, 3, 1, 6)]
-#        , shade = TRUE)
-
 mosaic(with(students#[students$outcome != "defer", ]
             , table(year, grad))
        , shade = TRUE
        , rot_labels = c(0, 45, 0, 90))
-
-prop.table(with(students#[students$outcome != "defer", ]
-                , table(year, grad)), 1)
 
 prop.table(with(students#[students$outcome != "defer", ]
                 , table(hqual, grad)), 1)
@@ -483,10 +485,59 @@ mosaic(with(students#[students$outcome != "defer", ]
        , shade = TRUE
        , rot_labels = c(0, 45, 0, 90))
 
-mosaic(with(students#[students$outcome != "defer", ]
-            , table(hqual, faculty, year))
+mosaic(with(students
+            , table(faculty, hqual, year))
        , shade = TRUE
        , rot_labels = c(0, 45, 0, 90))
+
+students$facfin <- factor(ifelse(students$faculty == "fin", TRUE, FALSE))
+students$facmgmt <- factor(ifelse(students$faculty == "mgmt", TRUE, FALSE))
+
+glm1a <- glm(Freq~(faculty + hqual)^2 + year
+            , as.data.frame(
+              with(students
+              , table(faculty, hqual, year))
+              )
+            , family = poisson)
+
+glm2 <- glm(Freq~(faculty + hqual + facfin)^2 + year
+            , as.data.frame(
+              with(students
+                   , table(faculty, hqual, year, facfin))
+            )
+            , family = poisson)
+
+glm1b <- glm(Freq~(faculty + hqual)^2 + year
+             , as.data.frame(
+               with(students
+                    , table(faculty, hqual, year, facfin))
+             )
+             , family = poisson)
+
+
+mosaic(glm1a
+       , shade = TRUE
+       , formula = ~ faculty + hqual + year
+       , residuals_type = "rstandard"
+       , rot_labels = c(0, 45, 0, 90))
+
+mosaic(glm1b
+       , shade = TRUE
+       , formula = ~ faculty + hqual + year
+       , residuals_type = "rstandard"
+       , rot_labels = c(0, 45, 0, 90))
+
+
+mosaic(glm2
+       , shade = TRUE
+       , formula = ~ faculty + hqual + year
+       , residuals_type = "rstandard"
+       , rot_labels = c(0, 45, 0, 90))
+
+LRstats(glm1b)
+LRstats(glm2)
+
+anova(glm1b, glm2)
 
 mosaic(with(students[students$outcome != "defer", ]
             , table(hqual, faculty, grad, year))
