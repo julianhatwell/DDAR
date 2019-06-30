@@ -37,18 +37,18 @@ source("acad_data.R")
 
 ## Academic Analytics
 
-```{r acad_anal_png, fig.cap='High-level architecture of integrated academic systems. Source: Paulsen (2002 : p4)', out.width = '90%'}
-include_graphics("acadsys.png")
-```
-
-## Academic Analytics
-
 **Monitor, Evaluate and Optimise**
   
   * Typical BI analysis of sales and marketing (student recruitment), financial, HR, operations, etc
 * **student life-cycle**: recruitment to alumni services
 * class room utilisation and exam planning
 * lecturer management (part-time and adjunct)
+
+## Academic Analytics
+
+```{r acad_anal_png, fig.cap='High-level architecture of integrated academic systems. Source: Paulsen (2002 : p4)', out.width = '90%'}
+include_graphics("acadsys.png")
+```
 
 ## Credits
 
@@ -147,7 +147,7 @@ A specialised plot for 2 $\times$ 2 contingency tables which exposes the log odd
 
 ## Fourfold Plots
 
-Foufold plots are automatically stratified over the levels of a third feature.
+Fourfold plots are automatically stratified over the levels of a third feature, when given a $2 \times 2 \times k$ table.
 
 ```{r ffold2, echo=TRUE, fig.align='center', out.width='70%'}
 fourfold(with(sts, table(grad, year, faculty)))
@@ -180,7 +180,7 @@ sts_ca_fc_out <- ca(with(sts, table(faculty, outcome)))
 res.ca <- plot(sts_ca_hq_out)
 # add some segments from the origin to make things clearer
 segments(0, 0, res.ca$cols[,1], res.ca$cols[,2], col = "red", lwd = 1)
-segments(0, 0, res.ca$rows[,1], res.ca$rows[,2], col = "blue", lwd = 0.5, lty = 3)
+segments(0, 0, res.ca$rows[,1], res.ca$rows[,2], col = "blue", lwd = 1, lty = 3)
 ```
 
 ## Correspondence Analysis
@@ -190,28 +190,32 @@ segments(0, 0, res.ca$rows[,1], res.ca$rows[,2], col = "blue", lwd = 0.5, lty = 
 res.ca <- plot(sts_ca_fc_out)
 # add some segments from the origin to make things clearer
 segments(0, 0, res.ca$cols[,1], res.ca$cols[,2], col = "red", lwd = 1)
-segments(0, 0, res.ca$rows[,1], res.ca$rows[,2], col = "blue", lwd = 0.5, lty = 3)
+segments(0, 0, res.ca$rows[,1], res.ca$rows[,2], col = "blue", lwd = 1, lty = 3)
+```
+
+## Extending Simple Correspondence Analysis
+
+A pivot table creates rows for combos of > 1 feature.
+
+```{r disp_struct, echo=TRUE}
+structable(outcome ~ hqual + faculty, data = sts)
 ```
 
 ## Correspondence Analysis
 
-A pivot table creates rows for combos of > 1 feature. This is a great way to extend simple ca and is much more interpretable than mjca.
-
-```{r sts_ca_struc, echo=TRUE}
+```{r sts_ca_struc}
 sts_ca_hqfc_out <- ca(as.matrix(
   # structable is a pivot table function
   structable(outcome ~ hqual + faculty
   , data = sts)))
 ```
 
-## Correspondence Analysis
-
 ```{r plot_ca3}
 # Generate the plot
 res.ca <- plot(sts_ca_hqfc_out)
 # add some segments from the origin to make things clearer
 segments(0, 0, res.ca$cols[,1], res.ca$cols[,2], col = "red", lwd = 1)
-segments(0, 0, res.ca$rows[,1], res.ca$rows[,2], col = "blue", lwd = 0.5, lty = 3)
+segments(0, 0, res.ca$rows[,1], res.ca$rows[,2], col = "blue", lwd = 1, lty = 3)
 ```
 
 ## Introducing the Strucplot Framework
@@ -273,16 +277,8 @@ mosaic(with(sts, table(faculty, hqual))
 ## Scaling to Higher Dimensions
 
 ```{r hd_mosaic}
-my_mosaic(with(sts, table(faculty, grad, hqual, year)))
+my_mosaic(with(sts, table(faculty, hqual, grad, year)))
 ```
-
-## Properties of Mosaic Plots
-
-1. Tile area $\propto$ frequency.
-1. Independence expectation: straight grid lines in the mosaic when marginal frequencies of one feature are constant over all levels of another feature.
-1. Deviations from expectation show up as deviations in the grid lines. Shading provides a visual cue.
-
-**Con:** Another plotting system to learn.
 
 ## Example Code
 
@@ -306,6 +302,7 @@ Two discrete variables *A* with *I* possible values and  *B* with *J* possible v
 Under independence, each cell count $n_{ij}$ in the table is assumed to be a Poisson distributed random variable:
   
 $$n_{ij} \sim \mathit{Pois}(\frac{n_{i+} \cdot n_{+j}}{n_{++}})$$
+$n_{i+} = \mathrm{row\ total},\ n_{+j} = \mathrm{col\ total},\ n_{++} = \mathrm{table\ total}$
 
 ## Loglinear Models
 
@@ -317,7 +314,7 @@ This is usually represented as:
 
 $$\mu + \lambda^A_i + \lambda^B_j$$
 
-where the $\lambda$ terms are the "main" effects and $\mu$ is in "intercept" term that is a property of the total count.
+where $\mu$ is in "intercept" term that is a property of the total count and the $\lambda$ terms are the "main" effects.
 
 Under independence, the main effects can be calculated directly from the marginal totals.
 
@@ -327,7 +324,7 @@ Deviation from independence implies an interaction term:
   
 $$\mu + \lambda^A_i + \lambda^B_j + \lambda^{AB}_{ij}$$
   
-To allow for estimation, we constrain: $\sum^I_{i = 1} \lambda^{A}_{i} = 0,\ \sum^J_{j = 1} \lambda^{B}_{i} = 0,\ \sum^I_{i = 1} \lambda^{AB}_{ij} = \sum^J_{j = 1} \lambda^{AB}_{ij} = 0$. There are $(I-1) + (J-1) + (I-1)(J-1)$ degrees of freedom.
+To allow for estimation, we constrain: $\sum^I_{i = 1} \lambda^{A}_{i} = 0,\ \sum^J_{j = 1} \lambda^{B}_{i} = 0,\ \sum^I_{i = 1} \lambda^{AB}_{ij} = \sum^J_{j = 1} \lambda^{AB}_{ij} = 0$.
 
 This scales to more variables as follows:
   
@@ -351,3 +348,100 @@ This can be done using:
 Building models using domain knowledge and visual inspection mosaic plots for significant residuals is the recommended approach.
 
 Compare and select the best model using anova tests and AIC/BIC.
+
+## Null Model `[F][H][G][Y]`
+
+```{r mk_sts_df}
+sts_df <- as.data.frame(with(sts
+                , table(faculty, hqual, grad, year)))
+```
+
+```{r nullmod, echo=TRUE}
+glm0 <- glm(Freq~faculty +
+              hqual + grad + year
+            , data = sts_df, family = poisson)
+```
+
+```{r glm0_mosaic, fig.height=6}
+my_mosaic(glm0)
+```
+
+## Model 1 `[FH][G][Y]`
+
+```{r glm1_mod, echo=TRUE}
+glm1 <- glm(Freq~faculty *
+              hqual + grad + year
+            , data = sts_df, family = poisson)
+```
+
+```{r glm1_mosaic, fig.height=6}
+my_mosaic(glm1)
+```
+
+## Model 2 `[FH][FG][Y]`
+
+```{r glm2_mod, echo=TRUE}
+glm2 <- glm(Freq~faculty *
+              (hqual + grad) + year
+            , data = sts_df, family = poisson)
+```
+
+```{r glm2_mosaic, fig.height=6}
+my_mosaic(glm2)
+```
+
+## Model 3 `[FH][FG][FY]`
+
+```{r glm3_mod, echo=TRUE}
+glm3 <- glm(Freq~faculty *
+              (hqual + grad + year)
+            , data = sts_df, family = poisson)
+```
+
+```{r glm3_mosaic, fig.height=6}
+my_mosaic(glm3)
+```
+
+## Model 4 `[FHG][FY]`
+```{r glm4_mod, echo=TRUE}
+glm4 <- glm(Freq~(faculty * hqual * grad) +
+              (faculty * year)
+            , data = sts_df, family = poisson)
+```
+
+```{r glm4_mosaic, fig.height=6}
+my_mosaic(glm4)
+```
+
+## Model 5 `[FHG][FHY]`
+```{r glm5_mod, echo=TRUE}
+glm5 <- glm(Freq~(faculty * hqual * grad) +
+              (faculty * hqual * year)
+            , data = sts_df, family = poisson)
+```
+
+```{r glm5_mosaic, fig.height=6}
+my_mosaic(glm5)
+```
+
+## Diagnostic Tests
+
+```{r diag_anova, echo=TRUE}
+as.data.frame(anova(glm0, glm1, glm2
+                    , glm3, glm4, glm5))
+```
+
+## Diagnostic Tests
+
+```{r diag_lr, echo=TRUE}
+LRstats(glm4)
+LRstats(glm5)
+```
+
+## Case Study Conclusions
+
+A policy change between 2014 and 2015 to increase student numbers led to lowering of entry level thresholds.
+
+The foundation diploma appears not to have met the needs of so many additional students on the more challenging finance degree.
+
+Recommend a review of curriculum and resources for the diploma to better support finance students, as well as interventions and support for students who are already one or two years into their course.

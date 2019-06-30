@@ -19,6 +19,7 @@ my_mosaic <- function(x) {
             else {"rstandard"}
   mosaic(x
          , residuals_type = rtype
+         , formula = ~ faculty + hqual + grad + year
          , gp = shading_Friendly2
          , rot_labels = c(0, -30, -45, 90)
          , rot_varnames = c(0, -90, 0, 90)

@@ -2,24 +2,25 @@ nrow(students)
 
 my_mosaic(with(sts, table(faculty, grad, hqual, year)))
 
-sts_freq <- as.data.frame(with(sts
-                , table(faculty, hqual, grad, year)))
-
-glm0 <- glm(Freq~faculty + hqual + grad + year
+glm0 <- glm(Freq~faculty + hqual + year + grad
             , data = sts_freq
             , family = poisson)
 
 my_mosaic(glm0)
+summary(glm0)
+anova(glm0)
 
-glm1 <- glm(Freq~faculty * hqual + grad + year
+ano <- anova(glm0, glm1, glm2, glm3, glm4, glm5)
+
+glm1 <- glm(Freq~faculty * year + hqual + grad
             , data = sts_freq
             , family = poisson)
 
 my_mosaic(glm1)
 summary(glm1)
-anova(glm1)
+anova(glm0, glm1)
 
-glm2 <- glm(Freq~faculty * (hqual + grad) + year
+glm2 <- glm(Freq~faculty * (year + hqual) + grad
             , data = sts_freq
             , family = poisson)
 
@@ -27,7 +28,7 @@ my_mosaic(glm2)
 summary(glm2)
 anova(glm2)
 
-glm3 <- glm(Freq~faculty * (hqual + grad + year) 
+glm3 <- glm(Freq~faculty * (hqual + year + grad)
             , data = sts_freq
             , family = poisson)
 
@@ -35,15 +36,16 @@ my_mosaic(glm3)
 summary(glm3)
 anova(glm3)
 
-glm4 <- glm(Freq~(faculty * hqual * grad) + year# + hq_grad_yr
+glm4 <- glm(Freq~(faculty * year) + (faculty * hqual * grad)
             , data = sts_freq
             , family = poisson)
 
 my_mosaic(glm4)
 summary(glm4)
 anova(glm4)
+LRstats(glm4)
 
-glm5 <- glm(Freq~(faculty * hqual * grad) + (faculty * hqual * year)
+glm5 <- glm(Freq~(faculty * hqual * year) + (faculty * hqual * grad)
             , data = sts_freq
             , family = poisson)
 
@@ -52,14 +54,6 @@ summary(glm5)
 anova(glm5)
 
 LRstats(glm5)
-
-
-hq_fc_yr <- factor(ifelse(sts_freq$hqual == "dip" &
-                        sts_freq$faculty %in% c("fin", "mgmt") &
-                        sts_freq$year == 2014
-                     , TRUE, FALSE))
-
-
 
 glm2 <- glm(Freq~(faculty + hqual)^2 + (grad + faculty)^2 + grad + year
             , as.data.frame(with(sts
