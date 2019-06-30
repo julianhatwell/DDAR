@@ -44,8 +44,8 @@ include_graphics("acadsys.png")
 ## Academic Analytics
 
 **Monitor, Evaluate and Optimise**
-
-* Typical BI analysis of sales and marketing (student recruitment), financial, HR, operations, etc
+  
+  * Typical BI analysis of sales and marketing (student recruitment), financial, HR, operations, etc
 * **student life-cycle**: recruitment to alumni services
 * class room utilisation and exam planning
 * lecturer management (part-time and adjunct)
@@ -59,344 +59,34 @@ include_graphics("acadsys.png")
 * Shorter, valuable tutorial on these topics:
   * **R> library("vcd")**
   * **R> vignette("vcd")**
-
-* https://www.youtube.com/watch?v=qfNsoc7Tf60 for an in depth lecture, by Michael Friendly.
-
+  
+  * https://www.youtube.com/watch?v=qfNsoc7Tf60 for an in depth lecture, by Michael Friendly.
+  
 :::
 ::: {.column}
-
+  
 ```{r book_info, echo=FALSE, fig.cap="Discrete Data Analysis with R: Visualization and Modeling Techniques for Categorical and Count Data", out.width = '75%'}
 include_graphics("ddar_book_info.png")
 ```
-
+  
 :::
 :::
 
-## Analysis of Categorical Data
-
+## Visualising Categorical Data
+  
 **Rigorous statistical analysis of categorical data is not only supported by visual tools, it is best performed visually.**
 
 *The main theme of Michael Friendly's work.*
-
-## HairEyeColor (R datasets)
-
-592 stats students, self-categorised, University of Delaware, 1974.
-
-```{r describe_haireye, echo=FALSE}
-hr_desc <- data.frame(No=1:3
-                      , Name=c("Hair", "Eye", "Sex")
-                      , Levels=c("Black, Brown, Red, Blond", "Brown, Hazel, Green, Blue", "Male, Female"))
-kable(hr_desc)
-```
-
-## Limitations of Working with Tables Directly
-
-```{r HEC, echo=TRUE}
-# re-order the eye colours dark to light.
-HEC <- HairEyeColor[, c("Brown", "Hazel"
-                        , "Green", "Blue"), ]
-
-# collapse over 3rd margin (Sex)
-haireye <- margin.table(HEC, 1:2)
-
-# vcd::structable package makes pivot tables
-structable(haireye)
-```
-
-## Naive Approach: Barplots
-
-Does hair colour depend on eye colour or does eye colour depend on hair colour?
-
-Can we succinctly describe the relationship?
-
-```{r not_intuitive, fig.fullwidth=TRUE, fig.height = 4}
-my_gbars <- function(g) {
-  g + stat_identity(geom = "bar"
-                , position = position_dodge()) +
-  myGgFillScale4 +
-  theme_bw() +
-  myGgTheme
-}
-
-g1 <- ggplot(data = as.data.frame(haireye)
-             , aes(x = Hair
-                   , fill = Eye
-                   , y = Freq))
-g1 <- my_gbars(g1)
-  
-
-g2 <- ggplot(data = as.data.frame(haireye)
-             , aes(x = Eye
-                   , fill = Hair
-                   , y = Freq))
-
-g2 <- my_gbars(g2)
-
-grid.arrange(g1, g2, nrow=1)
-```
-
-## Introducing the Strucplot Framework
-
-* Purpose built for handling tables - no dependent/independent variables.
-* Respects the table structure given.
-* Several Variants: mosaic, sieve, tile, assoc, spine, doubledecker
-* Focus of this talk: mosaic (most versatile, higher dimensional)
-* Properties of mosaic plots:
-    1. Tile area $\propto$ frequency.
-    1. Independence expectation: straight grid lines in the mosaic when marginal frequencies of one feature are constant over all levels of another feature.
-    1. Deviations from expectation show up as deviations in the grid lines. Shading provides a visual cue.
-
-**Con:** Another plotting system to learn.
-
-## Example Code
-
-```{r example_mosaic, echo=TRUE, eval=FALSE}
-mosaic(myTable
-   , shade = TRUE # highlight deviations?
-   , split_vertical = TRUE # control split directions
-   , main = "Title"
-   , labeling = labeling_values # show cell values?
-   , spacing = spacing_equal(
-     sp = unit(0.5, "lines"))
-   , value_type = "observed"
-   , gp_text = gpar(fontface = 1) # graphical params
-   , rot_labels = c(0, 90, 0, -30)) # tidy label rotation
-```
-
-## Hair Marginal Totals
-
-```{r h_marg}
-mosaic(margin.table(haireye, 1)
-       , main="Hair Marginal Totals"
-       , shade = TRUE
-       , labeling = labeling_values
-       , spacing = spacing_equal(sp = unit(0.5, "lines"))
-       , value_type = "observed"
-       , gp_text = gpar(fontface = 1))
-```
-
-## Eye Marginal Totals
-
-```{r e_marg}
-mosaic(margin.table(haireye, 2)
-       , split_vertical = TRUE
-       , main="Eye Marginal Totals"
-       , shade = TRUE
-       , labeling = labeling_values
-       , spacing = spacing_equal(sp = unit(0.5, "lines"))
-       , value_type = "observed"
-       , gp_text = gpar(fontface = 1))
-
-expected <- independence_table(haireye)
-```
-
-## Expected Frequencies (Assume Independence)
-
-```{r exp_freqs}
-mosaic(expected
-      , main="Expected frequencies"
-      , shade = TRUE
-      , labeling = labeling_values
-      , spacing = spacing_equal(sp = unit(0.5, "lines"))
-      , value_type = "expected"
-      , gp_text = gpar(fontface = 1))
-```
-
-## Observed Frequencies
-
-```{r hr_actuals}
-mosaic(haireye
-      , gp = shading_hcl # shade = TRUE
-      , main="Actual frequencies"
-      , labeling = labeling_values
-      , value_type = "observed"
-      , gp_text = gpar(fontface = 1))
-```
-
-## Friendly Colour Scheme
-
-```{r hr_actuals_friend}
-# visualising actual counts for independent features
-mosaic(haireye
-      , gp = shading_Friendly # shade = TRUE
-      , main="Actual frequencies"
-      , labeling = labeling_values
-      , value_type = "observed"
-      , gp_text = gpar(fontface = 1))
-```
-
-## Code for the Previous Mosaic
-
-```{r hr_actuals_friend, eval=FALSE, echo=TRUE}
-```
-
-## Previous + Sex Feature: Now in 3-D
-
-```{r hec}
-# showing all three dimensions
-mosaic(HEC
-      , gp = shading_Friendly # shade = TRUE
-      , main="Actual frequencies"
-      , labeling = labeling_values
-      , value_type = "observed"
-      , gp_text = gpar(fontface = 1), rot_labels = c(right = -45)) 
-```
-
-## What You See Depends on the Pivot
-
-The base R comes with lots of functions for maniptulating tables. Packages "vcd" and "vcdExtra" provide many more.
-
-```{r aperm_piv, echo=TRUE}
-# pivoting example
-HEC_pivot <- aperm(HEC, 3:1)
-```
-
-## What You See Depends on the Pivot
-
-```{r hec2}
-# with a different pivot
-mosaic(HEC_pivot
-      , gp = shading_Friendly # shade = TRUE
-      , main="Actual frequencies HEC_pivot"
-      , labeling = labeling_values
-      , value_type = "observed"
-      , gp_text = gpar(fontface = 1), rot_labels = c(right = -45)) 
-```
-
-## Loglinear Models
-
-Two discrete variables *A* with *I* possible values and  *B* with *J* possible values. A sample can be described by an *I* $\times$ *J* contingency table
-
-```{r conting_table_example}
-dimnames(haireye) <- list(A = c("A_1", "A_2", "A_3", "A_4")
-                          , B = c("B_1", "B_2", "B_3", "B_4"))
-haireye
-```
-
-Under independence, each cell count in the table is assumed to be a Poisson distributed random variable:
-
-$$n_{ij} \sim \mathit{Pois}(\frac{n_{i+} \cdot n_{+j}}{n_{++}})$$
-
-## Loglinear Models
-
-Rearranging, we get a model that is linear in all the logs:
-
-$$\log(\frac{n_{i+} \cdot n_{+j}}{n_{++}}) = \log(n_{i+}) + \log(n_{+j}) - \log(n_{++})$$
-
-This is usually represented as:
-
-$$\mu + \lambda^A_i + \lambda^B_j$$
-
-where the $\lambda$ terms are the "main" effects and $\mu$ is in "intercept" term that is a property of the total count.
-
-Under independence, the main effects can be calculated directly from the marginal totals.
-
-## Loglinear Models
-
-Deviation from independence implies an interaction term:
-
-$$\mu + \lambda^A_i + \lambda^B_j + \lambda^{AB}_{ij}$$
-
-Normally, there is a constraint on $\sum^I_{i = 1} \sum^J_{j = 1} \lambda^{AB}_{ij} = 0$. There are $(I-1)(J-1)$ degrees of freedom.
-
-This scales to more variables as follows:
-
-$$\mu + \lambda^A_i + \lambda^B_j + \lambda^C_k + \lambda^{AB}_{ij} + \lambda^{BC}_{jk} + \lambda^{AC}_{ik} + \lambda^{ABC}_{ijk}$$
-
-This is referred to as the saturated model - will be a near perfect fit.
-
-## Loglinear Models
-
-When modelling, we seek the most parsimious, best fit. Find a model that is:
-
-* as "good" as the saturated model
-* does not use all the degrees of freedom
-
-This can be done using:
-
-* generalised linear models (family = poisson)
-* comparing various interactions (joint, conditional)
-* dummy variables can capture very specific interactions
-
-Anova tests and AIC/BIC are used to determine the best model.
-
-## Loglinear Models
-
-```{r freq_glm, echo=TRUE}
-# convert to frequency form data frame
-HEC_df <- as.data.frame(HEC)
-head(HEC_df, 3)
-
-# explanatory model, hair eye interaction
-hec.glm1 <- glm(Freq~Hair*Eye+Sex
-               , data=HEC_df
-               , family = poisson)
-```
-
-## HEC Observed
-
-```{r hec2, eval=TRUE}
-```
-
-
-## HEC GLM
-
-```{r hec_glm, echo=TRUE, eval=FALSE}
-mosaic(hec.glm1 # invokes the glm plotting method
-       , main="Hair*Eye"
-       , gp = shading_Friendly
-       , formula = ~ Sex + Eye + Hair # mosaic layout
-       , residuals_type = "rstandard")
-```
-
-## HEC GLM
-
-```{r hec_glm, eval=TRUE}
-```
-
-## HEC GLM 2
-
-```{r glm2, echo=TRUE, eval=FALSE}
-# convert to frequency form data frame
-HEC_df$Blbl <- factor(ifelse(HEC_df$Hair == "Blond" &
-                               HEC_df$Eye == "Blue"
-                             , TRUE
-                             , FALSE))
-
-# explanatory model, hair eye interaction
-hec.glm2 <- glm(Freq~Hair*Eye+Sex*Blbl
-               , data=HEC_df
-               , family = poisson)
-
-mosaic(hec.glm2 # invokes the glm plotting method
-       , main="Hair*Eye | Blond-Blue*Sex"
-       , gp = shading_Friendly
-       , formula = ~ Sex + Eye + Hair # mosaic layout
-       , residuals_type = "rstandard")
-```
-
-## HEC GLM 2
-
-```{r glm2, eval=TRUE}
-```
-
-## HEC GLM tests
-
-```{r glmtests, echo=TRUE}
-anova(hec.glm1, hec.glm2)
-LRstats(hec.glm2) # compare to saturated
-
-```
 
 # Case Study
 
 ## Analysis of Negative Trend in Student Outcomes
 
-Academic life-cycle data for undergraduates. 2014 and 2015 intakes, graduating in 2017 and 2018 respectively. In 2018, rates of non-graduation (fails and withdrawals) were found to be signinficantly higher than the previous year.
+Academic life-cycle data for undergraduates. 2014 and 2015 intakes, graduating in 2017 and 2018 respectively. In 2018, rates of non-graduation (fails and withdrawals) were found to be significantly higher than the previous year.
 
 An analysis was conducted to determine the factors associated with this trend.
 
-*This is a synthetic data set, designed to replicate and exagerate some problems found in a real life scenario*
+*This is a synthetic data set, designed to replicate and exaggerate some problems found in a real life scenario*
 
 ## Academic Data
 
@@ -407,23 +97,77 @@ summary(sts[, 1:3])
 summary(sts[, 9:10])
 ```
 
+## Limitations of Working with Tables Directly
+
+```{r fchq}
+structable(with(sts, table(grad, year)))
+structable(with(sts, table(faculty, hqual)))
+```
+
+## Naive Approach: Barplots
+
+Which is the right grouping variable?
+
+Can we succinctly describe the relationship?
+
+```{r not_intuitive, fig.fullwidth=TRUE, fig.height = 4}
+my_gbars <- function(g) {
+        g + stat_identity(geom = "bar"
+                          , position = position_dodge()) +
+                myGgFillScale4 +
+                theme_bw() +
+                myGgTheme
+}
+
+hf <- as.data.frame(with(sts, table(faculty, hqual)))
+g1 <- ggplot(data = as.data.frame(hf)
+             , aes(x = hqual
+                   , fill = faculty
+                   , y = Freq))
+g1 <- my_gbars(g1)
+
+
+g2 <- ggplot(data = as.data.frame(hf)
+             , aes(x = faculty
+                   , fill = hqual
+                   , y = Freq))
+
+g2 <- my_gbars(g2)
+
+grid.arrange(g1, g2, nrow=1)
+```
+
 ## Fourfold Plots
 
-A specialised plot for 2 $\times$ 2 contingency tables. The layout encompasses a log odds ratio test.
-
-```{r ffold, echo=TRUE, fig.align='center', out.width='60%'}
+```{r ffold1, echo=TRUE, fig.align='center', out.width='70%'}
 fourfold(with(sts, table(grad, year)))
 ```
 
-The log odds ratio statistic is standard normal random variable. A significant difference in the ratios shows up as non-overlapping CI.
+A specialised plot for 2 $\times$ 2 contingency tables which exposes the log odds ratio. A significant difference in the ratios shows up as non-overlapping CI.
+
+## Fourfold Plots
+
+Foufold plots are automatically stratified over the levels of a third feature.
+
+```{r ffold2, echo=TRUE, fig.align='center', out.width='70%'}
+fourfold(with(sts, table(grad, year, faculty)))
+```
+
+## Fourfold Plots
+
+```{r ffold3, echo=TRUE, fig.align='center', out.width='70%'}
+fourfold(with(sts, table(grad, year, hqual)))
+```
 
 ## Correspondence Analysis
 
-Unsupervised/Clustering Method. R Package "ca".
+An unsupervised/clustering Method. R Package "ca". 
+
+Simple ca, the ca() function, operates on just two features. It determines per level associations. 
+
+Multiple/Joint ca, the mjca() function, operates simultaneously on two or more features. mjca is harder to interpret and not shown here.
 
 ```{r sts_ca, echo=TRUE}
-# ca is a simple correspondence analysis
-# determines per level associations for just two features
 sts_ca_hq_out <- ca(with(sts, table(hqual, outcome)))
 
 sts_ca_fc_out <- ca(with(sts, table(faculty, outcome)))
@@ -451,11 +195,12 @@ segments(0, 0, res.ca$rows[,1], res.ca$rows[,2], col = "blue", lwd = 0.5, lty = 
 
 ## Correspondence Analysis
 
-```{r sts_ca, echo=TRUE}
-# a pivot table creates rows for combos of > 1 feature
-# this makes simple ca very flexible
+A pivot table creates rows for combos of > 1 feature. This is a great way to extend simple ca and is much more interpretable than mjca.
+
+```{r sts_ca_struc, echo=TRUE}
 sts_ca_hqfc_out <- ca(as.matrix(
-  structable(outcome~hqual+faculty
+  # structable is a pivot table function
+  structable(outcome ~ hqual + faculty
   , data = sts)))
 ```
 
@@ -469,6 +214,140 @@ segments(0, 0, res.ca$cols[,1], res.ca$cols[,2], col = "red", lwd = 1)
 segments(0, 0, res.ca$rows[,1], res.ca$rows[,2], col = "blue", lwd = 0.5, lty = 3)
 ```
 
+## Introducing the Strucplot Framework
 
+* Purpose built for handling tables - no dependent/independent variables.
+* Respects the table structure given.
+* Several Variants: mosaic, sieve, tile, assoc, spine, doubledecker
+* Mosaic is the most versatile and supports higher dimensional data
+* Fourfold is also part of the strucplot framework but uniquely specialised for $2 \times 2$ contingency tables and log odds ratio tests.
 
-# End
+## faculty Marginal Totals
+
+```{r f_marg}
+mosaic(with(sts, table(faculty))
+       , gp = shading_Friendly2
+       , labeling = labeling_values
+       , spacing = spacing_equal(sp = unit(0.5, "lines"))
+       , value_type = "observed"
+       , gp_text = gpar(fontface = 1))
+```
+
+## hqual Marginal Totals
+
+```{r h_marg}
+mosaic(with(sts, table(hqual))
+       , gp = shading_Friendly2
+       , split_vertical = TRUE
+       , labeling = labeling_values
+       , spacing = spacing_equal(sp = unit(0.5, "lines"))
+       , value_type = "observed"
+       , gp_text = gpar(fontface = 1))
+
+```
+
+## Expected Frequencies (Assume Independence)
+
+```{r exp_freqs}
+expected <- independence_table(with(sts, table(faculty, hqual)))
+
+mosaic(expected
+      , gp = shading_Friendly2
+      , labeling = labeling_values
+      , spacing = spacing_equal(sp = unit(0.5, "lines"))
+      , value_type = "expected"
+      , gp_text = gpar(fontface = 1))
+```
+
+## Observed Frequencies
+
+```{r fh_actuals}
+mosaic(with(sts, table(faculty, hqual))
+      , gp = shading_Friendly2
+      , labeling = labeling_values
+      , spacing = spacing_equal(sp = unit(0.5, "lines"))
+      , value_type = "observed"
+      , gp_text = gpar(fontface = 1))
+```
+
+## Scaling to Higher Dimensions
+
+```{r hd_mosaic}
+my_mosaic(with(sts, table(faculty, grad, hqual, year)))
+```
+
+## Properties of Mosaic Plots
+
+1. Tile area $\propto$ frequency.
+1. Independence expectation: straight grid lines in the mosaic when marginal frequencies of one feature are constant over all levels of another feature.
+1. Deviations from expectation show up as deviations in the grid lines. Shading provides a visual cue.
+
+**Con:** Another plotting system to learn.
+
+## Example Code
+
+```{r mosample, echo=TRUE, eval=FALSE}
+mosaic(my_table
+       # shading function
+       , gp = shading_Friendly2
+       # tile spacing
+       , spacing = spacing_equal(sp = unit(0.4, "lines"))
+       # label positioning
+       , rot_labels = c(0, -30, -45, 90)
+       , rot_varnames = c(0, -90, 0, 90)
+       , offset_labels = c(0, 0.5, 0, 0)
+       , offset_varnames = c(0, 1, 0, 0.5))
+```
+
+## Loglinear Models
+
+Two discrete variables *A* with *I* possible values and  *B* with *J* possible values. A sample can be described by an *I* $\times$ *J* contingency table
+
+Under independence, each cell count $n_{ij}$ in the table is assumed to be a Poisson distributed random variable:
+  
+$$n_{ij} \sim \mathit{Pois}(\frac{n_{i+} \cdot n_{+j}}{n_{++}})$$
+
+## Loglinear Models
+
+Rearranging, we get a model that is linear in all the logs:
+
+$$\log(\frac{n_{i+} \cdot n_{+j}}{n_{++}}) = \log(n_{i+}) + \log(n_{+j}) - \log(n_{++})$$
+
+This is usually represented as:
+
+$$\mu + \lambda^A_i + \lambda^B_j$$
+
+where the $\lambda$ terms are the "main" effects and $\mu$ is in "intercept" term that is a property of the total count.
+
+Under independence, the main effects can be calculated directly from the marginal totals.
+
+## Loglinear Models
+
+Deviation from independence implies an interaction term:
+  
+$$\mu + \lambda^A_i + \lambda^B_j + \lambda^{AB}_{ij}$$
+  
+To allow for estimation, we constrain: $\sum^I_{i = 1} \lambda^{A}_{i} = 0,\ \sum^J_{j = 1} \lambda^{B}_{i} = 0,\ \sum^I_{i = 1} \lambda^{AB}_{ij} = \sum^J_{j = 1} \lambda^{AB}_{ij} = 0$. There are $(I-1) + (J-1) + (I-1)(J-1)$ degrees of freedom.
+
+This scales to more variables as follows:
+  
+$$\mu + \lambda^A_i + \lambda^B_j + \lambda^C_k + \lambda^{AB}_{ij} + \lambda^{BC}_{jk} + \lambda^{AC}_{ik} + \lambda^{ABC}_{ijk}$$
+  
+The model with all parameters (one for each table cell) included is referred to as the saturated model - we can always fit the data, but learn nothing.
+
+## Loglinear Models
+
+When modelling, we seek the most parsimious, best fit. Find a model that is:
+  
+* as "good" as the saturated model - non-significant residuals
+* does not use all the parameters / degrees of freedom
+
+This can be done using:
+  
+* generalised linear models (family = poisson)
+* comparing various interactions (joint, conditional)
+* dummy variables can capture very specific interactions
+
+Building models using domain knowledge and visual inspection mosaic plots for significant residuals is the recommended approach.
+
+Compare and select the best model using anova tests and AIC/BIC.

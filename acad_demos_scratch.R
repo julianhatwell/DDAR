@@ -1,4 +1,101 @@
 nrow(students)
+
+my_mosaic(with(sts, table(faculty, grad, hqual, year)))
+
+sts_freq <- as.data.frame(with(sts
+                , table(faculty, hqual, grad, year)))
+
+glm0 <- glm(Freq~faculty + hqual + grad + year
+            , data = sts_freq
+            , family = poisson)
+
+my_mosaic(glm0)
+
+glm1 <- glm(Freq~faculty * hqual + grad + year
+            , data = sts_freq
+            , family = poisson)
+
+my_mosaic(glm1)
+summary(glm1)
+anova(glm1)
+
+glm2 <- glm(Freq~faculty * (hqual + grad) + year
+            , data = sts_freq
+            , family = poisson)
+
+my_mosaic(glm2)
+summary(glm2)
+anova(glm2)
+
+glm3 <- glm(Freq~faculty * (hqual + grad + year) 
+            , data = sts_freq
+            , family = poisson)
+
+my_mosaic(glm3)
+summary(glm3)
+anova(glm3)
+
+glm4 <- glm(Freq~(faculty * hqual * grad) + year# + hq_grad_yr
+            , data = sts_freq
+            , family = poisson)
+
+my_mosaic(glm4)
+summary(glm4)
+anova(glm4)
+
+glm5 <- glm(Freq~(faculty * hqual * grad) + (faculty * hqual * year)
+            , data = sts_freq
+            , family = poisson)
+
+my_mosaic(glm5)
+summary(glm5)
+anova(glm5)
+
+LRstats(glm5)
+
+
+hq_fc_yr <- factor(ifelse(sts_freq$hqual == "dip" &
+                        sts_freq$faculty %in% c("fin", "mgmt") &
+                        sts_freq$year == 2014
+                     , TRUE, FALSE))
+
+
+
+glm2 <- glm(Freq~(faculty + hqual)^2 + (grad + faculty)^2 + grad + year
+            , as.data.frame(with(sts
+                                 , table(faculty, hqual, grad, year)))
+            , family = poisson)
+
+mosaic(glm2
+       , shade = TRUE
+       , formula = ~ faculty + grad + hqual + year
+       , residuals_type = "rstandard"
+       , rot_labels = c(0, -60, -30, 90))
+
+
+glm1 <- glm(Freq~(faculty + hqual)^2 + grad + year
+            , grad_stats_df
+            , family = poisson)
+
+mosaic(glm1
+       , shade = TRUE
+       , formula = ~ faculty + grad + hqual + year
+       , residuals_type = "rstandard"
+       , rot_labels = c(0, -60, -30, 90))
+
+glm2 <- glm(Freq~(faculty + hqual)^2 + (grad + faculty)^2 + grad + year
+            , grad_stats_df
+            , family = poisson)
+
+mosaic(glm2
+       , shade = TRUE
+       , formula = ~ faculty + grad + hqual + year
+       , residuals_type = "rstandard"
+       , rot_labels = c(0, -60, -30, 90))
+
+
+
+
 prop.table(with(students
                 , table(year, outcome))[, c(1, 3, 4, 2, 5)]
            , 1)
@@ -395,3 +492,121 @@ gam3 <- glm(grad~natmix+finance+year+faculty+hqual+t1_success+abs_rate
 
 Anova(glm2, glm1)
 library(psych)
+
+sts_ca <- ca(with(sts, table(hqual, faculty)))
+plot(sts_ca)
+
+my_gbars <- function(g) {
+        g + stat_identity(geom = "bar"
+                          , position = position_dodge()) +
+                myGgFillScale4 +
+                theme_bw() +
+                myGgTheme
+}
+
+hf <- as.data.frame(with(sts, table(faculty, hqual)))
+g1 <- ggplot(data = as.data.frame(hf)
+             , aes(x = hqual
+                   , fill = faculty
+                   , y = Freq))
+g1 <- my_gbars(g1)
+
+
+g2 <- ggplot(data = as.data.frame(hf)
+             , aes(x = faculty
+                   , fill = hqual
+                   , y = Freq))
+
+g2 <- my_gbars(g2)
+
+grid.arrange(g1, g2, nrow=1)
+
+
+structable(year+grad~faculty+hqual
+           , data = with(sts
+                , table(faculty, hqual, grad, year)))
+
+
+with(sts, table(faculty, hqual))
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- ## Loglinear Models -->
+        
+        <!-- ```{r freq_glm, echo=TRUE} -->
+        <!-- # convert to frequency form data frame -->
+        <!-- HEC_df <- as.data.frame(HEC) -->
+        <!-- head(HEC_df, 3) -->
+        
+        <!-- # explanatory model, hair eye interaction -->
+        <!-- hec.glm1 <- glm(Freq~Hair*Eye+Sex -->
+                                     <!--                , data=HEC_df -->
+                                     <!--                , family = poisson) -->
+        <!-- ``` -->
+        
+        <!-- ## HEC Observed -->
+        
+        <!-- ```{r hec2, eval=TRUE} -->
+        <!-- ``` -->
+        
+        
+        <!-- ## HEC GLM -->
+        
+        <!-- ```{r hec_glm, echo=TRUE, eval=FALSE} -->
+        <!-- mosaic(hec.glm1 # invokes the glm plotting method -->
+                    <!--        , main="Hair*Eye" -->
+                            <!--        , gp = shading_Friendly -->
+                            <!--        , formula = ~ Sex + Eye + Hair # mosaic layout -->
+                    <!--        , residuals_type = "rstandard") -->
+        <!-- ``` -->
+        
+        <!-- ## HEC GLM -->
+        
+        <!-- ```{r hec_glm, eval=TRUE} -->
+        <!-- ``` -->
+        
+        <!-- ## HEC GLM 2 -->
+        
+        <!-- ```{r glm2, echo=TRUE, eval=FALSE} -->
+        <!-- # convert to frequency form data frame -->
+        <!-- HEC_df$Blbl <- factor(ifelse(HEC_df$Hair == "Blond" & -->
+                                                  <!--                                HEC_df$Eye == "Blue" -->
+                                                  <!--                              , TRUE -->
+                                                  <!--                              , FALSE)) -->
+        
+        <!-- # explanatory model, hair eye interaction -->
+        <!-- hec.glm2 <- glm(Freq~Hair*Eye+Sex*Blbl -->
+                                     <!--                , data=HEC_df -->
+                                     <!--                , family = poisson) -->
+        
+        <!-- mosaic(hec.glm2 # invokes the glm plotting method -->
+                    <!--        , main="Hair*Eye | Blond-Blue*Sex" -->
+                            <!--        , gp = shading_Friendly -->
+                            <!--        , formula = ~ Sex + Eye + Hair # mosaic layout -->
+                    <!--        , residuals_type = "rstandard") -->
+        <!-- ``` -->
+        
+        <!-- ## HEC GLM 2 -->
+        
+        <!-- ```{r glm2, eval=TRUE} -->
+        <!-- ``` -->
+        
+        <!-- ## HEC GLM tests -->
+        
+        <!-- ```{r glmtests, echo=TRUE} -->
+        <!-- anova(hec.glm1, hec.glm2) -->
+        <!-- LRstats(hec.glm2) # compare to saturated -->
+
+<!-- ``` -->
+        
+        # End

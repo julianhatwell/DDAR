@@ -2,3 +2,13 @@
 .Rhistory
 .RData
 .Ruserdata
+*.pdf
+*.html
+*.log
+*.bib
+rsconnect/
+DDAR_tufte_files/
+DDAR_tufte_cache/
+DDAR_tufte_scratch_files/
+DDAR_tufte_scratch_cache/
+Scratch_files/

@@ -112,7 +112,7 @@ myGgTheme <- theme(plot.title = element_text(colour = myPalBrand[1], size = 14)
                    , legend.text = element_text(colour = myPalBrand[1]))
 
 myGgFillScale2 <- scale_fill_manual(values = c(myPalBrand[8], myPalBrand[2]))
-myGgFillScale4 <- scale_fill_manual(values = k.grad.purple(4))
+myGgFillScale4 <- scale_fill_manual(values = k.grad.purple(5))
 myGgColourScale <- scale_colour_manual(values = c(myPalBrand[8], myPalBrand[2]))
 myGgPurpleGradient <- scale_color_gradient(low = k.grad.purple(100)[1], high = k.grad.purple(100)[100])
 myGgRedGradient <- scale_color_gradient(low = k.grad.red(100)[1], high = k.grad.red(100)[100])

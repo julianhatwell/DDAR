@@ -15,15 +15,15 @@ random_binary_from_logits <- function(lgt) {
   }))}
 
 my_mosaic <- function(x) {
-  rtype <- ifelse(class(x) == "table", "deviance", "rstandard")
+  rtype <- if(class(x) == "table") {"deviance" }
+            else {"rstandard"}
   mosaic(x
          , residuals_type = rtype
          , gp = shading_Friendly2
-         , spacing = spacing_equal(sp = unit(0.5, "lines"))
          , rot_labels = c(0, -30, -45, 90)
          , rot_varnames = c(0, -90, 0, 90)
          , offset_labels = c(0, 0.5, 0, 0)
-         , offset_varnames = c(0, 0, 0, 0.5))
+         , offset_varnames = c(0, 1, 0, 0.5))
 }
 
 year_intake <- c(2014, 2015)
@@ -443,7 +443,9 @@ acad_data <- function() {
 
 students <- acad_data()
 
-sts <- students[,  c("year", "faculty", "hqual"
+sts <- students[students$faculty %in% faculty_business[1:3], ]
+sts$faculty <- factor(sts$faculty)
+sts <- sts[,  c("year", "faculty", "hqual"
                      , "natmix", "finance", "gender"
                      , "t1_success", "abs_rate"
                      , "outcome", "grad")]
