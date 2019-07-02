@@ -21,10 +21,22 @@ my_mosaic <- function(x) {
          , residuals_type = rtype
          , formula = ~ faculty + hqual + grad + year
          , gp = shading_Friendly2
-         , rot_labels = c(0, -30, -45, 90)
+         , rot_labels = c(0, -45, -45, 90)
          , rot_varnames = c(0, -90, 0, 90)
          , offset_labels = c(0, 0.5, 0, 0)
          , offset_varnames = c(0, 1, 0, 0.5))
+}
+
+my_caplot <- function(x) {
+  # Generate the plot
+  res.ca <- plot(x)
+  # add some segments from the origin to make things clearer
+  segments(0, 0, res.ca$cols[,1]
+           , res.ca$cols[,2]
+           , col = "red", lwd = 1)
+  segments(0, 0, res.ca$rows[,1]
+           , res.ca$rows[,2]
+           , col = "blue", lwd = 1.5, lty = 3)
 }
 
 year_intake <- c(2014, 2015)

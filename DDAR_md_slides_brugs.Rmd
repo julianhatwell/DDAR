@@ -35,6 +35,12 @@ source("acad_data.R")
 * MSc (Distinction) Business Intelligence, Birmingham City University. Master's Dissertation: *An Association Rules Based Method for Imputing Missing Likert Scale Data*
 * Research to PhD (in progress): *Designing Explanation Systems for Decision Forests*, Data Analytics and Artifical Intelligence research group, Birmingham City University  
 
+<!-- ## Academic Analytics -->
+
+<!-- ```{r acad_anal_png, fig.cap='High-level architecture of integrated academic systems. Source: Paulsen (2002 : p4)', out.width = '90%'} -->
+<!-- include_graphics("acadsys.png") -->
+<!-- ``` -->
+
 ## Academic Analytics
 
 **Monitor, Evaluate and Optimise**
@@ -44,23 +50,19 @@ source("acad_data.R")
 * class room utilisation and exam planning
 * lecturer management (part-time and adjunct)
 
-## Academic Analytics
-
-```{r acad_anal_png, fig.cap='High-level architecture of integrated academic systems. Source: Paulsen (2002 : p4)', out.width = '90%'}
-include_graphics("acadsys.png")
-```
-
 ## Credits
 
 ::: {.columns}
 ::: {.column}
-* **Michael Friendly** is a pioneer in this field and has contributed to the development of modules and libraries for SAS and R. Ideas and examples based on material contained in this book.
+* **Michael Friendly** is a pioneer in this field and has contributed to the development of modules and libraries for SAS and R.
+
+* This book is *the bible*.
 
 * Shorter, valuable tutorial on these topics:
   * **R> library("vcd")**
   * **R> vignette("vcd")**
   
-  * https://www.youtube.com/watch?v=qfNsoc7Tf60 for an in depth lecture, by Michael Friendly.
+* This link https://www.youtube.com/watch?v=qfNsoc7Tf60 for an in depth lecture, by Michael Friendly.
   
 :::
 ::: {.column}
@@ -73,7 +75,7 @@ include_graphics("ddar_book_info.png")
 :::
 
 ## Visualising Categorical Data
-  
+
 **Rigorous statistical analysis of categorical data is not only supported by visual tools, it is best performed visually.**
 
 *The main theme of Michael Friendly's work.*
@@ -82,11 +84,11 @@ include_graphics("ddar_book_info.png")
 
 ## Analysis of Negative Trend in Student Outcomes
 
+*This is a synthetic data set, designed to replicate and exaggerate some problems found in a real life scenario*
+
 Academic life-cycle data for undergraduates. 2014 and 2015 intakes, graduating in 2017 and 2018 respectively. In 2018, rates of non-graduation (fails and withdrawals) were found to be significantly higher than the previous year.
 
 An analysis was conducted to determine the factors associated with this trend.
-
-*This is a synthetic data set, designed to replicate and exaggerate some problems found in a real life scenario*
 
 ## Academic Data
 
@@ -161,11 +163,12 @@ fourfold(with(sts, table(grad, year, hqual)))
 
 ## Correspondence Analysis
 
-An unsupervised/clustering Method. R Package "ca". 
-
-Simple ca, the ca() function, operates on just two features. It determines per level associations. 
+An unsupervised/clustering method. R Package "ca". 
+per level associations. 
 
 Multiple/Joint ca, the mjca() function, operates simultaneously on two or more features. mjca is harder to interpret and not shown here.
+
+Simple ca, the ca() function, operates on just two features.
 
 ```{r sts_ca, echo=TRUE}
 sts_ca_hq_out <- ca(with(sts, table(hqual, outcome)))
@@ -173,24 +176,30 @@ sts_ca_hq_out <- ca(with(sts, table(hqual, outcome)))
 sts_ca_fc_out <- ca(with(sts, table(faculty, outcome)))
 ```
 
+## Correspondence Analysis Plot
+
+```{r plot_ca codem, echo=TRUE, eval=FALSE}
+# Generate the plot
+res.ca <- plot(x)
+# add some segments from the origin to make things clearer
+segments(0, 0, res.ca$cols[, 1]
+         , res.ca$cols[, 2]
+         , col = "red", lwd = 1)
+segments(0, 0, res.ca$rows[, 1]
+         , res.ca$rows[, 2]
+         , col = "blue", lwd = 1.5, lty = 3)
+```
+
 ## Correspondence Analysis
 
 ```{r plot_ca1}
-# Generate the plot
-res.ca <- plot(sts_ca_hq_out)
-# add some segments from the origin to make things clearer
-segments(0, 0, res.ca$cols[,1], res.ca$cols[,2], col = "red", lwd = 1)
-segments(0, 0, res.ca$rows[,1], res.ca$rows[,2], col = "blue", lwd = 1, lty = 3)
+my_caplot(sts_ca_hq_out)
 ```
 
 ## Correspondence Analysis
 
 ```{r plot_ca2}
-# Generate the plot
-res.ca <- plot(sts_ca_fc_out)
-# add some segments from the origin to make things clearer
-segments(0, 0, res.ca$cols[,1], res.ca$cols[,2], col = "red", lwd = 1)
-segments(0, 0, res.ca$rows[,1], res.ca$rows[,2], col = "blue", lwd = 1, lty = 3)
+my_caplot(sts_ca_fc_out)
 ```
 
 ## Extending Simple Correspondence Analysis
@@ -211,19 +220,17 @@ sts_ca_hqfc_out <- ca(as.matrix(
 ```
 
 ```{r plot_ca3}
-# Generate the plot
-res.ca <- plot(sts_ca_hqfc_out)
-# add some segments from the origin to make things clearer
-segments(0, 0, res.ca$cols[,1], res.ca$cols[,2], col = "red", lwd = 1)
-segments(0, 0, res.ca$rows[,1], res.ca$rows[,2], col = "blue", lwd = 1, lty = 3)
+my_caplot(sts_ca_hqfc_out)
 ```
 
 ## Introducing the Strucplot Framework
 
 * Purpose built for handling tables - no dependent/independent variables.
 * Respects the table structure given.
+* Table is represented as rectangular tiles.
+* Tile area $\propto$ cell count.
 * Several Variants: mosaic, sieve, tile, assoc, spine, doubledecker
-* Mosaic is the most versatile and supports higher dimensional data
+* Mosaic is the most versatile and supports higher dimensional data and models.
 * Fourfold is also part of the strucplot framework but uniquely specialised for $2 \times 2$ contingency tables and log odds ratio tests.
 
 ## faculty Marginal Totals
@@ -289,7 +296,7 @@ mosaic(my_table
        # tile spacing
        , spacing = spacing_equal(sp = unit(0.4, "lines"))
        # label positioning
-       , rot_labels = c(0, -30, -45, 90)
+       , rot_labels = c(0, -45, -45, 90)
        , rot_varnames = c(0, -90, 0, 90)
        , offset_labels = c(0, 0.5, 0, 0)
        , offset_varnames = c(0, 1, 0, 0.5))
@@ -297,9 +304,9 @@ mosaic(my_table
 
 ## Loglinear Models
 
-Two discrete variables *A* with *I* possible values and  *B* with *J* possible values. A sample can be described by an *I* $\times$ *J* contingency table
+Two discrete variables: $$A = \{A_1,\ \dots,\ A_I \},\ B = \{B_1,\ \dots,\ B_J \}$$
 
-Under independence, each cell count $n_{ij}$ in the table is assumed to be a Poisson distributed random variable:
+Represented as an *I* $\times$ *J* contingency table. Under independence, each cell count $n_{ij}$ in the table is assumed to be a Poisson distributed random variable:
   
 $$n_{ij} \sim \mathit{Pois}(\frac{n_{i+} \cdot n_{+j}}{n_{++}})$$
 $n_{i+} = \mathrm{row\ total},\ n_{+j} = \mathrm{col\ total},\ n_{++} = \mathrm{table\ total}$
@@ -326,6 +333,7 @@ $$\mu + \lambda^A_i + \lambda^B_j + \lambda^{AB}_{ij}$$
   
 To allow for estimation, we constrain: $\sum^I_{i = 1} \lambda^{A}_{i} = 0,\ \sum^J_{j = 1} \lambda^{B}_{i} = 0,\ \sum^I_{i = 1} \lambda^{AB}_{ij} = \sum^J_{j = 1} \lambda^{AB}_{ij} = 0$.
 
+
 This scales to more variables as follows:
   
 $$\mu + \lambda^A_i + \lambda^B_j + \lambda^C_k + \lambda^{AB}_{ij} + \lambda^{BC}_{jk} + \lambda^{AC}_{ik} + \lambda^{ABC}_{ijk}$$
@@ -339,15 +347,14 @@ When modelling, we seek the most parsimious, best fit. Find a model that is:
 * as "good" as the saturated model - non-significant residuals
 * does not use all the parameters / degrees of freedom
 
-This can be done using:
+Recommended Methodology:
   
-* generalised linear models (family = poisson)
-* comparing various interactions (joint, conditional)
-* dummy variables can capture very specific interactions
+* generalised linear models; glm(family = poisson)
+* add interaction terms one at a time and hierarchically, according to domain knowledge
+* visual inspection of mosaic plots for significant residuals
+* repeat until residuals are non-significant and the mosaic is "cleaned up"
 
-Building models using domain knowledge and visual inspection mosaic plots for significant residuals is the recommended approach.
-
-Compare and select the best model using anova tests and AIC/BIC.
+Diagnostics and model selection with using anova and AIC/BIC.
 
 ## Null Model `[F][H][G][Y]`
 
@@ -424,6 +431,14 @@ glm5 <- glm(Freq~(faculty * hqual * grad) +
 my_mosaic(glm5)
 ```
 
+## Case Study Conclusions
+
+A policy change between 2014 and 2015 to increase student numbers led to lowering of entry level thresholds.
+
+The foundation diploma appears not to have met the needs of so many additional students on the more challenging finance degree.
+
+Recommend a review of curriculum and resources for the diploma to better support finance students, as well as interventions and support for students who are already one or two years into their course.
+
 ## Diagnostic Tests
 
 ```{r diag_anova, echo=TRUE}
@@ -438,10 +453,4 @@ LRstats(glm4)
 LRstats(glm5)
 ```
 
-## Case Study Conclusions
-
-A policy change between 2014 and 2015 to increase student numbers led to lowering of entry level thresholds.
-
-The foundation diploma appears not to have met the needs of so many additional students on the more challenging finance degree.
-
-Recommend a review of curriculum and resources for the diploma to better support finance students, as well as interventions and support for students who are already one or two years into their course.
+# End
