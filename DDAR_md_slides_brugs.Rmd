@@ -101,10 +101,27 @@ summary(sts[, 9:10])
 
 ## Limitations of Working with Tables Directly
 
-```{r fchq}
-structable(with(sts, table(grad, year)))
-structable(with(sts, table(faculty, hqual)))
+```{r fchq1}
+with(sts, table(grad, year))
 ```
+
+## Limitations of Working with Tables Directly
+
+```{r fchq2}
+with(sts, table(grad, year))
+```
+
+```{r fchq3, echo=TRUE}
+loddsratio(with(sts, table(grad, year)))
+confint(loddsratio(with(sts, table(grad, year))))
+```
+
+## Limitations of Working with Tables Directly
+
+```{r fchq4}
+with(sts, table(faculty, hqual))
+```
+
 
 ## Naive Approach: Barplots
 
@@ -149,7 +166,7 @@ A specialised plot for 2 $\times$ 2 contingency tables which exposes the log odd
 
 ## Fourfold Plots
 
-Fourfold plots are automatically stratified over the levels of a third feature, when given a $2 \times 2 \times k$ table.
+Fourfold plots are automatically stratified over the levels of a third variable, when given a $2 \times 2 \times k$ table.
 
 ```{r ffold2, echo=TRUE, fig.align='center', out.width='70%'}
 fourfold(with(sts, table(grad, year, faculty)))
@@ -166,9 +183,9 @@ fourfold(with(sts, table(grad, year, hqual)))
 An unsupervised/clustering method. R Package "ca". 
 per level associations. 
 
-Multiple/Joint ca, the mjca() function, operates simultaneously on two or more features. mjca is harder to interpret and not shown here.
+Multiple/Joint ca, the mjca() function, operates simultaneously on two or more variables. mjca is harder to interpret and not shown here.
 
-Simple ca, the ca() function, operates on just two features.
+Simple ca, the ca() function, operates on just two variables.
 
 ```{r sts_ca, echo=TRUE}
 sts_ca_hq_out <- ca(with(sts, table(hqual, outcome)))
@@ -204,7 +221,7 @@ my_caplot(sts_ca_fc_out)
 
 ## Extending Simple Correspondence Analysis
 
-A pivot table creates rows for combos of > 1 feature.
+A pivot table creates rows for combos of > 1 variable.
 
 ```{r disp_struct, echo=TRUE}
 structable(outcome ~ hqual + faculty, data = sts)
